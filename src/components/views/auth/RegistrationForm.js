@@ -306,80 +306,80 @@ module.exports = React.createClass({
     },
 
     render: function() {
-        let yourMatrixAccountText = _t('Create your Matrix account');
-        if (this.props.hsName) {
-            yourMatrixAccountText = _t('Create your Matrix account on %(serverName)s', {
-                serverName: this.props.hsName,
-            });
-        } else {
-            try {
-                const parsedHsUrl = new URL(this.props.hsUrl);
-                yourMatrixAccountText = _t('Create your Matrix account on %(serverName)s', {
-                    serverName: parsedHsUrl.hostname,
-                });
-            } catch (e) {
-                // ignore
-            }
-        }
+        // let yourMatrixAccountText = _t('Create your Matrix account');
+        // if (this.props.hsName) {
+        //     yourMatrixAccountText = _t('Create your Matrix account on %(serverName)s', {
+        //         serverName: this.props.hsName,
+        //     });
+        // } else {
+        //     try {
+        //         const parsedHsUrl = new URL(this.props.hsUrl);
+        //         yourMatrixAccountText = _t('Create your Matrix account on %(serverName)s', {
+        //             serverName: parsedHsUrl.hostname,
+        //         });
+        //     } catch (e) {
+        //         // ignore
+        //     }
+        // }
 
-        let editLink = null;
-        if (this.props.onEditServerDetailsClick) {
-            editLink = <a className="mx_AuthBody_editServerDetails"
-                href="#" onClick={this.props.onEditServerDetailsClick}
-            >
-                {_t('Change')}
-            </a>;
-        }
+        // let editLink = null;
+        // if (this.props.onEditServerDetailsClick) {
+        //     editLink = <a className="mx_AuthBody_editServerDetails"
+        //         href="#" onClick={this.props.onEditServerDetailsClick}
+        //     >
+        //         {_t('Change')}
+        //     </a>;
+        // }
+        //
+        // let emailSection;
+        // if (this._authStepIsUsed('m.login.email.identity')) {
+        //     const emailPlaceholder = this._authStepIsRequired('m.login.email.identity') ?
+        //         _t("Email") :
+        //         _t("Email (optional)");
+        //
+        //     emailSection = (
+        //         <div>
+        //             <input type="text" ref="email"
+        //                 placeholder={emailPlaceholder}
+        //                 defaultValue={this.props.defaultEmail}
+        //                 className={this._classForField(FIELD_EMAIL, 'mx_Login_field')}
+        //                 onBlur={this.onEmailBlur}
+        //                 value={this.state.email} />
+        //         </div>
+        //     );
+        // }
 
-        let emailSection;
-        if (this._authStepIsUsed('m.login.email.identity')) {
-            const emailPlaceholder = this._authStepIsRequired('m.login.email.identity') ?
-                _t("Email") :
-                _t("Email (optional)");
-
-            emailSection = (
-                <div>
-                    <input type="text" ref="email"
-                        placeholder={emailPlaceholder}
-                        defaultValue={this.props.defaultEmail}
-                        className={this._classForField(FIELD_EMAIL, 'mx_Login_field')}
-                        onBlur={this.onEmailBlur}
-                        value={this.state.email} />
-                </div>
-            );
-        }
-
-        const threePidLogin = !SdkConfig.get().disable_3pid_login;
-        const CountryDropdown = sdk.getComponent('views.auth.CountryDropdown');
-        let phoneSection;
-        if (threePidLogin && this._authStepIsUsed('m.login.msisdn')) {
-            const phonePlaceholder = this._authStepIsRequired('m.login.msisdn') ?
-                _t("Phone") :
-                _t("Phone (optional)");
-            phoneSection = (
-                <div className="mx_Login_phoneSection">
-                    <CountryDropdown ref="phone_country"
-                        className="mx_Login_phoneCountry mx_Login_field_prefix"
-                        value={this.state.phoneCountry}
-                        isSmall={true}
-                        showPrefix={true}
-                        onOptionChange={this.onPhoneCountryChange}
-                    />
-                    <input type="text" ref="phoneNumber"
-                        placeholder={phonePlaceholder}
-                        defaultValue={this.props.defaultPhoneNumber}
-                        className={this._classForField(
-                            FIELD_PHONE_NUMBER,
-                            'mx_Login_phoneNumberField',
-                            'mx_Login_field',
-                            'mx_Login_field_has_prefix',
-                        )}
-                        onBlur={this.onPhoneNumberBlur}
-                        value={this.state.phoneNumber}
-                    />
-                </div>
-            );
-        }
+        // const threePidLogin = !SdkConfig.get().disable_3pid_login;
+        // const CountryDropdown = sdk.getComponent('views.auth.CountryDropdown');
+        // let phoneSection;
+        // if (threePidLogin && this._authStepIsUsed('m.login.msisdn')) {
+        //     const phonePlaceholder = this._authStepIsRequired('m.login.msisdn') ?
+        //         _t("Phone") :
+        //         _t("Phone (optional)");
+        //     phoneSection = (
+        //         <div className="mx_Login_phoneSection">
+        //             <CountryDropdown ref="phone_country"
+        //                 className="mx_Login_phoneCountry mx_Login_field_prefix"
+        //                 value={this.state.phoneCountry}
+        //                 isSmall={true}
+        //                 showPrefix={true}
+        //                 onOptionChange={this.onPhoneCountryChange}
+        //             />
+        //             <input type="text" ref="phoneNumber"
+        //                 placeholder={phonePlaceholder}
+        //                 defaultValue={this.props.defaultPhoneNumber}
+        //                 className={this._classForField(
+        //                     FIELD_PHONE_NUMBER,
+        //                     'mx_Login_phoneNumberField',
+        //                     'mx_Login_field',
+        //                     'mx_Login_field_has_prefix',
+        //                 )}
+        //                 onBlur={this.onPhoneNumberBlur}
+        //                 value={this.state.phoneNumber}
+        //             />
+        //         </div>
+        //     );
+        // }
 
         const registerButton = (
             <input className="mx_Login_submit" type="submit" value={_t("Register")} />
@@ -389,10 +389,7 @@ module.exports = React.createClass({
 
         return (
             <div>
-                <h3>
-                    {yourMatrixAccountText}
-                    {editLink}
-                </h3>
+
                 <form onSubmit={this.onSubmit}>
                     <div className="mx_AuthBody_fieldRow">
                         <input type="text" ref="username"
@@ -412,10 +409,7 @@ module.exports = React.createClass({
                             onBlur={this.onPasswordConfirmBlur}
                             defaultValue={this.props.defaultPassword} />
                     </div>
-                    <div className="mx_AuthBody_fieldRow">
-                        { emailSection }
-                        { phoneSection }
-                    </div>
+
                     {_t(
                         "Use an email address to recover your account. Other users " +
                         "can invite you to rooms using your contact details.",
