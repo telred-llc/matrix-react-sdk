@@ -20,14 +20,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import sdk from '../../../index';
 import Email from '../../../email';
-import { looksValid as phoneNumberLooksValid } from '../../../phonenumber';
 import Modal from '../../../Modal';
 import { _t } from '../../../languageHandler';
-import SdkConfig from '../../../SdkConfig';
 import { SAFE_LOCALPART_REGEX } from '../../../Registration';
 
 const FIELD_EMAIL = 'field_email';
-const FIELD_PHONE_NUMBER = 'field_phone_number';
 const FIELD_USERNAME = 'field_username';
 const FIELD_PASSWORD = 'field_password';
 const FIELD_PASSWORD_CONFIRM = 'field_password_confirm';
@@ -41,8 +38,6 @@ module.exports = React.createClass({
     propTypes: {
         // Values pre-filled in the input boxes when the component loads
         defaultEmail: PropTypes.string,
-        defaultPhoneCountry: PropTypes.string,
-        defaultPhoneNumber: PropTypes.string,
         defaultUsername: PropTypes.string,
         defaultPassword: PropTypes.string,
         minPasswordLength: PropTypes.number,
@@ -68,8 +63,6 @@ module.exports = React.createClass({
         return {
             // Field error codes by field ID
             fieldErrors: {},
-            // The ISO2 country code selected in the phone number entry
-            phoneCountry: this.props.defaultPhoneCountry,
         };
     },
 
@@ -81,7 +74,6 @@ module.exports = React.createClass({
         // is the one from the first invalid field.
         // It's not super ideal that this just calls
         // onValidationChange once for each invalid field.
-        this.validateField(FIELD_PHONE_NUMBER, ev.type);
         this.validateField(FIELD_EMAIL, ev.type);
         this.validateField(FIELD_PASSWORD_CONFIRM, ev.type);
         this.validateField(FIELD_PASSWORD, ev.type);
@@ -156,14 +148,6 @@ module.exports = React.createClass({
                 } else this.markFieldValid(fieldID, emailValid, "RegistrationForm.ERR_EMAIL_INVALID");
                 break;
             }
-            case FIELD_PHONE_NUMBER: {
-                const phoneNumber = this.refs.phoneNumber ? this.refs.phoneNumber.value : '';
-                const phoneNumberValid = phoneNumber === '' || phoneNumberLooksValid(phoneNumber);
-                if (this._authStepIsRequired('m.login.msisdn') && (!phoneNumberValid || phoneNumber === '')) {
-                    this.markFieldValid(fieldID, false, "RegistrationForm.ERR_MISSING_PHONE_NUMBER");
-                } else this.markFieldValid(fieldID, phoneNumberValid, "RegistrationForm.ERR_PHONE_NUMBER_INVALID");
-                break;
-            }
             case FIELD_USERNAME: {
                 const username = this.refs.username.value.trim();
                 if (allowEmpty && username === '') {
@@ -234,8 +218,6 @@ module.exports = React.createClass({
         switch (fieldID) {
             case FIELD_EMAIL:
                 return this.refs.email;
-            case FIELD_PHONE_NUMBER:
-                return this.refs.phoneNumber;
             case FIELD_USERNAME:
                 return this.refs.username;
             case FIELD_PASSWORD:
@@ -264,17 +246,6 @@ module.exports = React.createClass({
 
     onPasswordConfirmBlur(ev) {
         this.validateField(FIELD_PASSWORD_CONFIRM, ev.type);
-    },
-
-    onPhoneCountryChange(newVal) {
-        this.setState({
-            phoneCountry: newVal.iso2,
-            phonePrefix: newVal.prefix,
-        });
-    },
-
-    onPhoneNumberBlur(ev) {
-        this.validateField(FIELD_PHONE_NUMBER, ev.type);
     },
 
     onUsernameBlur(ev) {
@@ -306,80 +277,24 @@ module.exports = React.createClass({
     },
 
     render: function() {
-        // let yourMatrixAccountText = _t('Create your Matrix account');
-        // if (this.props.hsName) {
-        //     yourMatrixAccountText = _t('Create your Matrix account on %(serverName)s', {
-        //         serverName: this.props.hsName,
-        //     });
-        // } else {
-        //     try {
-        //         const parsedHsUrl = new URL(this.props.hsUrl);
-        //         yourMatrixAccountText = _t('Create your Matrix account on %(serverName)s', {
-        //             serverName: parsedHsUrl.hostname,
-        //         });
-        //     } catch (e) {
-        //         // ignore
-        //     }
-        // }
 
-        // let editLink = null;
-        // if (this.props.onEditServerDetailsClick) {
-        //     editLink = <a className="mx_AuthBody_editServerDetails"
-        //         href="#" onClick={this.props.onEditServerDetailsClick}
-        //     >
-        //         {_t('Change')}
-        //     </a>;
-        // }
-        //
-        // let emailSection;
-        // if (this._authStepIsUsed('m.login.email.identity')) {
-        //     const emailPlaceholder = this._authStepIsRequired('m.login.email.identity') ?
-        //         _t("Email") :
-        //         _t("Email (optional)");
-        //
-        //     emailSection = (
-        //         <div>
-        //             <input type="text" ref="email"
-        //                 placeholder={emailPlaceholder}
-        //                 defaultValue={this.props.defaultEmail}
-        //                 className={this._classForField(FIELD_EMAIL, 'mx_Login_field')}
-        //                 onBlur={this.onEmailBlur}
-        //                 value={this.state.email} />
-        //         </div>
-        //     );
-        // }
+        let emailSection;
+        if (this._authStepIsUsed('m.login.email.identity')) {
+            const emailPlaceholder = this._authStepIsRequired('m.login.email.identity') ?
+                _t("Email") :
+                _t("Email (optional)");
 
-        // const threePidLogin = !SdkConfig.get().disable_3pid_login;
-        // const CountryDropdown = sdk.getComponent('views.auth.CountryDropdown');
-        // let phoneSection;
-        // if (threePidLogin && this._authStepIsUsed('m.login.msisdn')) {
-        //     const phonePlaceholder = this._authStepIsRequired('m.login.msisdn') ?
-        //         _t("Phone") :
-        //         _t("Phone (optional)");
-        //     phoneSection = (
-        //         <div className="mx_Login_phoneSection">
-        //             <CountryDropdown ref="phone_country"
-        //                 className="mx_Login_phoneCountry mx_Login_field_prefix"
-        //                 value={this.state.phoneCountry}
-        //                 isSmall={true}
-        //                 showPrefix={true}
-        //                 onOptionChange={this.onPhoneCountryChange}
-        //             />
-        //             <input type="text" ref="phoneNumber"
-        //                 placeholder={phonePlaceholder}
-        //                 defaultValue={this.props.defaultPhoneNumber}
-        //                 className={this._classForField(
-        //                     FIELD_PHONE_NUMBER,
-        //                     'mx_Login_phoneNumberField',
-        //                     'mx_Login_field',
-        //                     'mx_Login_field_has_prefix',
-        //                 )}
-        //                 onBlur={this.onPhoneNumberBlur}
-        //                 value={this.state.phoneNumber}
-        //             />
-        //         </div>
-        //     );
-        // }
+            emailSection = (
+                <div>
+                    <input type="text" ref="email"
+                        placeholder={emailPlaceholder}
+                        defaultValue={this.props.defaultEmail}
+                        className={this._classForField(FIELD_EMAIL, 'mx_Login_field')}
+                        onBlur={this.onEmailBlur}
+                        value={this.state.email} />
+                </div>
+            );
+        }
 
         const registerButton = (
             <input className="mx_Login_submit" type="submit" value={_t("Register")} />
@@ -409,7 +324,7 @@ module.exports = React.createClass({
                             onBlur={this.onPasswordConfirmBlur}
                             defaultValue={this.props.defaultPassword} />
                     </div>
-
+                    {emailSection}
                     {_t(
                         "Use an email address to recover your account. Other users " +
                         "can invite you to rooms using your contact details.",

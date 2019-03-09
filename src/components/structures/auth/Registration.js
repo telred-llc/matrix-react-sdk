@@ -555,7 +555,6 @@ module.exports = React.createClass({
                 <AuthBody>
                     <h2>{ _t('Create your account') }</h2>
                     { errorText }
-                    { this.renderServerComponent() }
                     { this.renderRegisterComponent() }
                     { signIn }
                 </AuthBody>

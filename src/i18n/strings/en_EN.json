@@ -1257,6 +1257,7 @@
     "The password field must not be blank.": "The password field must not be blank.",
     "Username on %(hs)s": "Username on %(hs)s",
     "Username": "Username",
+    "Username or Email": "Username or Email",
     "Mobile phone number": "Mobile phone number",
     "Not sure of your password? <a>Set a new one</a>": "Not sure of your password? <a>Set a new one</a>",
     "Sign in to your Matrix account": "Sign in to your Matrix account",
