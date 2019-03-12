@@ -24,7 +24,6 @@ import Modal from '../../../Modal';
 import { _t } from '../../../languageHandler';
 import { SAFE_LOCALPART_REGEX } from '../../../Registration';
 
-const FIELD_EMAIL = 'field_email';
 const FIELD_USERNAME = 'field_username';
 const FIELD_PASSWORD = 'field_password';
 const FIELD_PASSWORD_CONFIRM = 'field_password_confirm';
@@ -37,7 +36,6 @@ module.exports = React.createClass({
 
     propTypes: {
         // Values pre-filled in the input boxes when the component loads
-        defaultEmail: PropTypes.string,
         defaultUsername: PropTypes.string,
         defaultPassword: PropTypes.string,
         minPasswordLength: PropTypes.number,
@@ -74,14 +72,14 @@ module.exports = React.createClass({
         // is the one from the first invalid field.
         // It's not super ideal that this just calls
         // onValidationChange once for each invalid field.
-        this.validateField(FIELD_EMAIL, ev.type);
         this.validateField(FIELD_PASSWORD_CONFIRM, ev.type);
         this.validateField(FIELD_PASSWORD, ev.type);
         this.validateField(FIELD_USERNAME, ev.type);
 
         const self = this;
         if (this.allFieldsValid()) {
-            if (this.refs.email.value == '') {
+            const username = this.refs.username.value;
+            if (username == '' || !Email.looksValid(username)) {
                 const QuestionDialog = sdk.getComponent("dialogs.QuestionDialog");
                 Modal.createTrackedDialog('If you don\'t specify an email address...', '', QuestionDialog, {
                     title: _t("Warning!"),
@@ -104,13 +102,19 @@ module.exports = React.createClass({
     },
 
     _doSubmit: function(ev) {
-        const email = this.refs.email.value.trim();
+        let username = this.refs.username.value.trim();
+        let email = '';
+        if (Email.looksValid(username)) {
+            email = username;
+            username = username.split("@")[0];
+        }
+
         const promise = this.props.onRegisterClick({
-            username: this.refs.username.value.trim(),
+            username: username,
             password: this.refs.password.value.trim(),
             email: email,
-            phoneCountry: this.state.phoneCountry,
-            phoneNumber: this.refs.phoneNumber ? this.refs.phoneNumber.value.trim() : '',
+            phoneCountry: '',
+            phoneNumber: '',
         });
 
         if (promise) {
@@ -138,18 +142,18 @@ module.exports = React.createClass({
         const pwd1 = this.refs.password.value.trim();
         const pwd2 = this.refs.passwordConfirm.value.trim();
         const allowEmpty = eventType === "blur";
-
         switch (fieldID) {
-            case FIELD_EMAIL: {
-                const email = this.refs.email.value;
-                const emailValid = email === '' || Email.looksValid(email);
-                if (this._authStepIsRequired('m.login.email.identity') && (!emailValid || email === '')) {
-                    this.markFieldValid(fieldID, false, "RegistrationForm.ERR_MISSING_EMAIL");
-                } else this.markFieldValid(fieldID, emailValid, "RegistrationForm.ERR_EMAIL_INVALID");
-                break;
-            }
             case FIELD_USERNAME: {
                 const username = this.refs.username.value.trim();
+                if (Email.looksValid(username)) {
+                    if (this._authStepIsRequired('m.login.email.identity') && username === '') {
+                        this.markFieldValid(fieldID, false, "RegistrationForm.ERR_MISSING_EMAIL");
+                    } else {
+                        // this.markFieldValid(fieldID, Email.looksValid(username), "RegistrationForm.ERR_EMAIL_INVALID");
+                        this.markFieldValid(fieldID, true);
+                    }
+                    break;
+                }
                 if (allowEmpty && username === '') {
                     this.markFieldValid(fieldID, true);
                 } else if (!SAFE_LOCALPART_REGEX.test(username)) {
@@ -216,8 +220,6 @@ module.exports = React.createClass({
 
     fieldElementById(fieldID) {
         switch (fieldID) {
-            case FIELD_EMAIL:
-                return this.refs.email;
             case FIELD_USERNAME:
                 return this.refs.username;
             case FIELD_PASSWORD:
@@ -234,10 +236,6 @@ module.exports = React.createClass({
             cls += 'error';
         }
         return cls;
-    },
-
-    onEmailBlur(ev) {
-        this.validateField(FIELD_EMAIL, ev.type);
     },
 
     onPasswordBlur(ev) {
@@ -278,29 +276,11 @@ module.exports = React.createClass({
 
     render: function() {
 
-        let emailSection;
-        if (this._authStepIsUsed('m.login.email.identity')) {
-            const emailPlaceholder = this._authStepIsRequired('m.login.email.identity') ?
-                _t("Email") :
-                _t("Email (optional)");
-
-            emailSection = (
-                <div>
-                    <input type="text" ref="email"
-                        placeholder={emailPlaceholder}
-                        defaultValue={this.props.defaultEmail}
-                        className={this._classForField(FIELD_EMAIL, 'mx_Login_field')}
-                        onBlur={this.onEmailBlur}
-                        value={this.state.email} />
-                </div>
-            );
-        }
-
         const registerButton = (
             <input className="mx_Login_submit" type="submit" value={_t("Register")} />
         );
 
-        const placeholderUsername = _t("Username");
+        const placeholderUsername = _t("Username or Email");
 
         return (
             <div>
@@ -324,7 +304,6 @@ module.exports = React.createClass({
                             onBlur={this.onPasswordConfirmBlur}
                             defaultValue={this.props.defaultPassword} />
                     </div>
-                    {emailSection}
                     {_t(
                         "Use an email address to recover your account. Other users " +
                         "can invite you to rooms using your contact details.",
