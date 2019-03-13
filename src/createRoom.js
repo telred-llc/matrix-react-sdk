@@ -94,6 +94,14 @@ function createRoom(opts) {
         modal.close();
     }).then(function(res) {
         roomId = res.room_id;
+
+        MatrixClientPeg.get().sendStateEvent(
+            roomId, "m.room.encryption",
+            { algorithm: "m.megolm.v1.aes-sha2" },
+        ).catch((e) => {
+            console.error(e);
+        });
+
         if (opts.dmUserId) {
             return Rooms.setDMRoom(roomId, opts.dmUserId);
         } else {

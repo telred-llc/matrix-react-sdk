@@ -312,6 +312,7 @@ module.exports = React.createClass({
         }
     },
 
+    // TODO create_room_here
     onCreateRoomClicked: function() {
         this.props.onFinished();
         dis.dispatch({action: 'view_create_room'});

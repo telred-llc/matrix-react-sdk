@@ -82,6 +82,7 @@ export default class SecurityRoomSettingsTab extends React.Component {
         if (refreshWhenTypes.includes(e.getType())) this.forceUpdate();
     };
 
+    // EncryptionSettingTab
     _onEncryptionChange = (e) => {
         const beforeEncrypted = this.state.encrypted;
         this.setState({encrypted: true});
