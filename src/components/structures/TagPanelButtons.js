@@ -48,7 +48,7 @@ const TagPanelButtons = React.createClass({
         const ActionButton = sdk.getComponent("elements.ActionButton");
 
         return (<div className="mx_TagPanelButtons">
-            <GroupsButton />
+            {/*<GroupsButton />*/}
             <ActionButton
                 className="mx_TagPanelButtons_report" action="show_redesign_feedback_dialog"
                 label={_t("Report bugs & give feedback")} tooltip={true} />
