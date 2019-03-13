@@ -286,7 +286,7 @@ module.exports = React.createClass({
                         name="reset_password"
                         value={this.state.password}
                         onChange={this.onInputChanged.bind(this, "password")}
-                        placeholder={_t('Password')} />
+                        placeholder={_t('New Password')} />
                     <input className="mx_Login_field" type="password"
                         name="reset_password_confirm"
                         value={this.state.password2}
