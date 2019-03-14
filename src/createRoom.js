@@ -101,7 +101,12 @@ function createRoom(opts) {
         ).catch((e) => {
             console.error(e);
         });
-
+        MatrixClientPeg.get().sendStateEvent(roomId, 'm.room.guest_access', createOpts.guest_access, "").catch((e) => {
+            console.error(e);
+        });
+        MatrixClientPeg.get().sendStateEvent(roomId, 'm.room.join_rules', createOpts.join_rule, "").catch((e) => {
+            console.error(e);
+        });
         if (opts.dmUserId) {
             return Rooms.setDMRoom(roomId, opts.dmUserId);
         } else {
