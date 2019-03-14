@@ -736,6 +736,9 @@ module.exports = withMatrixClient(React.createClass({
                     this.props.permalinkCreator,
                     'replyThread',
                 );
+                if (isEncryptionFailure) {
+                    return (<div></div>);
+                }
                 return (
                     <div className={classes}>
                         <div className="mx_EventTile_msgOption">
