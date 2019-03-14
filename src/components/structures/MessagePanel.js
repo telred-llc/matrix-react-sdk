@@ -495,9 +495,9 @@ module.exports = React.createClass({
 
         // do we need a date separator since the last event?
         if (this._wantsDateSeparator(prevEvent, eventDate)) {
-            const dateSeparator = <li key={ts1}><DateSeparator key={ts1} ts={ts1} /></li>;
-            ret.push(dateSeparator);
-            continuation = false;
+            // const dateSeparator = <li key={ts1}><DateSeparator key={ts1} ts={ts1} /></li>;
+            // ret.push(dateSeparator);
+            // continuation = false;
         }
 
         const eventId = mxEv.getId();
