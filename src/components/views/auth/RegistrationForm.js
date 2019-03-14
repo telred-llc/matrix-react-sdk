@@ -297,7 +297,7 @@ module.exports = React.createClass({
                         <input type="password" ref="password"
                             className={this._classForField(FIELD_PASSWORD, 'mx_Login_field')}
                             onBlur={this.onPasswordBlur}
-                            placeholder={_t("Password")} defaultValue={this.props.defaultPassword} />
+                            placeholder={_t("New Password")} defaultValue={this.props.defaultPassword} />
                         <input type="password" ref="passwordConfirm"
                             placeholder={_t("Confirm")}
                             className={this._classForField(FIELD_PASSWORD_CONFIRM, 'mx_Login_field')}
