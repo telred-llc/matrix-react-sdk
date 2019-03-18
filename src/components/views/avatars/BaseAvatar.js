@@ -191,43 +191,56 @@ module.exports = React.createClass({
                     alt="" title={title} onError={this.onError}
                     width={width} height={height} />
             );
-            if (onClick != null) {
-                return (
-                    <AccessibleButton element='span' className="mx_BaseAvatar"
-                        onClick={onClick} {...otherProps}
-                    >
-                        { textNode }
-                        { imgNode }
-                    </AccessibleButton>
-                );
-            } else {
-                return (
-                    <span className="mx_BaseAvatar" {...otherProps}>
-                        { textNode }
-                        { imgNode }
-                    </span>
-                );
-            }
-        }
-        if (onClick != null) {
+            // if (onClick != null) {
+            //     return (
+            //         <AccessibleButton element='span' className="mx_BaseAvatar"
+            //             onClick={onClick} {...otherProps}
+            //         >
+            //             { textNode }
+            //             { imgNode }
+            //         </AccessibleButton>
+            //     );
+            // } else {
+            //     return (
+            //         <span className="mx_BaseAvatar" {...otherProps}>
+            //             { textNode }
+            //             { imgNode }
+            //         </span>
+            //     );
+            // }
             return (
-                <AccessibleButton className="mx_BaseAvatar mx_BaseAvatar_image"
-                    element='img'
-                    src={imageUrl}
-                    onClick={onClick}
-                    onError={this.onError}
-                    width={width} height={height}
-                    title={title} alt=""
-                    {...otherProps} />
-            );
-        } else {
-            return (
-                <img className="mx_BaseAvatar mx_BaseAvatar_image" src={imageUrl}
-                    onError={this.onError}
-                    width={width} height={height}
-                    title={title} alt=""
-                    {...otherProps} />
+                <span className="mx_BaseAvatar" {...otherProps}>
+                    { textNode }
+                    { imgNode }
+                </span>
             );
         }
+        // if (onClick != null) {
+        //     return (
+        //         <AccessibleButton className="mx_BaseAvatar mx_BaseAvatar_image"
+        //             element='img'
+        //             src={imageUrl}
+        //             onClick={onClick}
+        //             onError={this.onError}
+        //             width={width} height={height}
+        //             title={title} alt=""
+        //             {...otherProps} />
+        //     );
+        // } else {
+        //     return (
+        //         <img className="mx_BaseAvatar mx_BaseAvatar_image" src={imageUrl}
+        //             onError={this.onError}
+        //             width={width} height={height}
+        //             title={title} alt=""
+        //             {...otherProps} />
+        //     );
+        // }
+        return (
+            <img className="mx_BaseAvatar mx_BaseAvatar_image" src={imageUrl}
+                 onError={this.onError}
+                 width={width} height={height}
+                 title={title} alt=""
+                 {...otherProps} />
+        );
     },
 });
