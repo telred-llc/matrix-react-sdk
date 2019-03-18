@@ -426,7 +426,7 @@ const LoggedInView = React.createClass({
         const GroupView = sdk.getComponent('structures.GroupView');
         const MyGroups = sdk.getComponent('structures.MyGroups');
         const MatrixToolbar = sdk.getComponent('globals.MatrixToolbar');
-        const CookieBar = sdk.getComponent('globals.CookieBar');
+        // const CookieBar = sdk.getComponent('globals.CookieBar');
         const NewVersionBar = sdk.getComponent('globals.NewVersionBar');
         const UpdateCheckBar = sdk.getComponent('globals.UpdateCheckBar');
         const PasswordNagBar = sdk.getComponent('globals.PasswordNagBar');
@@ -500,11 +500,10 @@ const LoggedInView = React.createClass({
                 adminContact={usageLimitEvent.getContent().admin_contact}
                 limitType={usageLimitEvent.getContent().limit_type}
             />;
-        } else if (this.props.showCookieBar &&
-            this.props.config.piwik
-        ) {
+        } else if (this.props.showCookieBar && this.props.config.piwik) {
             const policyUrl = this.props.config.piwik.policyUrl || null;
-            topBar = <CookieBar policyUrl={policyUrl} />;
+            // topBar = <CookieBar policyUrl={policyUrl} />;
+            topBar = <span></span>;
         } else if (this.props.hasNewVersion) {
             topBar = <NewVersionBar version={this.props.version} newVersion={this.props.newVersion}
                                     releaseNotes={this.props.newVersionReleaseNotes}
