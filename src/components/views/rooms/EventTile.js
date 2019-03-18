@@ -722,7 +722,7 @@ module.exports = withMatrixClient(React.createClass({
                             <a href={permalink} onClick={this.onPermalinkClicked}>
                                 { timestamp }
                             </a>
-                            { this._renderE2EPadlock() }
+                            {/*{ this._renderE2EPadlock() }*/}
                             { thread }
                             <EventTileType ref="tile"
                                            mxEvent={this.props.mxEvent}
@@ -752,7 +752,7 @@ module.exports = withMatrixClient(React.createClass({
                             <a href={permalink} onClick={this.onPermalinkClicked}>
                                 { timestamp }
                             </a>
-                            { this._renderE2EPadlock() }
+                            {/*{ this._renderE2EPadlock() }*/}
                             { thread }
                             <EventTileType ref="tile"
                                            mxEvent={this.props.mxEvent}
