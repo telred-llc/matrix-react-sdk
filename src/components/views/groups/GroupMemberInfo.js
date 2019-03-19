@@ -190,13 +190,6 @@ module.exports = React.createClass({
                     </AccessibleButton>
                     { avatarElement }
                     <EmojiText element="h2">{ groupMemberName }</EmojiText>
-
-                    <div className="mx_MemberInfo_profile">
-                        <div className="mx_MemberInfo_profileField">
-                            { this.props.groupMember.userId }
-                        </div>
-                    </div>
-
                     { adminTools }
                 </GeminiScrollbarWrapper>
             </div>
