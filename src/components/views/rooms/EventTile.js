@@ -525,7 +525,7 @@ module.exports = withMatrixClient(React.createClass({
         const isEncryptionFailure = this.props.mxEvent.isDecryptionFailure();
         const isRedundant = isRedundantEventMessage(this.props.mxEvent);
 
-        if (isRedundant || isEncryptionFailure) {
+        if (isRedundant || isEncryptionFailure | isRedacted) {
             return (<div></div>);
         }
 
