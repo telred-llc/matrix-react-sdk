@@ -706,12 +706,12 @@ module.exports = withMatrixClient(React.createClass({
                     });
                 };
 
-                const onInsertPillButton = function() {
-                    dis.dispatch({
-                        action: 'insert_mention',
-                        user_id: member.userId,
-                    });
-                };
+                // const onInsertPillButton = function() {
+                //     dis.dispatch({
+                //         action: 'insert_mention',
+                //         user_id: member.userId,
+                //     });
+                // };
 
                 readReceiptButton = (
                     <AccessibleButton onClick={onReadReceiptButton} className="mx_MemberInfo_field">
@@ -719,11 +719,11 @@ module.exports = withMatrixClient(React.createClass({
                     </AccessibleButton>
                 );
 
-                insertPillButton = (
-                    <AccessibleButton onClick={onInsertPillButton} className={"mx_MemberInfo_field"}>
-                        { _t('Mention') }
-                    </AccessibleButton>
-                );
+                // insertPillButton = (
+                //     <AccessibleButton onClick={onInsertPillButton} className={"mx_MemberInfo_field"}>
+                //         { _t('Mention') }
+                //     </AccessibleButton>
+                // );
             }
 
             if (!member || !member.membership || member.membership === 'leave') {
