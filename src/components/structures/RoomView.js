@@ -1571,6 +1571,7 @@ module.exports = React.createClass({
         }
 
         const myMembership = this.state.room.getMyMembership();
+        console.log('member state: '+ myMembership);
         if (myMembership == 'invite') {
             if (this.state.rejecting) {
                 return (

@@ -225,7 +225,7 @@ module.exports = React.createClass({
                 viewAvatarOnClick={true} />);
         }
 
-        if (this.props.onSettingsClick) {
+        if (this.props.onSettingsClick && this.props.inRoom) {
             settingsButton =
                 <AccessibleButton className="mx_RoomHeader_button mx_RoomHeader_settingsButton"
                     onClick={this.props.onSettingsClick}
@@ -286,6 +286,7 @@ module.exports = React.createClass({
                 >
                 </AccessibleButton>;
         }
+
 
         let manageIntegsButton;
         if (this.props.room && this.props.room.roomId && this.props.inRoom) {

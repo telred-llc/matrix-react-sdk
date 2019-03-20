@@ -293,9 +293,9 @@ module.exports = React.createClass({
     },
 
     _renderLeaveMenu: function(membership) {
-        if (!membership) {
-            return null;
-        }
+        // if (!membership) {
+        //     return null;
+        // }
 
         let leaveClickHandler = null;
         let leaveText = null;
@@ -304,6 +304,10 @@ module.exports = React.createClass({
             case "join":
                 leaveClickHandler = this._onClickLeave;
                 leaveText = _t('Leave');
+                break;
+            case null:
+                leaveClickHandler = this._onClickForget;
+                leaveText = _t('Forget');
                 break;
             case "leave":
             case "ban":
@@ -368,16 +372,19 @@ module.exports = React.createClass({
 
     render: function() {
         const myMembership = this.props.room.getMyMembership();
-
+        console.log('membership: '+ myMembership);
         // Can't set notif level or tags on non-join rooms
-        if (myMembership !== 'join') {
+        if (myMembership === 'leave' || myMembership === 'ban' || myMembership === null) {
+            return <div>
+                { this._renderLeaveMenu(myMembership) }
+            </div>;
+        } else if (myMembership !== 'join') {
             return <div>
                 { this._renderLeaveMenu(myMembership) }
                 <hr className="mx_RoomTileContextMenu_separator" />
                 { this._renderSettingsMenu() }
             </div>;
         }
-
         return (
             <div>
                 { this._renderNotifMenu() }
