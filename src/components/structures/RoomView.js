@@ -1572,17 +1572,51 @@ module.exports = React.createClass({
 
         const myMembership = this.state.room.getMyMembership();
         if (myMembership == 'invite') {
-            if (this.state.joining || this.state.rejecting) {
+            if (this.state.rejecting) {
                 return (
                     <div className="mx_RoomView">
-                        <Loader />
+                        <Loader/>
                     </div>
                 );
-            } else {
+            }else if (this.state.joining) {
                 const myUserId = MatrixClientPeg.get().credentials.userId;
                 const myMember = this.state.room.getMember(myUserId);
                 const inviteEvent = myMember.events.member;
-                var inviterName = inviteEvent.sender ? inviteEvent.sender.name : inviteEvent.getSender();
+                let inviterName = inviteEvent.sender ? inviteEvent.sender.name : inviteEvent.getSender();
+
+                // We deliberately don't try to peek into invites, even if we have permission to peek
+                // as they could be a spam vector.
+                // XXX: in future we could give the option of a 'Preview' button which lets them view anyway.
+
+                // We have a regular invite for this room.
+                return (
+                    <div className="mx_RoomView">
+                        <RoomHeader
+                            ref="header"
+                            room={this.state.room}
+                            collapsedRhs={this.props.collapsedRhs}
+                            e2eStatus={this.state.e2eStatus}
+                        />
+                        <div className="mx_RoomView_body">
+                            <div className="mx_RoomView_auxPanel">
+                                <RoomPreviewBar onJoinClick={this.onJoinButtonClicked}
+                                                onForgetClick={this.onForgetClick}
+                                                onRejectClick={this.onRejectButtonClicked}
+                                                inviterName={inviterName}
+                                                canPreview={false}
+                                                // spinner={this.state.joining}
+                                                // spinnerState="joining"
+                                                room={this.state.room}
+                                />
+                            </div>
+                        </div>
+                        <div className="mx_RoomView_messagePanel"></div>
+                    </div>);
+            }else {
+                const myUserId = MatrixClientPeg.get().credentials.userId;
+                const myMember = this.state.room.getMember(myUserId);
+                const inviteEvent = myMember.events.member;
+                let inviterName = inviteEvent.sender ? inviteEvent.sender.name : inviteEvent.getSender();
 
                 // We deliberately don't try to peek into invites, even if we have permission to peek
                 // as they could be a spam vector.
