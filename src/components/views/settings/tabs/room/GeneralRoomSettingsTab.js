@@ -32,6 +32,7 @@ export default class GeneralRoomSettingsTab extends React.Component {
 
     static propTypes = {
         roomId: PropTypes.string.isRequired,
+        onFinish: PropTypes.func.isRequired
     };
 
     constructor() {
@@ -73,6 +74,7 @@ export default class GeneralRoomSettingsTab extends React.Component {
             action: 'leave_room',
             room_id: this.props.roomId,
         });
+        this.props.onFinish(false);
     };
 
     render() {
