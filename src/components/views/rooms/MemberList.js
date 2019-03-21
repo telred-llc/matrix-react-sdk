@@ -20,6 +20,7 @@ import React from 'react';
 import { _t } from '../../../languageHandler';
 import SdkConfig from '../../../SdkConfig';
 import dis from '../../../dispatcher';
+import DMRoomMap from "../../../utils/DMRoomMap";
 const MatrixClientPeg = require("../../../MatrixClientPeg");
 const sdk = require('../../../index');
 const rate_limited_func = require('../../../ratelimitedfunc');
@@ -431,6 +432,19 @@ module.exports = React.createClass({
         return this.state.filteredInvitedMembers.length + (this._getPending3PidInvites() || []).length;
     },
 
+    inviteButtonOnlyRoom(room) {
+        const dmRooms = DMRoomMap.shared().getUserIdForRoomId(this.props.roomId);
+        let inviteButton;
+        if (!dmRooms && room && room.getMyMembership() === 'join') {
+            const AccessibleButton = sdk.getComponent("elements.AccessibleButton");
+            inviteButton =
+                <AccessibleButton className="mx_MemberList_invite" onClick={this.onInviteButtonClick}>
+                    <span>{ _t('Invite to this room') }</span>
+                </AccessibleButton>;
+        }
+        return inviteButton;
+    },
+
     render: function() {
         if (this.state.loading) {
             const Spinner = sdk.getComponent("elements.Spinner");
@@ -443,14 +457,7 @@ module.exports = React.createClass({
 
         const cli = MatrixClientPeg.get();
         const room = cli.getRoom(this.props.roomId);
-        let inviteButton;
-        if (room && room.getMyMembership() === 'join') {
-            const AccessibleButton = sdk.getComponent("elements.AccessibleButton");
-            inviteButton =
-                <AccessibleButton className="mx_MemberList_invite" onClick={this.onInviteButtonClick}>
-                    <span>{ _t('Invite to this room') }</span>
-                </AccessibleButton>;
-        }
+        const inviteButton = this.inviteButtonOnlyRoom(room);
 
         let invitedHeader;
         let invitedSection;
