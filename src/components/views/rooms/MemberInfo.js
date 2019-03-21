@@ -400,7 +400,7 @@ module.exports = withMatrixClient(React.createClass({
         level = parseInt(level);
 
         if (!isNaN(level)) {
-            this.setState({ updating: this.state.updating + 1 });
+            this.setState({ updating: this.state.updating + 1, muted: !isMuted });
             this.props.matrixClient.setPowerLevel(roomId, target, level, powerLevelEvent).then(
                 function() {
                     // NO-OP; rely on the m.room.member event coming down else we could
@@ -414,7 +414,7 @@ module.exports = withMatrixClient(React.createClass({
                     });
                 },
             ).finally(()=>{
-                this.setState({ updating: this.state.updating - 1 });
+                this.setState({ updating: this.state.updating - 1, muted: !isMuted });
             });
         }
     },
