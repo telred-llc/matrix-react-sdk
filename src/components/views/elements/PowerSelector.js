@@ -102,25 +102,25 @@ module.exports = React.createClass({
     },
 
     render: function() {
-        let customPicker;
-        if (this.state.custom) {
-            if (this.props.disabled) {
-                customPicker = <span>{ _t(
-                    "Custom of %(powerLevel)s",
-                    { powerLevel: this.props.value },
-                ) }</span>;
-            } else {
-                customPicker = <span> = <input
-                    ref="custom"
-                    type="text"
-                    size="3"
-                    defaultValue={this.props.value}
-                    onBlur={this.onCustomBlur}
-                    onKeyDown={this.onCustomKeyDown}
-                />
-                </span>;
-            }
-        }
+        // let customPicker;
+        // if (this.state.custom) {
+        //     if (this.props.disabled) {
+        //         customPicker = <span>{ _t(
+        //             "Custom of %(powerLevel)s",
+        //             { powerLevel: this.props.value },
+        //         ) }</span>;
+        //     } else {
+        //         customPicker = <span> = <input
+        //             ref="custom"
+        //             type="text"
+        //             size="3"
+        //             defaultValue={this.props.value}
+        //             onBlur={this.onCustomBlur}
+        //             onKeyDown={this.onCustomKeyDown}
+        //         />
+        //         </span>;
+        //     }
+        // }
 
         let selectValue;
         if (this.state.custom) {
@@ -140,7 +140,7 @@ module.exports = React.createClass({
                     text: Roles.textualPowerLevel(level, this.props.usersDefault),
                 };
             });
-            options.push({ value: "SELECT_VALUE_CUSTOM", text: _t("Custom level") });
+            // options.push({ value: "SELECT_VALUE_CUSTOM", text: _t("Custom level") });
             options = options.map((op) => {
                 return <option value={op.value} key={op.value}>{ op.text }</option>;
             });
@@ -157,7 +157,6 @@ module.exports = React.createClass({
         return (
             <span className="mx_PowerSelector">
                 { select }
-                { customPicker }
             </span>
         );
     },

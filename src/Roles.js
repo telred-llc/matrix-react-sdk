@@ -18,9 +18,9 @@ import { _t } from './languageHandler';
 export function levelRoleMap(usersDefault) {
     return {
         undefined: _t('Default'),
-        0: _t('Restricted'),
+        // 0: _t('Restricted'),
         [usersDefault]: _t('Default'),
-        50: _t('Moderator'),
+        // 50: _t('Moderator'),
         100: _t('Admin'),
     };
 }
