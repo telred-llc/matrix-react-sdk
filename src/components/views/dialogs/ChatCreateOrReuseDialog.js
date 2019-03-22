@@ -135,7 +135,7 @@ export default class ChatCreateOrReuseDialog extends React.Component {
                 { _t('You already have existing direct chats with this user:') }
                 <div className="mx_ChatCreateOrReuseDialog_tiles">
                     { this.state.tiles }
-                    { startNewChat }
+                    {/*{ startNewChat }*/}
                 </div>
             </div>;
         } else {
