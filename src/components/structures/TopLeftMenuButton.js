@@ -23,6 +23,7 @@ import BaseAvatar from '../views/avatars/BaseAvatar';
 import MatrixClientPeg from '../../MatrixClientPeg';
 import Avatar from '../../Avatar';
 import { _t } from '../../languageHandler';
+import RoomListStore from "../../stores/RoomListStore";
 
 const AVATAR_SIZE = 28;
 
@@ -58,10 +59,16 @@ export default class TopLeftMenuButton extends React.Component {
         };
     }
 
+    async refreshProfileInfo() {
+        const profileInfo = await this._getProfileInfo();
+        this.setState({profileInfo});
+    }
+
     async componentDidMount() {
         try {
-            const profileInfo = await this._getProfileInfo();
-            this.setState({profileInfo});
+            this._roomListStoreToken = RoomListStore.addListener(() => {
+                this.refreshProfileInfo();
+            });
         } catch (ex) {
             console.log("could not fetch profile");
             console.error(ex);
