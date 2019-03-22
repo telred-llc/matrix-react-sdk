@@ -361,11 +361,11 @@ module.exports = React.createClass({
                     <img className="mx_RoomTileContextMenu_tag_icon_set" src={require("../../../../res/img/icon_context_low_on.svg")} width="15" height="15" />
                     { _t('Low Priority') }
                 </div>
-                <div className={dmClasses} onClick={this._onClickDM} >
-                    <img className="mx_RoomTileContextMenu_tag_icon" src={require("../../../../res/img/icon_context_person.svg")} width="15" height="15" />
-                    <img className="mx_RoomTileContextMenu_tag_icon_set" src={require("../../../../res/img/icon_context_person_on.svg")} width="15" height="15" />
-                    { _t('Direct Chat') }
-                </div>
+                {/*<div className={dmClasses} onClick={this._onClickDM} >*/}
+                    {/*<img className="mx_RoomTileContextMenu_tag_icon" src={require("../../../../res/img/icon_context_person.svg")} width="15" height="15" />*/}
+                    {/*<img className="mx_RoomTileContextMenu_tag_icon_set" src={require("../../../../res/img/icon_context_person_on.svg")} width="15" height="15" />*/}
+                    {/*{ _t('Direct Chat') }*/}
+                {/*</div>*/}
             </div>
         );
     },
