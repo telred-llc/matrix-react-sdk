@@ -21,11 +21,12 @@ const React = require('react');
 const MatrixClientPeg = require('../../../MatrixClientPeg');
 
 import {formatDate} from '../../../DateUtils';
+import {_t} from '../../../languageHandler';
+
 const filesize = require('filesize');
 const AccessibleButton = require('../../../components/views/elements/AccessibleButton');
 const Modal = require('../../../Modal');
 const sdk = require('../../../index');
-import { _t } from '../../../languageHandler';
 
 module.exports = React.createClass({
     displayName: 'ImageView',
@@ -80,7 +81,7 @@ module.exports = React.createClass({
                         title: _t('Error'),
                         description: _t('You cannot delete this image. (%(code)s)', {code: code}),
                     });
-                }).done();
+                }).done(this.props.onFinished());
             },
         });
     },
@@ -88,41 +89,42 @@ module.exports = React.createClass({
     getName: function() {
         let name = this.props.name;
         if (name && this.props.link) {
-            name = <a href={ this.props.link } target="_blank" rel="noopener">{ name }</a>;
+            name = <a href={this.props.link} target="_blank" rel="noopener">{name}</a>;
         }
         return name;
     },
 
     render: function() {
-/*
-        // In theory max-width: 80%, max-height: 80% on the CSS should work
-        // but in practice, it doesn't, so do it manually:
+        /*
+                // In theory max-width: 80%, max-height: 80% on the CSS should work
+                // but in practice, it doesn't, so do it manually:
 
-        var width = this.props.width || 500;
-        var height = this.props.height || 500;
+                var width = this.props.width || 500;
+                var height = this.props.height || 500;
 
-        var maxWidth = document.documentElement.clientWidth * 0.8;
-        var maxHeight = document.documentElement.clientHeight * 0.8;
+                var maxWidth = document.documentElement.clientWidth * 0.8;
+                var maxHeight = document.documentElement.clientHeight * 0.8;
 
-        var widthFrac = width / maxWidth;
-        var heightFrac = height / maxHeight;
+                var widthFrac = width / maxWidth;
+                var heightFrac = height / maxHeight;
 
-        var displayWidth;
-        var displayHeight;
-        if (widthFrac > heightFrac) {
-            displayWidth = Math.min(width, maxWidth);
-            displayHeight = (displayWidth / width) * height;
-        } else {
-            displayHeight = Math.min(height, maxHeight);
-            displayWidth = (displayHeight / height) * width;
-        }
+                var displayWidth;
+                var displayHeight;
+                if (widthFrac > heightFrac) {
+                    displayWidth = Math.min(width, maxWidth);
+                    displayHeight = (displayWidth / width) * height;
+                } else {
+                    displayHeight = Math.min(height, maxHeight);
+                    displayWidth = (displayHeight / height) * width;
+                }
 
-        var style = {
-            width: displayWidth,
-            height: displayHeight
-        };
-*/
-        let style; let res;
+                var style = {
+                    width: displayWidth,
+                    height: displayHeight
+                };
+        */
+        let style;
+        let res;
 
         if (this.props.width && this.props.height) {
             style = {
@@ -157,14 +159,17 @@ module.exports = React.createClass({
             }
 
             eventMeta = (<div className="mx_ImageView_metadata">
-                { _t('Uploaded on %(date)s by %(user)s', {date: formatDate(new Date(this.props.mxEvent.getTs())), user: sender}) }
+                {_t('Uploaded on %(date)s by %(user)s', {
+                    date: formatDate(new Date(this.props.mxEvent.getTs())),
+                    user: sender
+                })}
             </div>);
         }
 
         let eventRedact;
         if (showEventMeta) {
             eventRedact = (<div className="mx_ImageView_button" onClick={this.onRedactClick}>
-                { _t('Remove') }
+                {_t('Remove')}
             </div>);
         }
 
@@ -173,23 +178,26 @@ module.exports = React.createClass({
                 <div className="mx_ImageView_lhs">
                 </div>
                 <div className="mx_ImageView_content">
-                    <img src={this.props.src} style={style} />
+                    <img src={this.props.src} style={style}/>
                     <div className="mx_ImageView_labelWrapper">
                         <div className="mx_ImageView_label">
-                            <AccessibleButton className="mx_ImageView_cancel" onClick={ this.props.onFinished }><img src={require("../../../../res/img/cancel-white.svg")} width="18" height="18" alt={ _t('Close') } /></AccessibleButton>
+                            <AccessibleButton className="mx_ImageView_cancel" onClick={this.props.onFinished}><img
+                                src={require("../../../../res/img/cancel-white.svg")} width="18" height="18"
+                                alt={_t('Close')}/></AccessibleButton>
                             <div className="mx_ImageView_shim">
                             </div>
                             <div className="mx_ImageView_name">
-                                { this.getName() }
+                                {this.getName()}
                             </div>
-                            { eventMeta }
-                            <a className="mx_ImageView_link" href={ this.props.src } download={ this.props.name } target="_blank" rel="noopener">
+                            {eventMeta}
+                            <a className="mx_ImageView_link" href={this.props.src} download={this.props.name}
+                               target="_blank" rel="noopener">
                                 <div className="mx_ImageView_download">
-                                        { _t('Download this file') }<br />
-                                         <span className="mx_ImageView_size">{ size_res }</span>
+                                    {_t('Download this file')}<br/>
+                                    <span className="mx_ImageView_size">{size_res}</span>
                                 </div>
                             </a>
-                            { eventRedact }
+                            {eventRedact}
                             <div className="mx_ImageView_shim">
                             </div>
                         </div>
