@@ -1,12 +1,15 @@
 .ck-dialog__content {
     margin: 9px;
+    height: 578px;
+    overflow: auto;
 }
 
 .list-item {
     display: flex;
     align-items: center;
     position: relative;
-
+    border-bottom: 1px solid $input-border-color;
+    height: 70px;
 }
 .list-item__button {
     position: absolute;
