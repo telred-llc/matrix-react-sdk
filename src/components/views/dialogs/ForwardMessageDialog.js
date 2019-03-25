@@ -104,14 +104,14 @@ export default React.createClass({
         const roomAvatar = [];
 
         this.state.searchFilter.forEach(item => {
-            const button = item.sent ? <button disabled={true} style={{color: "black"}}>Sent</button> :
-                <button style={{color: "red"}} onClick={ this.onForwardClick.bind(this, item) }>Send</button>;
+            const button = item.sent ? <button disabled={true} className={'list-item__button list-item__button--disable'}>Sent</button> :
+                <button className={'list-item__button list-item__button--enable'} onClick={ this.onForwardClick.bind(this, item) }>Send</button>;
             roomAvatar.push(
-                <div key={item.roomId} style={{inline: true}}>
+                <div key={item.roomId} style={{inline: true}} className={'list-item'}>
                     <span className={avatarClasses}>
                         <RoomAvatar room={item} width={50} height={50} />
                     </span>
-                    <span><b> {item.name} </b></span>
+                    <span className={'list-item__text'}><b> {item.name} </b></span>
                     {button}
                 </div>
             );
@@ -130,7 +130,7 @@ export default React.createClass({
                                        placeholder={ _t('Filter room names') }
                                        onSearch={ this.onFilterChange } style={{border: '1px solid black' }} />
 
-                        <div>
+                        <div className={'ck-dialog__content'}>
                             {roomAvatar}
                         </div>
 
