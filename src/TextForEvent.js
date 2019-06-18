@@ -329,8 +329,41 @@ function textForCallAnswerEvent(event) {
 }
 
 function textForCallHangupEvent(event) {
-    const senderName = event.sender ? event.sender.name : _t('Someone');
+    // const senderName = event.sender ? event.sender.name : _t('Someone');
+    // const eventContent = event.getContent();
+    // let reason = "";
+    // if (!MatrixClientPeg.get().supportsVoip()) {
+    //     reason = _t('(not supported by this browser)');
+    // } else if (eventContent.reason) {
+    //     if (eventContent.reason === "ice_failed") {
+    //         reason = _t('(could not connect media)');
+    //     } else if (eventContent.reason === "invite_timeout") {
+    //         reason = _t('(no answer)');
+    //     } else if (eventContent.reason === "user hangup") {
+    //         // workaround for https://github.com/vector-im/riot-web/issues/5178
+    //         // it seems Android randomly sets a reason of "user hangup" which is
+    //         // interpreted as an error code :(
+    //         // https://github.com/vector-im/riot-android/issues/2623
+    //         reason = '';
+    //     } else {
+    //         reason = _t('(unknown failure: %(reason)s)', {reason: eventContent.reason});
+    //     }
+    // }
+    // return _t('%(senderName)s ended the call.', {senderName}) + ' ' + reason;
+
+    const senderId = event.sender ? event.sender.userId : _t ('Someone');
     const eventContent = event.getContent();
+    const memberIds = MatrixClientPeg.get().getRoom(event.sender.roomId).currentState.members;
+    const myUserId = MatrixClientPeg.get().getRoom(event.sender.roomId).myUserId;
+    let senderName = _t('Someone');
+    for(let key in memberIds){
+        if(key != senderId) {
+            senderName = memberIds[key].name
+        }
+    }
+    console.log('senderId', senderId);
+    console.log('members',memberIds);
+    console.log('nonSender', senderName);
     let reason = "";
     if (!MatrixClientPeg.get().supportsVoip()) {
         reason = _t('(not supported by this browser)');
