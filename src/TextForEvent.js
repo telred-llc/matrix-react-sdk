@@ -358,7 +358,7 @@ function textForCallHangupEvent(event) {
     let senderName = _t('Someone');
     for(let key in memberIds){
         if(key != senderId) {
-            senderName = memberIds[key].name
+            senderName = memberIds[key].name;
         }
     }
     console.log('senderId', senderId);

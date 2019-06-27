@@ -31,10 +31,15 @@ import AccessibleButton from '../elements/AccessibleButton';
 import ActiveRoomObserver from '../../../ActiveRoomObserver';
 import RoomViewStore from '../../../stores/RoomViewStore';
 import SettingsStore from "../../../settings/SettingsStore";
+import RoomListStore from "../../../stores/RoomListStore";
+import * as Rooms from "../../../Rooms";
+import  RoomState from 'matrix-js-sdk';
+const HIDE_CONFERENCE_CHANS = true;
+const STANDARD_TAGS_REGEX = /^(m\.(favourite|lowpriority|server_notice)|im\.vector\.fake\.(invite|recent|direct|archived))$/;
 
 module.exports = React.createClass({
     displayName: 'RoomTile',
-
+    refreshInterval: null,
     propTypes: {
         onClick: PropTypes.func,
 
@@ -56,6 +61,7 @@ module.exports = React.createClass({
 
     getInitialState: function() {
         return ({
+            room: this.props.room,
             hover: false,
             badgeHover: false,
             menuDisplayed: false,
@@ -116,6 +122,7 @@ module.exports = React.createClass({
     },
 
     onAccountData: function(accountDataEvent) {
+        console.log('accountDataEvent', accountDataEvent);
         if (accountDataEvent.getType() === 'm.push_rules') {
             this.setState({
                 notifState: RoomNotifs.getRoomNotifsState(this.props.room.roomId),
@@ -155,6 +162,27 @@ module.exports = React.createClass({
         MatrixClientPeg.get().on("Room.name", this.onRoomName);
         ActiveRoomObserver.addListener(this.props.room.roomId, this._onActiveRoomChange);
         this.dispatcherRef = dis.register(this.onAction);
+        let that = this;
+        let room = {};
+        if (this._isDirectMessageRoom(this.props.room.roomId)) {
+            this.refreshInterval = setInterval(function() {
+                let lists = RoomListStore.getRoomLists();
+                let rooms = lists['im.vector.fake.direct'];
+                if (rooms) {
+                    for (let i = 0; i < rooms.length; i++) {
+                        if (that.props.room.roomId === rooms[i].roomId) {
+                            room = Object.assign({}, rooms[i]);
+                            break;
+                        }
+                    }
+                }
+
+                that.setState({
+                    room : room,
+                });
+
+            },30000);
+        }
 
         if (this._shouldShowStatusMessage()) {
             const statusUser = this._getStatusMessageUser();
@@ -173,7 +201,9 @@ module.exports = React.createClass({
             MatrixClientPeg.get().removeListener("accountData", this.onAccountData);
             MatrixClientPeg.get().removeListener("Room.name", this.onRoomName);
         }
+        if (this.refreshInterval) clearInterval(this.refreshInterval);
         ActiveRoomObserver.removeListener(this.props.room.roomId, this._onActiveRoomChange);
+        if (this.refreshInterval) clearInterval(this.refreshInterval);
         dis.unregister(this.dispatcherRef);
 
         if (this._shouldShowStatusMessage()) {
@@ -382,14 +412,30 @@ module.exports = React.createClass({
         const RoomAvatar = sdk.getComponent('avatars.RoomAvatar');
 
         let dmIndicator;
+        let isOnline = false;
         if (this._isDirectMessageRoom(this.props.room.roomId)) {
-            dmIndicator = <img
-                src={require("../../../../res/img/icon_person.svg")}
-                className="mx_RoomTile_dm"
-                width="11"
-                height="13"
-                alt="dm"
-            />;
+            let members = this.state.room.currentState.members;
+            let user = this.state.room.myUserId;
+            for (let [key, value] of Object.entries(members)) {
+                if ( value.user && value.user.presence === 'online' && key != user && this.state.room.currentState._summaryJoinedMemberCount === 2) isOnline = true;
+            }
+            if (isOnline) {
+                dmIndicator = <img
+                    src={require("../../../../res/img/icon_person_online.svg")}
+                    className="mx_RoomTile_dm"
+                    width="11"
+                    height="13"
+                    alt="dm"
+                />;
+            } else {
+                dmIndicator = <img
+                    src={require("../../../../res/img/icon_person_offline.svg")}
+                    className="mx_RoomTile_dm"
+                    width="11"
+                    height="13"
+                    alt="dm"
+                />;
+            }
         }
 
         return <AccessibleButton tabIndex="0"
