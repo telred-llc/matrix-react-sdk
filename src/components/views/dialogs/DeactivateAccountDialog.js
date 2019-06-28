@@ -23,6 +23,7 @@ import MatrixClientPeg from '../../../MatrixClientPeg';
 import * as Lifecycle from '../../../Lifecycle';
 import Velocity from 'velocity-vector';
 import { _t } from '../../../languageHandler';
+import Modal from "../../../Modal";
 
 export default class DeactivateAccountDialog extends React.Component {
     constructor(props, context) {
@@ -55,7 +56,7 @@ export default class DeactivateAccountDialog extends React.Component {
         });
     }
 
-    async _onOk() {
+     async _onOk() {
         this.setState({busy: true});
 
         try {
@@ -81,13 +82,15 @@ export default class DeactivateAccountDialog extends React.Component {
             return;
         }
 
+        this.props.onFinished(false);
         Analytics.trackEvent('Account', 'Deactivate Account');
         Lifecycle.onLoggedOut();
-        this.props.onFinished(false);
     }
 
     _onCancel() {
         this.props.onFinished(false);
+        const UserSettingsDialog = sdk.getComponent("dialogs.UserSettingsDialog");
+        Modal.createTrackedDialog('User settings', '', UserSettingsDialog, {}, 'mx_SettingsDialog');
     }
 
     render() {

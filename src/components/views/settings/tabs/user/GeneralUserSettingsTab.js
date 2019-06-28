@@ -26,6 +26,7 @@ import SettingsStore from "../../../../../settings/SettingsStore";
 import LanguageDropdown from "../../../elements/LanguageDropdown";
 import AccessibleButton from "../../../elements/AccessibleButton";
 import DeactivateAccountDialog from "../../../dialogs/DeactivateAccountDialog";
+import PropTypes from "prop-types";
 const PlatformPeg = require("../../../../../PlatformPeg");
 const sdk = require('../../../../..');
 const Modal = require("../../../../../Modal");
@@ -34,13 +35,15 @@ const dis = require("../../../../../dispatcher");
 export default class GeneralUserSettingsTab extends React.Component {
     constructor() {
         super();
-
+        this._onDeactivateClicked = this._onDeactivateClicked.bind(this);
         this.state = {
             language: languageHandler.getCurrentLanguage(),
             theme: SettingsStore.getValueAt(SettingLevel.ACCOUNT, "theme"),
         };
     }
-
+    static propTypes = {
+        onFinished: PropTypes.func.isRequired,
+    };
     _onLanguageChange = (newLanguage) => {
         if (this.state.language === newLanguage) return;
 
@@ -87,7 +90,9 @@ export default class GeneralUserSettingsTab extends React.Component {
     };
 
     _onDeactivateClicked = () => {
+        this.props.onFinished(false);
         Modal.createTrackedDialog('Deactivate Account', '', DeactivateAccountDialog, {});
+
     };
 
     _renderProfileSection() {
