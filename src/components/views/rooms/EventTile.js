@@ -181,6 +181,7 @@ module.exports = withMatrixClient(React.createClass({
             verified: null,
             // Whether onRequestKeysClick has been called since mounting.
             previouslyRequestedKeys: false,
+            continuation: this.props.continuation,
         };
     },
 
@@ -538,7 +539,7 @@ module.exports = withMatrixClient(React.createClass({
             mx_EventTile_notSent: this.props.eventSendStatus === 'not_sent',
             mx_EventTile_highlight: this.props.tileShape === 'notif' ? false : this.shouldHighlight(),
             mx_EventTile_selected: this.props.isSelectedEvent,
-            mx_EventTile_continuation: this.props.tileShape ? '' : this.props.continuation,
+            // mx_EventTile_continuation: this.props.tileShape ? '' : this.props.continuation,
             mx_EventTile_last: this.props.last,
             mx_EventTile_contextual: this.props.contextual,
             menu: this.state.menu,
@@ -572,11 +573,13 @@ module.exports = withMatrixClient(React.createClass({
             // joins/parts/etc
             avatarSize = 14;
             needsSenderProfile = false;
-        } else if (this.props.continuation && this.props.tileShape !== "file_grid") {
-            // no avatar or sender profile for continuation messages
-            avatarSize = 0;
-            needsSenderProfile = false;
-        } else {
+        }
+        //else if (this.props.continuation && this.props.tileShape !== "file_grid") {
+        //     // no avatar or sender profile for continuation messages
+        //     avatarSize = 0;
+        //     needsSenderProfile = false;
+        // }
+        else {
             avatarSize = 30;
             needsSenderProfile = true;
         }
