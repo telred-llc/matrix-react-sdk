@@ -1733,9 +1733,9 @@ export default React.createClass({
                 notifCount++;
             } else if (rooms[i].getUnreadNotificationCount()) {
                 // if we were summing unread notifs:
-                // notifCount += rooms[i].getUnreadNotificationCount();
+                notifCount += rooms[i].getUnreadNotificationCount();
                 // instead, we just count the number of rooms with notifs.
-                notifCount++;
+                // notifCount++;
             }
         }
 
