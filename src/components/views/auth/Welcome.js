@@ -20,9 +20,8 @@ import SdkConfig from '../../../SdkConfig';
 
 export default class Welcome extends React.PureComponent {
     render() {
-        const AuthPage = sdk.getComponent("auth.AuthPage");
+        const AuthPage = sdk.getComponent('auth.AuthPage');
         const EmbeddedPage = sdk.getComponent('structures.EmbeddedPage');
-        const LanguageSelector = sdk.getComponent('auth.LanguageSelector');
 
         const pagesConfig = SdkConfig.get().embeddedPages;
         let pageUrl = null;
@@ -35,11 +34,8 @@ export default class Welcome extends React.PureComponent {
 
         return (
             <AuthPage>
-                <div className="mx_Welcome">
-                    <EmbeddedPage className="mx_WelcomePage"
-                        url={pageUrl}
-                    />
-                    <LanguageSelector />
+                <div className='mx_Welcome'>
+                    <EmbeddedPage className='mx_WelcomePage' url={pageUrl} />
                 </div>
             </AuthPage>
         );
