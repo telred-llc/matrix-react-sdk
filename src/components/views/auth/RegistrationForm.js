@@ -25,6 +25,7 @@ import { _t } from '../../../languageHandler';
 import { SAFE_LOCALPART_REGEX } from '../../../Registration';
 import withValidation from '../elements/Validation';
 import { ValidatedServerConfig } from '../../../utils/AutoDiscoveryUtils';
+import SdkConfig from '../../../SdkConfig';
 
 const FIELD_EMAIL = 'field_email';
 const FIELD_USERNAME = 'field_username';
