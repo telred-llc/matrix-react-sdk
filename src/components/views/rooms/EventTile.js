@@ -552,6 +552,11 @@ module.exports = withMatrixClient(React.createClass({
         const isRedacted = isMessageEvent(this.props.mxEvent) && this.props.isRedacted;
         const isEncryptionFailure = this.props.mxEvent.isDecryptionFailure();
 
+        const isRedundant = isRedundantEventMessage(this.props.mxEvent);
+         if (isRedundant || isEncryptionFailure) {
+            return (<div></div>);
+        }
+
         const isEditing = !!this.props.editState;
         const classes = classNames({
             mx_EventTile: true,
@@ -821,6 +826,11 @@ module.exports = withMatrixClient(React.createClass({
 const messageTypes = ['m.room.message', 'm.sticker'];
 function isMessageEvent(ev) {
     return (messageTypes.includes(ev.getType()));
+}
+
+const redundantType = ['m.room.join_rules', 'm.room.history_visibility', 'm.room.guest_access', 'm.room.encryption'];
+function isRedundantEventMessage(ev) {
+    return (redundantType.includes(ev.getType()));
 }
 
 module.exports.haveTileForEvent = function(e) {
