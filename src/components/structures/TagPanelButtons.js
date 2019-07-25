@@ -23,7 +23,6 @@ import { _t } from '../../languageHandler';
 const TagPanelButtons = React.createClass({
     displayName: 'TagPanelButtons',
 
-
     componentWillMount: function() {
         this._dispatcherRef = dis.register(this._onAction);
     },
@@ -36,23 +35,32 @@ const TagPanelButtons = React.createClass({
     },
 
     _onAction(payload) {
-        if (payload.action === "show_redesign_feedback_dialog") {
-            const RedesignFeedbackDialog =
-                sdk.getComponent("views.dialogs.RedesignFeedbackDialog");
-            Modal.createTrackedDialog('Report bugs & give feedback', '', RedesignFeedbackDialog);
+        if (payload.action === 'show_redesign_feedback_dialog') {
+            const RedesignFeedbackDialog = sdk.getComponent(
+                'views.dialogs.RedesignFeedbackDialog'
+            );
+            Modal.createTrackedDialog(
+                'Report bugs & give feedback',
+                '',
+                RedesignFeedbackDialog
+            );
         }
     },
 
     render() {
-        const GroupsButton = sdk.getComponent('elements.GroupsButton');
-        const ActionButton = sdk.getComponent("elements.ActionButton");
+        // const GroupsButton = sdk.getComponent('elements.GroupsButton');
+        const ActionButton = sdk.getComponent('elements.ActionButton');
 
-        return (<div className="mx_TagPanelButtons">
-            <GroupsButton />
-            <ActionButton
-                className="mx_TagPanelButtons_report" action="show_redesign_feedback_dialog"
-                label={_t("Report bugs & give feedback")} tooltip={true} />
-        </div>);
-    },
+        return (
+            <div className='mx_TagPanelButtons'>
+                <ActionButton
+                    className='mx_TagPanelButtons_report'
+                    action='show_redesign_feedback_dialog'
+                    label={_t('Report bugs & give feedback')}
+                    tooltip={true}
+                />
+            </div>
+        );
+    }
 });
 export default TagPanelButtons;
