@@ -16,16 +16,16 @@ limitations under the License.
 */
 
 'use strict';
-import SettingsStore from "../../../settings/SettingsStore";
-import Timer from "../../../utils/Timer";
+import SettingsStore from '../../../settings/SettingsStore';
+import Timer from '../../../utils/Timer';
 
-const React = require("react");
-const ReactDOM = require("react-dom");
+const React = require('react');
+const ReactDOM = require('react-dom');
 import PropTypes from 'prop-types';
 import { _t } from '../../../languageHandler';
-const MatrixClientPeg = require("../../../MatrixClientPeg");
+const MatrixClientPeg = require('../../../MatrixClientPeg');
 const CallHandler = require('../../../CallHandler');
-const dis = require("../../../dispatcher");
+const dis = require('../../../dispatcher');
 const sdk = require('../../../index');
 const rate_limited_func = require('../../../ratelimitedfunc');
 import * as Rooms from '../../../Rooms';
@@ -38,8 +38,11 @@ import GroupStore from '../../../stores/GroupStore';
 import RoomSubList from '../../structures/RoomSubList';
 import ResizeHandle from '../elements/ResizeHandle';
 
-import {Resizer} from '../../../resizer';
-import {Layout, Distributor} from '../../../resizer/distributors/roomsublist2';
+import { Resizer } from '../../../resizer';
+import {
+    Layout,
+    Distributor
+} from '../../../resizer/distributors/roomsublist2';
 const HIDE_CONFERENCE_CHANS = true;
 const STANDARD_TAGS_REGEX = /^(m\.(favourite|lowpriority|server_notice)|im\.vector\.fake\.(invite|recent|direct|archived))$/;
 const HOVER_MOVE_TIMEOUT = 1000;
@@ -60,7 +63,7 @@ function phraseForSection(section) {
         case 'm.lowpriority':
             return _t('Drop here to demote');
         default:
-            return _t('Drop here to tag %(section)s', {section: section});
+            return _t('Drop here to tag %(section)s', { section: section });
     }
 }
 
@@ -70,50 +73,63 @@ module.exports = React.createClass({
     propTypes: {
         ConferenceHandler: PropTypes.any,
         collapsed: PropTypes.bool.isRequired,
-        searchFilter: PropTypes.string,
+        searchFilter: PropTypes.string
     },
 
     getInitialState: function() {
-
         this._hoverClearTimer = null;
         this._subListRefs = {
             // key => RoomSubList ref
         };
 
-        const sizesJson = window.localStorage.getItem("mx_roomlist_sizes");
-        const collapsedJson = window.localStorage.getItem("mx_roomlist_collapsed");
+        const sizesJson = window.localStorage.getItem('mx_roomlist_sizes');
+        const collapsedJson = window.localStorage.getItem(
+            'mx_roomlist_collapsed'
+        );
         this.subListSizes = sizesJson ? JSON.parse(sizesJson) : {};
         this.collapsedState = collapsedJson ? JSON.parse(collapsedJson) : {};
         this._layoutSections = [];
 
         const unfilteredOptions = {
             allowWhitespace: false,
-            handleHeight: 1,
+            handleHeight: 1
         };
-        this._unfilteredlayout = new Layout((key, size) => {
-            const subList = this._subListRefs[key];
-            if (subList) {
-                subList.setHeight(size);
-            }
-            // update overflow indicators
-            this._checkSubListsOverflow();
-            // don't store height for collapsed sublists
-            if (!this.collapsedState[key]) {
-                this.subListSizes[key] = size;
-                window.localStorage.setItem("mx_roomlist_sizes",
-                    JSON.stringify(this.subListSizes));
-            }
-        }, this.subListSizes, this.collapsedState, unfilteredOptions);
+        this._unfilteredlayout = new Layout(
+            (key, size) => {
+                const subList = this._subListRefs[key];
+                if (subList) {
+                    subList.setHeight(size);
+                }
+                // update overflow indicators
+                this._checkSubListsOverflow();
+                // don't store height for collapsed sublists
+                if (!this.collapsedState[key]) {
+                    this.subListSizes[key] = size;
+                    window.localStorage.setItem(
+                        'mx_roomlist_sizes',
+                        JSON.stringify(this.subListSizes)
+                    );
+                }
+            },
+            this.subListSizes,
+            this.collapsedState,
+            unfilteredOptions
+        );
 
-        this._filteredLayout = new Layout((key, size) => {
-            const subList = this._subListRefs[key];
-            if (subList) {
-                subList.setHeight(size);
+        this._filteredLayout = new Layout(
+            (key, size) => {
+                const subList = this._subListRefs[key];
+                if (subList) {
+                    subList.setHeight(size);
+                }
+            },
+            null,
+            null,
+            {
+                allowWhitespace: false,
+                handleHeight: 0
             }
-        }, null, null, {
-            allowWhitespace: false,
-            handleHeight: 0,
-        });
+        );
 
         this._layout = this._unfilteredlayout;
 
@@ -125,7 +141,7 @@ module.exports = React.createClass({
             incomingCall: null,
             selectedTags: [],
             hover: false,
-            customTags: CustomRoomTagStore.getTags(),
+            customTags: CustomRoomTagStore.getTags()
         };
     },
 
@@ -134,14 +150,14 @@ module.exports = React.createClass({
 
         const cli = MatrixClientPeg.get();
 
-        cli.on("Room", this.onRoom);
-        cli.on("deleteRoom", this.onDeleteRoom);
-        cli.on("Room.receipt", this.onRoomReceipt);
-        cli.on("RoomMember.name", this.onRoomMemberName);
-        cli.on("Event.decrypted", this.onEventDecrypted);
-        cli.on("accountData", this.onAccountData);
-        cli.on("Group.myMembership", this._onGroupMyMembership);
-        cli.on("RoomState.events", this.onRoomStateEvents);
+        cli.on('Room', this.onRoom);
+        cli.on('deleteRoom', this.onDeleteRoom);
+        cli.on('Room.receipt', this.onRoomReceipt);
+        cli.on('RoomMember.name', this.onRoomMemberName);
+        cli.on('Event.decrypted', this.onEventDecrypted);
+        cli.on('accountData', this.onAccountData);
+        cli.on('Group.myMembership', this._onGroupMyMembership);
+        cli.on('RoomState.events', this.onRoomStateEvents);
 
         const dmRoomMap = DMRoomMap.shared();
         // A map between tags which are group IDs and the room IDs of rooms that should be kept
@@ -156,7 +172,7 @@ module.exports = React.createClass({
         // Listen to updates to group data. RoomList cares about members and rooms in order
         // to filter the room list when group tags are selected.
         this._groupStoreToken = GroupStore.registerListener(null, () => {
-            (TagOrderStore.getOrderedTags() || []).forEach((tag) => {
+            (TagOrderStore.getOrderedTags() || []).forEach(tag => {
                 if (tag[0] !== '+') {
                     return;
                 }
@@ -175,11 +191,10 @@ module.exports = React.createClass({
             this._delayedRefreshRoomList();
         });
 
-
-        if (SettingsStore.isFeatureEnabled("feature_custom_tags")) {
+        if (SettingsStore.isFeatureEnabled('feature_custom_tags')) {
             this._customTagStoreToken = CustomRoomTagStore.addListener(() => {
                 this.setState({
-                    customTags: CustomRoomTagStore.getTags(),
+                    customTags: CustomRoomTagStore.getTags()
                 });
             });
         }
@@ -197,23 +212,23 @@ module.exports = React.createClass({
     componentDidMount: function() {
         this.dispatcherRef = dis.register(this.onAction);
         const cfg = {
-            getLayout: () => this._layout,
+            getLayout: () => this._layout
         };
         this.resizer = new Resizer(this.resizeContainer, Distributor, cfg);
         this.resizer.setClassNames({
-            handle: "mx_ResizeHandle",
-            vertical: "mx_ResizeHandle_vertical",
-            reverse: "mx_ResizeHandle_reverse"
+            handle: 'mx_ResizeHandle',
+            vertical: 'mx_ResizeHandle_vertical',
+            reverse: 'mx_ResizeHandle_reverse'
         });
         this._layout.update(
             this._layoutSections,
-            this.resizeContainer && this.resizeContainer.offsetHeight,
+            this.resizeContainer && this.resizeContainer.offsetHeight
         );
         this._checkSubListsOverflow();
 
         this.resizer.attach();
         if (this.props.resizeNotifier) {
-            this.props.resizeNotifier.on("leftPanelResized", this.onResize);
+            this.props.resizeNotifier.on('leftPanelResized', this.onResize);
         }
         this.mounted = true;
     },
@@ -231,7 +246,7 @@ module.exports = React.createClass({
         this._layout.update(
             this._layoutSections,
             this.resizeContainer && this.resizeContainer.clientHeight,
-            forceLayoutUpdate,
+            forceLayoutUpdate
         );
         this._checkSubListsOverflow();
     },
@@ -246,13 +261,15 @@ module.exports = React.createClass({
                 if (call && call.call_state === 'ringing') {
                     this.setState({
                         incomingCall: call,
-                        incomingCallTag: this.getTagNameForRoomId(payload.room_id),
+                        incomingCallTag: this.getTagNameForRoomId(
+                            payload.room_id
+                        )
                     });
                     this._repositionIncomingCallBox(undefined, true);
                 } else {
                     this.setState({
                         incomingCall: null,
-                        incomingCallTag: null,
+                        incomingCallTag: null
                     });
                 }
                 break;
@@ -264,20 +281,43 @@ module.exports = React.createClass({
 
         dis.unregister(this.dispatcherRef);
         if (MatrixClientPeg.get()) {
-            MatrixClientPeg.get().removeListener("Room", this.onRoom);
-            MatrixClientPeg.get().removeListener("deleteRoom", this.onDeleteRoom);
-            MatrixClientPeg.get().removeListener("Room.receipt", this.onRoomReceipt);
-            MatrixClientPeg.get().removeListener("RoomMember.name", this.onRoomMemberName);
-            MatrixClientPeg.get().removeListener("Event.decrypted", this.onEventDecrypted);
-            MatrixClientPeg.get().removeListener("accountData", this.onAccountData);
-            MatrixClientPeg.get().removeListener("Group.myMembership", this._onGroupMyMembership);
-            MatrixClientPeg.get().removeListener("RoomState.events", this.onRoomStateEvents);
+            MatrixClientPeg.get().removeListener('Room', this.onRoom);
+            MatrixClientPeg.get().removeListener(
+                'deleteRoom',
+                this.onDeleteRoom
+            );
+            MatrixClientPeg.get().removeListener(
+                'Room.receipt',
+                this.onRoomReceipt
+            );
+            MatrixClientPeg.get().removeListener(
+                'RoomMember.name',
+                this.onRoomMemberName
+            );
+            MatrixClientPeg.get().removeListener(
+                'Event.decrypted',
+                this.onEventDecrypted
+            );
+            MatrixClientPeg.get().removeListener(
+                'accountData',
+                this.onAccountData
+            );
+            MatrixClientPeg.get().removeListener(
+                'Group.myMembership',
+                this._onGroupMyMembership
+            );
+            MatrixClientPeg.get().removeListener(
+                'RoomState.events',
+                this.onRoomStateEvents
+            );
         }
 
         if (this.props.resizeNotifier) {
-            this.props.resizeNotifier.removeListener("leftPanelResized", this.onResize);
+            this.props.resizeNotifier.removeListener(
+                'leftPanelResized',
+                this.onResize
+            );
         }
-
 
         if (this._tagStoreToken) {
             this._tagStoreToken.remove();
@@ -299,14 +339,16 @@ module.exports = React.createClass({
         this._delayedRefreshRoomList.cancelPendingCall();
     },
 
-
     onResize: function() {
-        if (this.mounted && this._layout && this.resizeContainer &&
+        if (
+            this.mounted &&
+            this._layout &&
+            this.resizeContainer &&
             Array.isArray(this._layoutSections)
         ) {
             this._layout.update(
                 this._layoutSections,
-                this.resizeContainer.offsetHeight,
+                this.resizeContainer.offsetHeight
             );
         }
     },
@@ -316,7 +358,10 @@ module.exports = React.createClass({
     },
 
     onRoomStateEvents: function(ev, state) {
-        if (ev.getType() === "m.room.create" || ev.getType() === "m.room.tombstone") {
+        if (
+            ev.getType() === 'm.room.create' ||
+            ev.getType() === 'm.room.tombstone'
+        ) {
             this.updateVisibleRooms();
         }
     },
@@ -331,19 +376,27 @@ module.exports = React.createClass({
             this.setState({ isLoadingLeftRooms: true });
             // we don't care about the response since it comes down via "Room"
             // events.
-            MatrixClientPeg.get().syncLeftRooms().catch(function(err) {
-                console.error("Failed to sync left rooms: %s", err);
-                console.error(err);
-            }).finally(function() {
-                self.setState({ isLoadingLeftRooms: false });
-            });
+            MatrixClientPeg.get()
+                .syncLeftRooms()
+                .catch(function(err) {
+                    console.error('Failed to sync left rooms: %s', err);
+                    console.error(err);
+                })
+                .finally(function() {
+                    self.setState({ isLoadingLeftRooms: false });
+                });
         }
     },
 
     onRoomReceipt: function(receiptEvent, room) {
         // because if we read a notification, it will affect notification count
         // only bother updating if there's a receipt from us
-        if (Receipt.findReadReceiptFromUserId(receiptEvent, MatrixClientPeg.get().credentials.userId)) {
+        if (
+            Receipt.findReadReceiptFromUserId(
+                receiptEvent,
+                MatrixClientPeg.get().credentials.userId
+            )
+        ) {
             this._delayedRefreshRoomList();
         }
     },
@@ -369,7 +422,7 @@ module.exports = React.createClass({
 
     onMouseMove: async function(ev) {
         if (!this._hoverClearTimer) {
-            this.setState({hover: true});
+            this.setState({ hover: true });
             this._hoverClearTimer = new Timer(HOVER_MOVE_TIMEOUT);
             this._hoverClearTimer.start();
             let finished = true;
@@ -380,7 +433,7 @@ module.exports = React.createClass({
             }
             this._hoverClearTimer = null;
             if (finished) {
-                this.setState({hover: false});
+                this.setState({ hover: false });
                 this._delayedRefreshRoomList();
             }
         } else {
@@ -393,7 +446,7 @@ module.exports = React.createClass({
             this._hoverClearTimer.abort();
             this._hoverClearTimer = null;
         }
-        this.setState({hover: false});
+        this.setState({ hover: false });
 
         // Refresh the room list just in case the user missed something.
         this._delayedRefreshRoomList();
@@ -410,12 +463,17 @@ module.exports = React.createClass({
         if (tag[0] !== '+') return;
 
         this._visibleRoomsForGroup[tag] = [];
-        GroupStore.getGroupRooms(tag).forEach((room) => this._visibleRoomsForGroup[tag].push(room.roomId));
-        GroupStore.getGroupMembers(tag).forEach((member) => {
-            if (member.userId === MatrixClientPeg.get().credentials.userId) return;
-            dmRoomMap.getDMRoomsForUserId(member.userId).forEach(
-                (roomId) => this._visibleRoomsForGroup[tag].push(roomId),
-            );
+        GroupStore.getGroupRooms(tag).forEach(room =>
+            this._visibleRoomsForGroup[tag].push(room.roomId)
+        );
+        GroupStore.getGroupMembers(tag).forEach(member => {
+            if (member.userId === MatrixClientPeg.get().credentials.userId)
+                return;
+            dmRoomMap
+                .getDMRoomsForUserId(member.userId)
+                .forEach(roomId =>
+                    this._visibleRoomsForGroup[tag].push(roomId)
+                );
         });
         // TODO: Check if room has been tagged to the group by the user
     },
@@ -424,9 +482,9 @@ module.exports = React.createClass({
     updateVisibleRooms: function() {
         const selectedTags = TagOrderStore.getSelectedTags();
         const visibleGroupRooms = [];
-        selectedTags.forEach((tag) => {
-            (this._visibleRoomsForGroup[tag] || []).forEach(
-                (roomId) => visibleGroupRooms.push(roomId),
+        selectedTags.forEach(tag => {
+            (this._visibleRoomsForGroup[tag] || []).forEach(roomId =>
+                visibleGroupRooms.push(roomId)
             );
         });
 
@@ -436,7 +494,7 @@ module.exports = React.createClass({
         // about (hence the Set and the null-guard on `room`).
         if (selectedTags.length > 0) {
             const roomSet = new Set();
-            visibleGroupRooms.forEach((roomId) => {
+            visibleGroupRooms.forEach(roomId => {
                 const room = MatrixClientPeg.get().getRoom(roomId);
                 if (room) {
                     roomSet.add(room);
@@ -465,18 +523,21 @@ module.exports = React.createClass({
         for (const l of Object.values(lists)) {
             totalRooms += l.length;
         }
-        this.setState({
-            lists,
-            totalRoomCount: totalRooms,
-            // Do this here so as to not render every time the selected tags
-            // themselves change.
-            selectedTags: TagOrderStore.getSelectedTags(),
-        }, () => {
-            // we don't need to restore any size here, do we?
-            // i guess we could have triggered a new group to appear
-            // that already an explicit size the last time it appeared ...
-            this._checkSubListsOverflow();
-        });
+        this.setState(
+            {
+                lists,
+                totalRoomCount: totalRooms,
+                // Do this here so as to not render every time the selected tags
+                // themselves change.
+                selectedTags: TagOrderStore.getSelectedTags()
+            },
+            () => {
+                // we don't need to restore any size here, do we?
+                // i guess we could have triggered a new group to appear
+                // that already an explicit size the last time it appeared ...
+                this._checkSubListsOverflow();
+            }
+        );
 
         // this._lastRefreshRoomListTs = Date.now();
     },
@@ -490,7 +551,14 @@ module.exports = React.createClass({
                     continue;
                 }
                 const myUserId = MatrixClientPeg.get().getUserId();
-                if (HIDE_CONFERENCE_CHANS && Rooms.isConfCallRoom(room, myUserId, this.props.ConferenceHandler)) {
+                if (
+                    HIDE_CONFERENCE_CHANS &&
+                    Rooms.isConfCallRoom(
+                        room,
+                        myUserId,
+                        this.props.ConferenceHandler
+                    )
+                ) {
                     continue;
                 }
 
@@ -510,25 +578,35 @@ module.exports = React.createClass({
             // $roomId: true,
         };
 
-        this._visibleRooms.forEach((r) => {
+        this._visibleRooms.forEach(r => {
             isRoomVisible[r.roomId] = true;
         });
 
-        Object.keys(lists).forEach((tagName) => {
-            const filteredRooms = lists[tagName].filter((taggedRoom) => {
+        Object.keys(lists).forEach(tagName => {
+            const filteredRooms = lists[tagName].filter(taggedRoom => {
                 // Somewhat impossible, but guard against it anyway
                 if (!taggedRoom) {
                     return;
                 }
                 const myUserId = MatrixClientPeg.get().getUserId();
-                if (HIDE_CONFERENCE_CHANS && Rooms.isConfCallRoom(taggedRoom, myUserId, this.props.ConferenceHandler)) {
+                if (
+                    HIDE_CONFERENCE_CHANS &&
+                    Rooms.isConfCallRoom(
+                        taggedRoom,
+                        myUserId,
+                        this.props.ConferenceHandler
+                    )
+                ) {
                     return;
                 }
 
                 return Boolean(isRoomVisible[taggedRoom.roomId]);
             });
 
-            if (filteredRooms.length > 0 || tagName.match(STANDARD_TAGS_REGEX)) {
+            if (
+                filteredRooms.length > 0 ||
+                tagName.match(STANDARD_TAGS_REGEX)
+            ) {
                 filteredLists[tagName] = filteredRooms;
             }
         });
@@ -555,49 +633,61 @@ module.exports = React.createClass({
 
     _hideTooltip: function(e) {
         // Hide tooltip when scrolling, as we'll no longer be over the one we were on
-        if (this.tooltip && this.tooltip.style.display !== "none") {
-            this.tooltip.style.display = "none";
+        if (this.tooltip && this.tooltip.style.display !== 'none') {
+            this.tooltip.style.display = 'none';
         }
     },
 
     _repositionIncomingCallBox: function(e, firstTime) {
-        const incomingCallBox = document.getElementById("incomingCallBox");
+        const incomingCallBox = document.getElementById('incomingCallBox');
         if (incomingCallBox && incomingCallBox.parentElement) {
             const scrollArea = this._getScrollNode();
             if (!scrollArea) return;
             // Use the offset of the top of the scroll area from the window
             // as this is used to calculate the CSS fixed top position for the stickies
-            const scrollAreaOffset = scrollArea.getBoundingClientRect().top + window.pageYOffset;
+            const scrollAreaOffset =
+                scrollArea.getBoundingClientRect().top + window.pageYOffset;
             // Use the offset of the top of the component from the window
             // as this is used to calculate the CSS fixed top position for the stickies
-            const scrollAreaHeight = ReactDOM.findDOMNode(this).getBoundingClientRect().height;
+            const scrollAreaHeight = ReactDOM.findDOMNode(
+                this
+            ).getBoundingClientRect().height;
 
-            let top = (incomingCallBox.parentElement.getBoundingClientRect().top + window.pageYOffset);
+            let top =
+                incomingCallBox.parentElement.getBoundingClientRect().top +
+                window.pageYOffset;
             // Make sure we don't go too far up, if the headers aren't sticky
-            top = (top < scrollAreaOffset) ? scrollAreaOffset : top;
+            top = top < scrollAreaOffset ? scrollAreaOffset : top;
             // make sure we don't go too far down, if the headers aren't sticky
             const bottomMargin = scrollAreaOffset + (scrollAreaHeight - 45);
-            top = (top > bottomMargin) ? bottomMargin : top;
+            top = top > bottomMargin ? bottomMargin : top;
 
-            incomingCallBox.style.top = top + "px";
-            incomingCallBox.style.left = scrollArea.offsetLeft + scrollArea.offsetWidth + 12 + "px";
+            incomingCallBox.style.top = top + 'px';
+            incomingCallBox.style.left =
+                scrollArea.offsetLeft + scrollArea.offsetWidth + 12 + 'px';
         }
     },
 
     _getHeaderItems: function(section) {
         const StartChatButton = sdk.getComponent('elements.StartChatButton');
-        const RoomDirectoryButton = sdk.getComponent('elements.RoomDirectoryButton');
+        const RoomDirectoryButton = sdk.getComponent(
+            'elements.RoomDirectoryButton'
+        );
         const CreateRoomButton = sdk.getComponent('elements.CreateRoomButton');
         switch (section) {
             case 'im.vector.fake.direct':
-                return <span className="mx_RoomList_headerButtons">
-                    <StartChatButton size="16" />
-                </span>;
+                return (
+                    <span className='mx_RoomList_headerButtons'>
+                        <StartChatButton size='16' />
+                    </span>
+                );
             case 'im.vector.fake.recent':
-                return <span className="mx_RoomList_headerButtons">
-                    <RoomDirectoryButton size="16" />
-                    <CreateRoomButton size="16" />
-                </span>;
+                return (
+                    <span className='mx_RoomList_headerButtons'>
+                        <RoomDirectoryButton size='16' />
+                        <CreateRoomButton size='16' />
+                    </span>
+                );
         }
     },
 
@@ -607,30 +697,51 @@ module.exports = React.createClass({
 
         const GroupInviteTile = sdk.getComponent('groups.GroupInviteTile');
         for (const group of MatrixClientPeg.get().getGroups()) {
-            const {groupId, name, myMembership} = group;
+            const { groupId, name, myMembership } = group;
             // filter to only groups in invite state and group_id starts with filter or group name includes it
             if (myMembership !== 'invite') continue;
-            if (lcFilter && !groupId.toLowerCase().startsWith(lcFilter) &&
-                !(name && name.toLowerCase().includes(lcFilter))) continue;
-            ret.push(<GroupInviteTile key={groupId} group={group} collapsed={this.props.collapsed} />);
+            if (
+                lcFilter &&
+                !groupId.toLowerCase().startsWith(lcFilter) &&
+                !(name && name.toLowerCase().includes(lcFilter))
+            )
+                continue;
+            ret.push(
+                <GroupInviteTile
+                    key={groupId}
+                    group={group}
+                    collapsed={this.props.collapsed}
+                />
+            );
         }
 
         return ret;
     },
 
     _applySearchFilter: function(list, filter) {
-        if (filter === "") return list;
+        if (filter === '') return list;
         const lcFilter = filter.toLowerCase();
         // case insensitive if room name includes filter,
         // or if starts with `#` and one of room's aliases starts with filter
-        return list.filter((room) => (room.name && room.name.toLowerCase().includes(lcFilter)) ||
-            (filter[0] === '#' && room.getAliases().some((alias) => alias.toLowerCase().startsWith(lcFilter))));
+        return list.filter(
+            room =>
+                (room.name && room.name.toLowerCase().includes(lcFilter)) ||
+                (filter[0] === '#' &&
+                    room
+                        .getAliases()
+                        .some(alias =>
+                            alias.toLowerCase().startsWith(lcFilter)
+                        ))
+        );
     },
 
     _handleCollapsedState: function(key, collapsed) {
         // persist collapsed state
         this.collapsedState[key] = collapsed;
-        window.localStorage.setItem("mx_roomlist_collapsed", JSON.stringify(this.collapsedState));
+        window.localStorage.setItem(
+            'mx_roomlist_collapsed',
+            JSON.stringify(this.collapsedState)
+        );
         // load the persisted size configuration of the expanded sub list
         if (collapsed) {
             this._layout.collapseSection(key);
@@ -660,48 +771,60 @@ module.exports = React.createClass({
         const defaultProps = {
             collapsed: this.props.collapsed,
             isFiltered: !!this.props.searchFilter,
-            incomingCall: this.state.incomingCall,
+            incomingCall: this.state.incomingCall
         };
 
-        subListsProps.forEach((p) => {
+        subListsProps.forEach(p => {
             p.list = this._applySearchFilter(p.list, this.props.searchFilter);
         });
 
-        subListsProps = subListsProps.filter((props => {
-            const len = props.list.length + (props.extraTiles ? props.extraTiles.length : 0);
+        subListsProps = subListsProps.filter(props => {
+            const len =
+                props.list.length +
+                (props.extraTiles ? props.extraTiles.length : 0);
             return len !== 0 || props.onAddRoom;
-        }));
+        });
 
         return subListsProps.reduce((components, props, i) => {
             props = Object.assign({}, defaultProps, props);
             const isLast = i === subListsProps.length - 1;
-            const len = props.list.length + (props.extraTiles ? props.extraTiles.length : 0);
-            const {key, label, onHeaderClick, ... otherProps} = props;
+            const len =
+                props.list.length +
+                (props.extraTiles ? props.extraTiles.length : 0);
+            const { key, label, onHeaderClick, ...otherProps } = props;
             const chosenKey = key || label;
-            const onSubListHeaderClick = (collapsed) => {
+            const onSubListHeaderClick = collapsed => {
                 this._handleCollapsedState(chosenKey, collapsed);
                 if (onHeaderClick) {
                     onHeaderClick(collapsed);
                 }
             };
-            let startAsHidden = props.startAsHidden || this.collapsedState[chosenKey];
+            let startAsHidden =
+                props.startAsHidden || this.collapsedState[chosenKey];
             this._layoutSections.push({
                 id: chosenKey,
-                count: len,
+                count: len
             });
-            let subList = (<RoomSubList
-                ref={this._subListRef.bind(this, chosenKey)}
-                startAsHidden={startAsHidden}
-                forceExpand={!!this.props.searchFilter}
-                onHeaderClick={onSubListHeaderClick}
-                key={chosenKey}
-                label={label}
-                {...otherProps} />);
+            let subList = (
+                <RoomSubList
+                    ref={this._subListRef.bind(this, chosenKey)}
+                    startAsHidden={startAsHidden}
+                    forceExpand={!!this.props.searchFilter}
+                    onHeaderClick={onSubListHeaderClick}
+                    key={chosenKey}
+                    label={label}
+                    {...otherProps}
+                />
+            );
 
             if (!isLast) {
                 return components.concat(
                     subList,
-                    <ResizeHandle key={chosenKey+"-resizer"} vertical={true} id={chosenKey} />
+                    <ResizeHandle
+                        key={chosenKey + '-resizer'}
+                        vertical={true}
+                        id={chosenKey}
+                    />
                 );
             } else {
                 return components.concat(subList);
@@ -714,7 +837,7 @@ module.exports = React.createClass({
     },
 
     render: function() {
-        const incomingCallIfTaggedAs = (tagName) => {
+        const incomingCallIfTaggedAs = tagName => {
             if (!this.state.incomingCall) return null;
             if (this.state.incomingCallTag !== tagName) return null;
             return this.state.incomingCall;
@@ -725,54 +848,62 @@ module.exports = React.createClass({
                 list: [],
                 extraTiles: this._makeGroupInviteTiles(this.props.searchFilter),
                 label: _t('Community Invites'),
-                order: "recent",
-                isInvite: true,
+                order: 'recent',
+                isInvite: true
             },
             {
                 list: this.state.lists['im.vector.fake.invite'],
                 label: _t('Invites'),
-                order: "recent",
+                order: 'recent',
                 incomingCall: incomingCallIfTaggedAs('im.vector.fake.invite'),
-                isInvite: true,
+                isInvite: true
             },
             {
                 list: this.state.lists['m.favourite'],
                 label: _t('Favourites'),
-                tagName: "m.favourite",
-                order: "manual",
-                incomingCall: incomingCallIfTaggedAs('m.favourite'),
+                tagName: 'm.favourite',
+                order: 'manual',
+                incomingCall: incomingCallIfTaggedAs('m.favourite')
             },
             {
                 list: this.state.lists['im.vector.fake.direct'],
-                label: _t('People'),
-                tagName: "im.vector.fake.direct",
+                label: _t('Direct messages'),
+                tagName: 'im.vector.fake.direct',
                 headerItems: this._getHeaderItems('im.vector.fake.direct'),
-                order: "recent",
+                order: 'recent',
                 incomingCall: incomingCallIfTaggedAs('im.vector.fake.direct'),
-                onAddRoom: () => {dis.dispatch({action: 'view_create_chat'})},
-                addRoomLabel: _t("Start chat"),
+                onAddRoom: () => {
+                    dis.dispatch({ action: 'view_create_chat' });
+                },
+                addRoomLabel: _t('Start chat')
             },
             {
                 list: this.state.lists['im.vector.fake.recent'],
                 label: _t('Rooms'),
                 headerItems: this._getHeaderItems('im.vector.fake.recent'),
-                order: "recent",
+                order: 'recent',
                 incomingCall: incomingCallIfTaggedAs('im.vector.fake.recent'),
-                onAddRoom: () => {dis.dispatch({action: 'view_room_directory'})},
-            },
+                onAddRoom: () => {
+                    dis.dispatch({ action: 'view_room_directory' });
+                }
+            }
         ];
         const tagSubLists = Object.keys(this.state.lists)
-            .filter((tagName) => {
-                return (!this.state.customTags || this.state.customTags[tagName]) &&
-                    !tagName.match(STANDARD_TAGS_REGEX);
-            }).map((tagName) => {
+            .filter(tagName => {
+                return (
+                    (!this.state.customTags ||
+                        this.state.customTags[tagName]) &&
+                    !tagName.match(STANDARD_TAGS_REGEX)
+                );
+            })
+            .map(tagName => {
                 return {
                     list: this.state.lists[tagName],
                     key: tagName,
                     label: labelForTagName(tagName),
                     tagName: tagName,
-                    order: "manual",
-                    incomingCall: incomingCallIfTaggedAs(tagName),
+                    order: 'manual',
+                    incomingCall: incomingCallIfTaggedAs(tagName)
                 };
             });
         subLists = subLists.concat(tagSubLists);
@@ -780,35 +911,39 @@ module.exports = React.createClass({
             {
                 list: this.state.lists['m.lowpriority'],
                 label: _t('Low priority'),
-                tagName: "m.lowpriority",
-                order: "recent",
-                incomingCall: incomingCallIfTaggedAs('m.lowpriority'),
+                tagName: 'm.lowpriority',
+                order: 'recent',
+                incomingCall: incomingCallIfTaggedAs('m.lowpriority')
             },
             {
                 list: this.state.lists['im.vector.fake.archived'],
                 label: _t('Historical'),
-                order: "recent",
+                order: 'recent',
                 incomingCall: incomingCallIfTaggedAs('im.vector.fake.archived'),
                 startAsHidden: true,
                 showSpinner: this.state.isLoadingLeftRooms,
-                onHeaderClick: this.onArchivedHeaderClick,
+                onHeaderClick: this.onArchivedHeaderClick
             },
             {
                 list: this.state.lists['m.server_notice'],
                 label: _t('System Alerts'),
-                tagName: "m.lowpriority",
-                order: "recent",
-                incomingCall: incomingCallIfTaggedAs('m.server_notice'),
-            },
+                tagName: 'm.lowpriority',
+                order: 'recent',
+                incomingCall: incomingCallIfTaggedAs('m.server_notice')
+            }
         ]);
 
         const subListComponents = this._mapSubListProps(subLists);
 
         return (
-            <div ref={this._collectResizeContainer} className="mx_RoomList"
-                 onMouseMove={this.onMouseMove} onMouseLeave={this.onMouseLeave}>
-                { subListComponents }
+            <div
+                ref={this._collectResizeContainer}
+                className='mx_RoomList'
+                onMouseMove={this.onMouseMove}
+                onMouseLeave={this.onMouseLeave}
+            >
+                {subListComponents}
             </div>
         );
-    },
+    }
 });
