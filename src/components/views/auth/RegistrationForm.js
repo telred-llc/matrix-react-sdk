@@ -432,7 +432,7 @@ module.exports = React.createClass({
                 id='mx_RegistrationForm_password'
                 ref={field => (this[FIELD_PASSWORD] = field)}
                 type='password'
-                label={_t('Password')}
+                label={_t('New Password')}
                 defaultValue={this.props.defaultPassword}
                 value={this.state.password}
                 onChange={this.onPasswordChange}
