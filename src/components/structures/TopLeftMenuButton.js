@@ -18,20 +18,20 @@ limitations under the License.
 import React from 'react';
 import PropTypes from 'prop-types';
 import * as ContextualMenu from './ContextualMenu';
-import {TopLeftMenu} from '../views/context_menus/TopLeftMenu';
+import { TopLeftMenu } from '../views/context_menus/TopLeftMenu';
 import AccessibleButton from '../views/elements/AccessibleButton';
 import BaseAvatar from '../views/avatars/BaseAvatar';
 import MatrixClientPeg from '../../MatrixClientPeg';
 import Avatar from '../../Avatar';
 import { _t } from '../../languageHandler';
-import dis from "../../dispatcher";
-import {focusCapturedRef} from "../../utils/Accessibility";
+import dis from '../../dispatcher';
+import { focusCapturedRef } from '../../utils/Accessibility';
 
 const AVATAR_SIZE = 28;
 
 export default class TopLeftMenuButton extends React.Component {
     static propTypes = {
-        collapsed: PropTypes.bool.isRequired,
+        collapsed: PropTypes.bool.isRequired
     };
 
     static displayName = 'TopLeftMenuButton';
@@ -41,7 +41,7 @@ export default class TopLeftMenuButton extends React.Component {
         this.state = {
             menuDisplayed: false,
             menuFunctions: null, // should be { close: fn }
-            profileInfo: null,
+            profileInfo: null
         };
 
         this.onToggleMenu = this.onToggleMenu.bind(this);
@@ -52,13 +52,16 @@ export default class TopLeftMenuButton extends React.Component {
         const userId = cli.getUserId();
         const profileInfo = await cli.getProfileInfo(userId);
         const avatarUrl = Avatar.avatarUrlForUser(
-            {avatarUrl: profileInfo.avatar_url},
-            AVATAR_SIZE, AVATAR_SIZE, "crop");
+            { avatarUrl: profileInfo.avatar_url },
+            AVATAR_SIZE,
+            AVATAR_SIZE,
+            'crop'
+        );
 
         return {
             userId,
             name: profileInfo.displayname,
-            avatarUrl,
+            avatarUrl
         };
     }
 
@@ -67,9 +70,9 @@ export default class TopLeftMenuButton extends React.Component {
 
         try {
             const profileInfo = await this._getProfileInfo();
-            this.setState({profileInfo});
+            this.setState({ profileInfo });
         } catch (ex) {
-            console.log("could not fetch profile");
+            console.log('could not fetch profile');
             console.error(ex);
         }
     }
@@ -78,16 +81,23 @@ export default class TopLeftMenuButton extends React.Component {
         dis.unregister(this._dispatcherRef);
     }
 
-    onAction = (payload) => {
+    onAction = payload => {
         // For accessibility
-        if (payload.action === "toggle_top_left_menu") {
+        if (payload.action === 'toggle_top_left_menu') {
             if (this._buttonRef) this._buttonRef.click();
+        } else if (payload.action === 'profile_name_changed') {
+            this._getProfileInfo()
+                .then(profileInfo => {
+                    debugger;
+                    this.setState({ profileInfo });
+                })
+                .catch(err => console.err(err));
         }
     };
 
     _getDisplayName() {
         if (MatrixClientPeg.get().isGuest()) {
-            return _t("Guest");
+            return _t('Guest');
         } else if (this.state.profileInfo) {
             return this.state.profileInfo.name;
         } else {
@@ -99,29 +109,32 @@ export default class TopLeftMenuButton extends React.Component {
         const name = this._getDisplayName();
         let nameElement;
         if (!this.props.collapsed) {
-            nameElement = <div className="mx_TopLeftMenuButton_name">
-                { name }
-            </div>;
+            nameElement = (
+                <div className='mx_TopLeftMenuButton_name'>{name}</div>
+            );
         }
 
         return (
             <AccessibleButton
-                className="mx_TopLeftMenuButton"
-                role="button"
+                className='mx_TopLeftMenuButton'
+                role='button'
                 onClick={this.onToggleMenu}
-                inputRef={(r) => this._buttonRef = r}
-                aria-label={_t("Your profile")}
+                inputRef={r => (this._buttonRef = r)}
+                aria-label={_t('Your profile')}
             >
                 <BaseAvatar
                     idName={MatrixClientPeg.get().getUserId()}
                     name={name}
-                    url={this.state.profileInfo && this.state.profileInfo.avatarUrl}
+                    url={
+                        this.state.profileInfo &&
+                        this.state.profileInfo.avatarUrl
+                    }
                     width={AVATAR_SIZE}
                     height={AVATAR_SIZE}
-                    resizeMethod="crop"
+                    resizeMethod='crop'
                 />
-                { nameElement }
-                <span className="mx_TopLeftMenuButton_chevron" />
+                {nameElement}
+                <span className='mx_TopLeftMenuButton_chevron' />
             </AccessibleButton>
         );
     }
@@ -140,7 +153,7 @@ export default class TopLeftMenuButton extends React.Component {
         const y = elementRect.top + elementRect.height;
 
         const menuFunctions = ContextualMenu.createMenu(TopLeftMenu, {
-            chevronFace: "none",
+            chevronFace: 'none',
             left: x,
             top: y,
             userId: MatrixClientPeg.get().getUserId(),
@@ -148,7 +161,7 @@ export default class TopLeftMenuButton extends React.Component {
             containerRef: focusCapturedRef, // Focus the TopLeftMenu on first render
             onFinished: () => {
                 this.setState({ menuDisplayed: false, menuFunctions: null });
-            },
+            }
         });
         this.setState({ menuDisplayed: true, menuFunctions });
     }
