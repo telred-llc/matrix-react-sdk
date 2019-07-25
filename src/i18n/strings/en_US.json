@@ -256,6 +256,7 @@
     "Password:": "Password:",
     "Passwords can't be empty": "Passwords can't be empty",
     "People": "People",
+    "Direct messages": "Direct messages",
     "Permissions": "Permissions",
     "Phone": "Phone",
     "%(senderName)s placed a %(callType)s call.": "%(senderName)s placed a %(callType)s call.",
