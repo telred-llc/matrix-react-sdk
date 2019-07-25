@@ -20,16 +20,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import sdk from '../../../index';
 import Email from '../../../email';
-import { looksValid as phoneNumberLooksValid } from '../../../phonenumber';
 import Modal from '../../../Modal';
 import { _t } from '../../../languageHandler';
-import SdkConfig from '../../../SdkConfig';
 import { SAFE_LOCALPART_REGEX } from '../../../Registration';
 import withValidation from '../elements/Validation';
-import {ValidatedServerConfig} from "../../../utils/AutoDiscoveryUtils";
+import { ValidatedServerConfig } from '../../../utils/AutoDiscoveryUtils';
 
 const FIELD_EMAIL = 'field_email';
-const FIELD_PHONE_NUMBER = 'field_phone_number';
 const FIELD_USERNAME = 'field_username';
 const FIELD_PASSWORD = 'field_password';
 const FIELD_PASSWORD_CONFIRM = 'field_password_confirm';
@@ -45,21 +42,19 @@ module.exports = React.createClass({
     propTypes: {
         // Values pre-filled in the input boxes when the component loads
         defaultEmail: PropTypes.string,
-        defaultPhoneCountry: PropTypes.string,
-        defaultPhoneNumber: PropTypes.string,
         defaultUsername: PropTypes.string,
         defaultPassword: PropTypes.string,
         onRegisterClick: PropTypes.func.isRequired, // onRegisterClick(Object) => ?Promise
         onEditServerDetailsClick: PropTypes.func,
         flows: PropTypes.arrayOf(PropTypes.object).isRequired,
         serverConfig: PropTypes.instanceOf(ValidatedServerConfig).isRequired,
-        canSubmit: PropTypes.bool,
+        canSubmit: PropTypes.bool
     },
 
     getDefaultProps: function() {
         return {
             onValidationChange: console.error,
-            canSubmit: true,
+            canSubmit: true
         };
     },
 
@@ -67,15 +62,12 @@ module.exports = React.createClass({
         return {
             // Field error codes by field ID
             fieldValid: {},
-            // The ISO2 country code selected in the phone number entry
-            phoneCountry: this.props.defaultPhoneCountry,
-            username: "",
-            email: "",
-            phoneNumber: "",
-            password: "",
-            passwordConfirm: "",
+            username: '',
+            email: '',
+            password: '',
+            passwordConfirm: '',
             passwordComplexity: null,
-            passwordSafe: false,
+            passwordSafe: false
         };
     },
 
@@ -91,21 +83,29 @@ module.exports = React.createClass({
 
         const self = this;
         if (this.state.email == '') {
-            const QuestionDialog = sdk.getComponent("dialogs.QuestionDialog");
-            Modal.createTrackedDialog('If you don\'t specify an email address...', '', QuestionDialog, {
-                title: _t("Warning!"),
-                description:
-                    <div>
-                        { _t("If you don't specify an email address, you won't be able to reset your password. " +
-                            "Are you sure?") }
-                    </div>,
-                button: _t("Continue"),
-                onFinished: function(confirmed) {
-                    if (confirmed) {
-                        self._doSubmit(ev);
+            const QuestionDialog = sdk.getComponent('dialogs.QuestionDialog');
+            Modal.createTrackedDialog(
+                "If you don't specify an email address...",
+                '',
+                QuestionDialog,
+                {
+                    title: _t('Warning!'),
+                    description: (
+                        <div>
+                            {_t(
+                                "If you don't specify an email address, you won't be able to reset your password. " +
+                                    'Are you sure?'
+                            )}
+                        </div>
+                    ),
+                    button: _t('Continue'),
+                    onFinished: function(confirmed) {
+                        if (confirmed) {
+                            self._doSubmit(ev);
+                        }
                     }
-                },
-            });
+                }
+            );
         } else {
             self._doSubmit(ev);
         }
@@ -116,9 +116,7 @@ module.exports = React.createClass({
         const promise = this.props.onRegisterClick({
             username: this.state.username.trim(),
             password: this.state.password.trim(),
-            email: email,
-            phoneCountry: this.state.phoneCountry,
-            phoneNumber: this.state.phoneNumber,
+            email: email
         });
 
         if (promise) {
@@ -141,8 +139,7 @@ module.exports = React.createClass({
             FIELD_USERNAME,
             FIELD_PASSWORD,
             FIELD_PASSWORD_CONFIRM,
-            FIELD_EMAIL,
-            FIELD_PHONE_NUMBER,
+            FIELD_EMAIL
         ];
 
         // Run all fields with stricter validation that no longer allows empty
@@ -206,13 +203,13 @@ module.exports = React.createClass({
         const { fieldValid } = this.state;
         fieldValid[fieldID] = valid;
         this.setState({
-            fieldValid,
+            fieldValid
         });
     },
 
     onEmailChange(ev) {
         this.setState({
-            email: ev.target.value,
+            email: ev.target.value
         });
     },
 
@@ -223,26 +220,31 @@ module.exports = React.createClass({
     },
 
     validateEmailRules: withValidation({
-        description: () => _t("Use an email address to recover your account"),
+        description: () => _t('Use an email address to recover your account'),
         rules: [
             {
-                key: "required",
+                key: 'required',
                 test: function({ value, allowEmpty }) {
-                    return allowEmpty || !this._authStepIsRequired('m.login.email.identity') || !!value;
+                    return (
+                        allowEmpty ||
+                        !this._authStepIsRequired('m.login.email.identity') ||
+                        !!value
+                    );
                 },
-                invalid: () => _t("Enter email address (required on this homeserver)"),
+                invalid: () =>
+                    _t('Enter email address (required on this homeserver)')
             },
             {
-                key: "email",
+                key: 'email',
                 test: ({ value }) => !value || Email.looksValid(value),
-                invalid: () => _t("Doesn't look like a valid email address"),
-            },
-        ],
+                invalid: () => _t("Doesn't look like a valid email address")
+            }
+        ]
     }),
 
     onPasswordChange(ev) {
         this.setState({
-            password: ev.target.value,
+            password: ev.target.value
         });
     },
 
@@ -256,31 +258,37 @@ module.exports = React.createClass({
         description: function() {
             const complexity = this.state.passwordComplexity;
             const score = complexity ? complexity.score : 0;
-            return <progress
-                className="mx_AuthBody_passwordScore"
-                max={PASSWORD_MIN_SCORE}
-                value={score}
-            />;
+            return (
+                <progress
+                    className='mx_AuthBody_passwordScore'
+                    max={PASSWORD_MIN_SCORE}
+                    value={score}
+                />
+            );
         },
         rules: [
             {
-                key: "required",
+                key: 'required',
                 test: ({ value, allowEmpty }) => allowEmpty || !!value,
-                invalid: () => _t("Enter password"),
+                invalid: () => _t('Enter password')
             },
             {
-                key: "complexity",
+                key: 'complexity',
                 test: async function({ value }) {
                     if (!value) {
                         return false;
                     }
-                    const { scorePassword } = await import('../../../utils/PasswordScorer');
+                    const { scorePassword } = await import(
+                        '../../../utils/PasswordScorer'
+                    );
                     const complexity = scorePassword(value);
                     const safe = complexity.score >= PASSWORD_MIN_SCORE;
-                    const allowUnsafe = SdkConfig.get()["dangerously_allow_unsafe_and_insecure_passwords"];
+                    const allowUnsafe = SdkConfig.get()[
+                        'dangerously_allow_unsafe_and_insecure_passwords'
+                    ];
                     this.setState({
                         passwordComplexity: complexity,
-                        passwordSafe: safe,
+                        passwordSafe: safe
                     });
                     return allowUnsafe || safe;
                 },
@@ -289,9 +297,9 @@ module.exports = React.createClass({
                     // configuration flag. We'll print some helper text to signal
                     // to the user that their password is allowed, but unsafe.
                     if (!this.state.passwordSafe) {
-                        return _t("Password is allowed, but unsafe");
+                        return _t('Password is allowed, but unsafe');
                     }
-                    return _t("Nice, strong password!");
+                    return _t('Nice, strong password!');
                 },
                 invalid: function() {
                     const complexity = this.state.passwordComplexity;
@@ -299,15 +307,19 @@ module.exports = React.createClass({
                         return null;
                     }
                     const { feedback } = complexity;
-                    return feedback.warning || feedback.suggestions[0] || _t("Keep going...");
-                },
-            },
-        ],
+                    return (
+                        feedback.warning ||
+                        feedback.suggestions[0] ||
+                        _t('Keep going...')
+                    );
+                }
+            }
+        ]
     }),
 
     onPasswordConfirmChange(ev) {
         this.setState({
-            passwordConfirm: ev.target.value,
+            passwordConfirm: ev.target.value
         });
     },
 
@@ -320,60 +332,23 @@ module.exports = React.createClass({
     validatePasswordConfirmRules: withValidation({
         rules: [
             {
-                key: "required",
+                key: 'required',
                 test: ({ value, allowEmpty }) => allowEmpty || !!value,
-                invalid: () => _t("Confirm password"),
+                invalid: () => _t('Confirm password')
             },
             {
-                key: "match",
+                key: 'match',
                 test: function({ value }) {
                     return !value || value === this.state.password;
                 },
-                invalid: () => _t("Passwords don't match"),
-            },
-         ],
-    }),
-
-    onPhoneCountryChange(newVal) {
-        this.setState({
-            phoneCountry: newVal.iso2,
-            phonePrefix: newVal.prefix,
-        });
-    },
-
-    onPhoneNumberChange(ev) {
-        this.setState({
-            phoneNumber: ev.target.value,
-        });
-    },
-
-    async onPhoneNumberValidate(fieldState) {
-        const result = await this.validatePhoneNumberRules(fieldState);
-        this.markFieldValid(FIELD_PHONE_NUMBER, result.valid);
-        return result;
-    },
-
-    validatePhoneNumberRules: withValidation({
-        description: () => _t("Other users can invite you to rooms using your contact details"),
-        rules: [
-            {
-                key: "required",
-                test: function({ value, allowEmpty }) {
-                    return allowEmpty || !this._authStepIsRequired('m.login.msisdn') || !!value;
-                },
-                invalid: () => _t("Enter phone number (required on this homeserver)"),
-            },
-            {
-                key: "email",
-                test: ({ value }) => !value || phoneNumberLooksValid(value),
-                invalid: () => _t("Doesn't look like a valid phone number"),
-            },
-        ],
+                invalid: () => _t("Passwords don't match")
+            }
+        ]
     }),
 
     onUsernameChange(ev) {
         this.setState({
-            username: ev.target.value,
+            username: ev.target.value
         });
     },
 
@@ -384,19 +359,20 @@ module.exports = React.createClass({
     },
 
     validateUsernameRules: withValidation({
-        description: () => _t("Use lowercase letters, numbers, dashes and underscores only"),
+        description: () =>
+            _t('Use lowercase letters, numbers, dashes and underscores only'),
         rules: [
             {
-                key: "required",
+                key: 'required',
                 test: ({ value, allowEmpty }) => allowEmpty || !!value,
-                invalid: () => _t("Enter username"),
+                invalid: () => _t('Enter username')
             },
             {
-                key: "safeLocalpart",
+                key: 'safeLocalpart',
                 test: ({ value }) => !value || SAFE_LOCALPART_REGEX.test(value),
-                invalid: () => _t("Some characters not allowed"),
-            },
-        ],
+                invalid: () => _t('Some characters not allowed')
+            }
+        ]
     }),
 
     /**
@@ -406,7 +382,7 @@ module.exports = React.createClass({
      * @returns {boolean} Whether it is required
      */
     _authStepIsRequired(step) {
-        return this.props.flows.every((flow) => {
+        return this.props.flows.every(flow => {
             return flow.stages.includes(step);
         });
     },
@@ -418,7 +394,7 @@ module.exports = React.createClass({
      * @returns {boolean} Whether it is used
      */
     _authStepIsUsed(step) {
-        return this.props.flows.some((flow) => {
+        return this.props.flows.some(flow => {
             return flow.stages.includes(step);
         });
     },
@@ -428,123 +404,124 @@ module.exports = React.createClass({
             return null;
         }
         const Field = sdk.getComponent('elements.Field');
-        const emailPlaceholder = this._authStepIsRequired('m.login.email.identity') ?
-            _t("Email") :
-            _t("Email (optional)");
-        return <Field
-            id="mx_RegistrationForm_email"
-            ref={field => this[FIELD_EMAIL] = field}
-            type="text"
-            label={emailPlaceholder}
-            defaultValue={this.props.defaultEmail}
-            value={this.state.email}
-            onChange={this.onEmailChange}
-            onValidate={this.onEmailValidate}
-        />;
+        const emailPlaceholder = this._authStepIsRequired(
+            'm.login.email.identity'
+        )
+            ? _t('Email')
+            : _t('Email (optional)');
+        return (
+            <Field
+                id='mx_RegistrationForm_email'
+                ref={field => (this[FIELD_EMAIL] = field)}
+                type='text'
+                label={emailPlaceholder}
+                defaultValue={this.props.defaultEmail}
+                value={this.state.email}
+                onChange={this.onEmailChange}
+                onValidate={this.onEmailValidate}
+            />
+        );
     },
 
     renderPassword() {
         const Field = sdk.getComponent('elements.Field');
-        return <Field
-            id="mx_RegistrationForm_password"
-            ref={field => this[FIELD_PASSWORD] = field}
-            type="password"
-            label={_t("Password")}
-            defaultValue={this.props.defaultPassword}
-            value={this.state.password}
-            onChange={this.onPasswordChange}
-            onValidate={this.onPasswordValidate}
-        />;
+        return (
+            <Field
+                id='mx_RegistrationForm_password'
+                ref={field => (this[FIELD_PASSWORD] = field)}
+                type='password'
+                label={_t('Password')}
+                defaultValue={this.props.defaultPassword}
+                value={this.state.password}
+                onChange={this.onPasswordChange}
+                onValidate={this.onPasswordValidate}
+            />
+        );
     },
 
     renderPasswordConfirm() {
         const Field = sdk.getComponent('elements.Field');
-        return <Field
-            id="mx_RegistrationForm_passwordConfirm"
-            ref={field => this[FIELD_PASSWORD_CONFIRM] = field}
-            type="password"
-            label={_t("Confirm")}
-            defaultValue={this.props.defaultPassword}
-            value={this.state.passwordConfirm}
-            onChange={this.onPasswordConfirmChange}
-            onValidate={this.onPasswordConfirmValidate}
-        />;
-    },
-
-    renderPhoneNumber() {
-        const threePidLogin = !SdkConfig.get().disable_3pid_login;
-        if (!threePidLogin || !this._authStepIsUsed('m.login.msisdn')) {
-            return null;
-        }
-        const CountryDropdown = sdk.getComponent('views.auth.CountryDropdown');
-        const Field = sdk.getComponent('elements.Field');
-        const phoneLabel = this._authStepIsRequired('m.login.msisdn') ?
-            _t("Phone") :
-            _t("Phone (optional)");
-        const phoneCountry = <CountryDropdown
-            value={this.state.phoneCountry}
-            isSmall={true}
-            showPrefix={true}
-            onOptionChange={this.onPhoneCountryChange}
-        />;
-        return <Field
-            id="mx_RegistrationForm_phoneNumber"
-            ref={field => this[FIELD_PHONE_NUMBER] = field}
-            type="text"
-            label={phoneLabel}
-            defaultValue={this.props.defaultPhoneNumber}
-            value={this.state.phoneNumber}
-            prefix={phoneCountry}
-            onChange={this.onPhoneNumberChange}
-            onValidate={this.onPhoneNumberValidate}
-        />;
+        return (
+            <Field
+                id='mx_RegistrationForm_passwordConfirm'
+                ref={field => (this[FIELD_PASSWORD_CONFIRM] = field)}
+                type='password'
+                label={_t('Confirm')}
+                defaultValue={this.props.defaultPassword}
+                value={this.state.passwordConfirm}
+                onChange={this.onPasswordConfirmChange}
+                onValidate={this.onPasswordConfirmValidate}
+            />
+        );
     },
 
     renderUsername() {
         const Field = sdk.getComponent('elements.Field');
-        return <Field
-            id="mx_RegistrationForm_username"
-            ref={field => this[FIELD_USERNAME] = field}
-            type="text"
-            autoFocus={true}
-            label={_t("Username")}
-            defaultValue={this.props.defaultUsername}
-            value={this.state.username}
-            onChange={this.onUsernameChange}
-            onValidate={this.onUsernameValidate}
-        />;
+        return (
+            <Field
+                id='mx_RegistrationForm_username'
+                ref={field => (this[FIELD_USERNAME] = field)}
+                type='text'
+                autoFocus={true}
+                label={_t('Username')}
+                defaultValue={this.props.defaultUsername}
+                value={this.state.username}
+                onChange={this.onUsernameChange}
+                onValidate={this.onUsernameValidate}
+            />
+        );
     },
 
     render: function() {
-        let yourMatrixAccountText = _t('Create your Matrix account on %(serverName)s', {
-            serverName: this.props.serverConfig.hsName,
-        });
+        let yourMatrixAccountText = _t(
+            'Create your Matrix account on %(serverName)s',
+            {
+                serverName: this.props.serverConfig.hsName
+            }
+        );
         if (this.props.serverConfig.hsNameIsDifferent) {
-            const TextWithTooltip = sdk.getComponent("elements.TextWithTooltip");
+            const TextWithTooltip = sdk.getComponent(
+                'elements.TextWithTooltip'
+            );
 
-            yourMatrixAccountText = _t('Create your Matrix account on <underlinedServerName />', {}, {
-                'underlinedServerName': () => {
-                    return <TextWithTooltip
-                        class="mx_Login_underlinedServerName"
-                        tooltip={this.props.serverConfig.hsUrl}
-                    >
-                        {this.props.serverConfig.hsName}
-                    </TextWithTooltip>;
-                },
-            });
+            yourMatrixAccountText = _t(
+                'Create your Matrix account on <underlinedServerName />',
+                {},
+                {
+                    underlinedServerName: () => {
+                        return (
+                            <TextWithTooltip
+                                class='mx_Login_underlinedServerName'
+                                tooltip={this.props.serverConfig.hsUrl}
+                            >
+                                {this.props.serverConfig.hsName}
+                            </TextWithTooltip>
+                        );
+                    }
+                }
+            );
         }
 
         let editLink = null;
         if (this.props.onEditServerDetailsClick) {
-            editLink = <a className="mx_AuthBody_editServerDetails"
-                href="#" onClick={this.props.onEditServerDetailsClick}
-            >
-                {_t('Change')}
-            </a>;
+            editLink = (
+                <a
+                    className='mx_AuthBody_editServerDetails'
+                    href='#'
+                    onClick={this.props.onEditServerDetailsClick}
+                >
+                    {_t('Change')}
+                </a>
+            );
         }
 
         const registerButton = (
-            <input className="mx_Login_submit" type="submit" value={_t("Register")} disabled={!this.props.canSubmit} />
+            <input
+                className='mx_Login_submit'
+                type='submit'
+                value={_t('Register')}
+                disabled={!this.props.canSubmit}
+            />
         );
 
         return (
@@ -554,22 +531,23 @@ module.exports = React.createClass({
                     {editLink}
                 </h3>
                 <form onSubmit={this.onSubmit}>
-                    <div className="mx_AuthBody_fieldRow">
+                    <div className='mx_AuthBody_fieldRow'>
                         {this.renderUsername()}
                     </div>
-                    <div className="mx_AuthBody_fieldRow">
+                    <div className='mx_AuthBody_fieldRow'>
                         {this.renderPassword()}
                         {this.renderPasswordConfirm()}
                     </div>
-                    <div className="mx_AuthBody_fieldRow">
+                    <div className='mx_AuthBody_fieldRow'>
                         {this.renderEmail()}
-                        {this.renderPhoneNumber()}
                     </div>
-                    {_t("Use an email address to recover your account.") + " "}
-                    {_t("Other users can invite you to rooms using your contact details.")}
-                    { registerButton }
+                    {_t('Use an email address to recover your account.') + ' '}
+                    {_t(
+                        'Other users can invite you to rooms using your contact details.'
+                    )}
+                    {registerButton}
                 </form>
             </div>
         );
-    },
+    }
 });
