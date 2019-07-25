@@ -46,12 +46,12 @@ export default React.createClass({
         // be the string entered.
         askReason: PropTypes.bool,
         danger: PropTypes.bool,
-        onFinished: PropTypes.func.isRequired,
+        onFinished: PropTypes.func.isRequired
     },
 
     defaultProps: {
         danger: false,
-        askReason: false,
+        askReason: false
     },
 
     componentWillMount: function() {
@@ -77,8 +77,8 @@ export default React.createClass({
     render: function() {
         const BaseDialog = sdk.getComponent('views.dialogs.BaseDialog');
         const DialogButtons = sdk.getComponent('views.elements.DialogButtons');
-        const MemberAvatar = sdk.getComponent("views.avatars.MemberAvatar");
-        const BaseAvatar = sdk.getComponent("views.avatars.BaseAvatar");
+        const MemberAvatar = sdk.getComponent('views.avatars.MemberAvatar');
+        const BaseAvatar = sdk.getComponent('views.avatars.BaseAvatar');
 
         const confirmButtonClass = this.props.danger ? 'danger' : '';
 
@@ -87,9 +87,10 @@ export default React.createClass({
             reasonBox = (
                 <div>
                     <form onSubmit={this.onOk}>
-                        <input className="mx_ConfirmUserActionDialog_reasonField"
+                        <input
+                            className='mx_ConfirmUserActionDialog_reasonField'
                             ref={this._collectReasonField}
-                            placeholder={_t("Reason")}
+                            placeholder={_t('Reason')}
                             autoFocus={true}
                         />
                     </form>
@@ -101,36 +102,61 @@ export default React.createClass({
         let name;
         let userId;
         if (this.props.member) {
-            avatar = <MemberAvatar member={this.props.member} width={48} height={48} />;
+            avatar = (
+                <MemberAvatar
+                    member={this.props.member}
+                    width={48}
+                    height={48}
+                />
+            );
             name = this.props.member.name;
             userId = this.props.member.userId;
         } else {
-            const httpAvatarUrl = this.props.groupMember.avatarUrl ?
-                this.props.matrixClient.mxcUrlToHttp(this.props.groupMember.avatarUrl, 48, 48) : null;
-            name = this.props.groupMember.displayname || this.props.groupMember.userId;
+            const httpAvatarUrl = this.props.groupMember.avatarUrl
+                ? this.props.matrixClient.mxcUrlToHttp(
+                      this.props.groupMember.avatarUrl,
+                      48,
+                      48
+                  )
+                : null;
+            name =
+                this.props.groupMember.displayname ||
+                this.props.groupMember.userId;
             userId = this.props.groupMember.userId;
-            avatar = <BaseAvatar name={name} url={httpAvatarUrl} width={48} height={48} />;
+            avatar = (
+                <BaseAvatar
+                    name={name}
+                    url={httpAvatarUrl}
+                    width={48}
+                    height={48}
+                />
+            );
         }
 
         return (
-            <BaseDialog className="mx_ConfirmUserActionDialog" onFinished={this.props.onFinished}
+            <BaseDialog
+                className='mx_ConfirmUserActionDialog'
+                onFinished={this.props.onFinished}
                 title={this.props.title}
                 contentId='mx_Dialog_content'
             >
-                <div id="mx_Dialog_content" className="mx_Dialog_content">
-                    <div className="mx_ConfirmUserActionDialog_avatar">
-                        { avatar }
+                <div id='mx_Dialog_content' className='mx_Dialog_content'>
+                    <div className='mx_ConfirmUserActionDialog_avatar'>
+                        {avatar}
                     </div>
-                    <div className="mx_ConfirmUserActionDialog_name">{ name }</div>
-                    <div className="mx_ConfirmUserActionDialog_userId">{ userId }</div>
+                    <div className='mx_ConfirmUserActionDialog_name'>
+                        {name}
+                    </div>
                 </div>
-                { reasonBox }
-                <DialogButtons primaryButton={this.props.action}
+                {reasonBox}
+                <DialogButtons
+                    primaryButton={this.props.action}
                     onPrimaryButtonClick={this.onOk}
                     primaryButtonClass={confirmButtonClass}
                     focus={!this.props.askReason}
-                    onCancel={this.onCancel} />
+                    onCancel={this.onCancel}
+                />
             </BaseDialog>
         );
-    },
+    }
 });
