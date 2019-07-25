@@ -1810,7 +1810,7 @@ export default React.createClass({
     },
 
     _setPageSubtitle: function(subtitle='') {
-        document.title = `${SdkConfig.get().brand || 'Riot'} ${subtitle}`;
+        document.title = `${SdkConfig.get().brand || 'ClearKeep'} ${subtitle}`;
     },
 
     updateStatusIndicator: function(state, prevState) {
