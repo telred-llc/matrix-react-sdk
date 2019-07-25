@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import dis from '../dispatcher';
-import {Store} from 'flux/utils';
+import { Store } from 'flux/utils';
 import MatrixClientPeg from '../MatrixClientPeg';
 import sdk from '../index';
 import Modal from '../Modal';
@@ -43,12 +43,12 @@ const INITIAL_STATE = {
 
     forwardingEvent: null,
 
-    quotingEvent: null,
+    quotingEvent: null
 };
 
 /**
  * A class for storing application state for RoomView. This is the RoomView's interface
-*  with a subset of the js-sdk.
+ *  with a subset of the js-sdk.
  *  ```
  */
 class RoomViewStore extends Store {
@@ -79,7 +79,7 @@ class RoomViewStore extends Store {
             case 'view_group':
                 this._setState({
                     roomId: null,
-                    roomAlias: null,
+                    roomAlias: null
                 });
                 break;
             case 'view_room_error':
@@ -87,12 +87,12 @@ class RoomViewStore extends Store {
                 break;
             case 'will_join':
                 this._setState({
-                    joining: true,
+                    joining: true
                 });
                 break;
             case 'cancel_join':
                 this._setState({
-                    joining: false,
+                    joining: false
                 });
                 break;
             // join_room:
@@ -108,20 +108,37 @@ class RoomViewStore extends Store {
                 this.reset();
                 break;
             case 'forward_event':
-                this._setState({
-                    forwardingEvent: payload.event,
-                });
+                // this._setState({
+                //     forwardingEvent: payload.event,
+                // });
+                Modal.createTrackedDialog(
+                    'Forward Message',
+                    '',
+                    sdk.getComponent('dialogs.ForwardMessageDialog'),
+                    { forwardingEvent: payload.event },
+                    'mx_SettingsDialog'
+                );
                 break;
             case 'reply_to_event':
                 this._setState({
-                    replyingToEvent: payload.event,
+                    replyingToEvent: payload.event
                 });
                 break;
             case 'open_room_settings': {
-                const RoomSettingsDialog = sdk.getComponent("dialogs.RoomSettingsDialog");
-                Modal.createTrackedDialog('Room settings', '', RoomSettingsDialog, {
-                    roomId: payload.room_id || this._state.roomId,
-                }, /*className=*/null, /*isPriority=*/false, /*isStatic=*/true);
+                const RoomSettingsDialog = sdk.getComponent(
+                    'dialogs.RoomSettingsDialog'
+                );
+                Modal.createTrackedDialog(
+                    'Room settings',
+                    '',
+                    RoomSettingsDialog,
+                    {
+                        roomId: payload.room_id || this._state.roomId
+                    },
+                    /*className=*/ null,
+                    /*isPriority=*/ false,
+                    /*isStatic=*/ true
+                );
                 break;
             }
         }
@@ -138,20 +155,23 @@ class RoomViewStore extends Store {
                 roomLoading: false,
                 roomLoadError: null,
                 // should peek by default
-                shouldPeek: payload.should_peek === undefined ? true : payload.should_peek,
+                shouldPeek:
+                    payload.should_peek === undefined
+                        ? true
+                        : payload.should_peek,
                 // have we sent a join request for this room and are waiting for a response?
                 joining: payload.joining || false,
                 // Reset replyingToEvent because we don't want cross-room because bad UX
                 replyingToEvent: null,
                 // pull the user out of Room Settings
-                isEditingSettings: false,
+                isEditingSettings: false
             };
 
             if (this._state.forwardingEvent) {
                 dis.dispatch({
                     action: 'send_event',
                     room_id: newState.roomId,
-                    event: this._state.forwardingEvent,
+                    event: this._state.forwardingEvent
                 });
             }
 
@@ -169,27 +189,31 @@ class RoomViewStore extends Store {
                 isInitialEventHighlighted: null,
                 roomAlias: payload.room_alias,
                 roomLoading: true,
-                roomLoadError: null,
+                roomLoadError: null
             });
-            MatrixClientPeg.get().getRoomIdForAlias(payload.room_alias).done(
-            (result) => {
-                dis.dispatch({
-                    action: 'view_room',
-                    room_id: result.room_id,
-                    event_id: payload.event_id,
-                    highlighted: payload.highlighted,
-                    room_alias: payload.room_alias,
-                    auto_join: payload.auto_join,
-                    oob_data: payload.oob_data,
-                });
-            }, (err) => {
-                dis.dispatch({
-                    action: 'view_room_error',
-                    room_id: null,
-                    room_alias: payload.room_alias,
-                    err: err,
-                });
-            });
+            MatrixClientPeg.get()
+                .getRoomIdForAlias(payload.room_alias)
+                .done(
+                    result => {
+                        dis.dispatch({
+                            action: 'view_room',
+                            room_id: result.room_id,
+                            event_id: payload.event_id,
+                            highlighted: payload.highlighted,
+                            room_alias: payload.room_alias,
+                            auto_join: payload.auto_join,
+                            oob_data: payload.oob_data
+                        });
+                    },
+                    err => {
+                        dis.dispatch({
+                            action: 'view_room_error',
+                            room_id: null,
+                            room_alias: payload.room_alias,
+                            err: err
+                        });
+                    }
+                );
         }
     }
 
@@ -198,51 +222,66 @@ class RoomViewStore extends Store {
             roomId: payload.room_id,
             roomAlias: payload.room_alias,
             roomLoading: false,
-            roomLoadError: payload.err,
+            roomLoadError: payload.err
         });
     }
 
     _joinRoom(payload) {
         this._setState({
-            joining: true,
+            joining: true
         });
-        MatrixClientPeg.get().joinRoom(
-            this._state.roomAlias || this._state.roomId, payload.opts,
-        ).done(() => {
-            // We don't actually need to do anything here: we do *not*
-            // clear the 'joining' flag because the Room object and/or
-            // our 'joined' member event may not have come down the sync
-            // stream yet, and that's the point at which we'd consider
-            // the user joined to the room.
-        }, (err) => {
-            dis.dispatch({
-                action: 'join_room_error',
-                err: err,
-            });
-            let msg = err.message ? err.message : JSON.stringify(err);
-            // XXX: We are relying on the error message returned by browsers here.
-            // This isn't great, but it does generalize the error being shown to users.
-            if (msg && msg.startsWith("CORS request rejected")) {
-                msg = _t("There was an error joining the room");
-            }
-            if (err.errcode === 'M_INCOMPATIBLE_ROOM_VERSION') {
-                msg = <div>
-                    {_t("Sorry, your homeserver is too old to participate in this room.")}<br />
-                    {_t("Please contact your homeserver administrator.")}
-                </div>;
-            }
-            const ErrorDialog = sdk.getComponent("dialogs.ErrorDialog");
-            Modal.createTrackedDialog('Failed to join room', '', ErrorDialog, {
-                title: _t("Failed to join room"),
-                description: msg,
-            });
-        });
+        MatrixClientPeg.get()
+            .joinRoom(this._state.roomAlias || this._state.roomId, payload.opts)
+            .done(
+                () => {
+                    // We don't actually need to do anything here: we do *not*
+                    // clear the 'joining' flag because the Room object and/or
+                    // our 'joined' member event may not have come down the sync
+                    // stream yet, and that's the point at which we'd consider
+                    // the user joined to the room.
+                },
+                err => {
+                    dis.dispatch({
+                        action: 'join_room_error',
+                        err: err
+                    });
+                    let msg = err.message ? err.message : JSON.stringify(err);
+                    // XXX: We are relying on the error message returned by browsers here.
+                    // This isn't great, but it does generalize the error being shown to users.
+                    if (msg && msg.startsWith('CORS request rejected')) {
+                        msg = _t('There was an error joining the room');
+                    }
+                    if (err.errcode === 'M_INCOMPATIBLE_ROOM_VERSION') {
+                        msg = (
+                            <div>
+                                {_t(
+                                    'Sorry, your homeserver is too old to participate in this room.'
+                                )}
+                                <br />
+                                {_t(
+                                    'Please contact your homeserver administrator.'
+                                )}
+                            </div>
+                        );
+                    }
+                    const ErrorDialog = sdk.getComponent('dialogs.ErrorDialog');
+                    Modal.createTrackedDialog(
+                        'Failed to join room',
+                        '',
+                        ErrorDialog,
+                        {
+                            title: _t('Failed to join room'),
+                            description: msg
+                        }
+                    );
+                }
+            );
     }
 
     _joinRoomError(payload) {
         this._setState({
             joining: false,
-            joinError: payload.err,
+            joinError: payload.err
         });
     }
 
