@@ -397,7 +397,7 @@
     "Who can read history?": "Who can read history?",
     "Who would you like to add to this room?": "Who would you like to add to this room?",
     "Who would you like to communicate with?": "Who would you like to communicate with?",
-    "%(senderName)s withdrew %(targetName)s's invitation.": "%(senderName)s withdrew %(targetName)s's invitation.",
+    "%(senderName)s cancelled %(targetName)s's invitation.": "%(senderName)s cancelled %(targetName)s's invitation.",
     "You are already in a call.": "You are already in a call.",
     "You are trying to access %(roomName)s.": "You are trying to access %(roomName)s.",
     "You cannot place a call with yourself.": "You cannot place a call with yourself.",
