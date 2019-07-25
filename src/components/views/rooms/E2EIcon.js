@@ -16,30 +16,36 @@ limitations under the License.
 
 import classNames from 'classnames';
 import { _t } from '../../../languageHandler';
-import AccessibleButton from '../elements/AccessibleButton';
+// import AccessibleButton from '../elements/AccessibleButton';
 
 export default function(props) {
-    const isWarning = props.status === "warning";
-    const isVerified = props.status === "verified";
-    const e2eIconClasses = classNames({
-        mx_E2EIcon: true,
-        mx_E2EIcon_warning: isWarning,
-        mx_E2EIcon_verified: isVerified,
-    }, props.className);
-    let e2eTitle;
-    if (isWarning) {
-        e2eTitle = props.isUser ?
-            _t("Some devices for this user are not trusted") :
-            _t("Some devices in this encrypted room are not trusted");
-    } else if (isVerified) {
-        e2eTitle = props.isUser ?
-            _t("All devices for this user are trusted") :
-            _t("All devices in this encrypted room are trusted");
-    }
-    const icon = (<div className={e2eIconClasses} title={e2eTitle} />);
-    if (props.onClick) {
-        return (<AccessibleButton onClick={props.onClick}>{ icon }</AccessibleButton>);
-    } else {
-        return icon;
-    }
+    // const isWarning = props.status === "warning";
+    // const isVerified = props.status === "verified";
+    const e2eIconClasses = classNames(
+        {
+            mx_E2EIcon: true,
+            mx_E2EIcon_warning: false,
+            mx_E2EIcon_verified: true
+        },
+        props.className
+    );
+    // if (isWarning) {
+    //     e2eTitle = props.isUser ?
+    //         _t("Some devices for this user are not trusted") :
+    //         _t("Some devices in this encrypted room are not trusted");
+    // } else if (isVerified) {
+    //     e2eTitle = props.isUser ?
+    //         _t("All devices for this user are trusted") :
+    //         _t("All devices in this encrypted room are trusted");
+    // }
+    const e2eTitle = props.isUser
+        ? _t('All devices for this user are trusted')
+        : _t('All devices in this encrypted room are trusted');
+    const icon = <div className={e2eIconClasses} title={e2eTitle} />;
+    // if (props.onClick) {
+    //     return (<AccessibleButton onClick={props.onClick}>{ icon }</AccessibleButton>);
+    // } else {
+    //     return icon;
+    // }
+    return icon;
 }
