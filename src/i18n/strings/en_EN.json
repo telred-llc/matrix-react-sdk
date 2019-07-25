@@ -231,7 +231,7 @@
     "(could not connect media)": "(could not connect media)",
     "(no answer)": "(no answer)",
     "(unknown failure: %(reason)s)": "(unknown failure: %(reason)s)",
-    "%(senderName)s ended the call.": "%(senderName)s ended the call.",
+    "%(senderName)s ended the call.": "%(senderName)s has missed call.",
     "%(senderName)s placed a %(callType)s call.": "%(senderName)s placed a %(callType)s call.",
     "%(senderName)s revoked the invitation for %(targetDisplayName)s to join the room.": "%(senderName)s revoked the invitation for %(targetDisplayName)s to join the room.",
     "%(senderName)s sent an invitation to %(targetDisplayName)s to join the room.": "%(senderName)s sent an invitation to %(targetDisplayName)s to join the room.",
