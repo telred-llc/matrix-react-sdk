@@ -26,10 +26,12 @@ import { _t, _td } from '../../../languageHandler';
 import SdkConfig from '../../../SdkConfig';
 import { messageForResourceLimitError } from '../../../utils/ErrorUtils';
 import * as ServerType from '../../views/auth/ServerTypeSelector';
-import AutoDiscoveryUtils, {ValidatedServerConfig} from "../../../utils/AutoDiscoveryUtils";
-import classNames from "classnames";
+import AutoDiscoveryUtils, {
+    ValidatedServerConfig
+} from '../../../utils/AutoDiscoveryUtils';
+import classNames from 'classnames';
 import * as Lifecycle from '../../../Lifecycle';
-import MatrixClientPeg from "../../../MatrixClientPeg";
+import MatrixClientPeg from '../../../MatrixClientPeg';
 
 // Phases
 // Show controls to configure server details
@@ -54,11 +56,13 @@ module.exports = React.createClass({
         email: PropTypes.string,
         // registration shouldn't know or care how login is done.
         onLoginClick: PropTypes.func.isRequired,
-        onServerConfigChange: PropTypes.func.isRequired,
+        onServerConfigChange: PropTypes.func.isRequired
     },
 
     getInitialState: function() {
-        const serverType = ServerType.getTypeFromServerConfig(this.props.serverConfig);
+        const serverType = ServerType.getTypeFromServerConfig(
+            this.props.serverConfig
+        );
 
         return {
             busy: false,
@@ -71,7 +75,7 @@ module.exports = React.createClass({
             // them in this component's state since this component
             // persist for the duration of the registration process.
             formVals: {
-                email: this.props.email,
+                email: this.props.email
             },
             // true if we're waiting for the user to complete
             // user-interactive auth
@@ -92,7 +96,7 @@ module.exports = React.createClass({
             // be seeing.
             serverIsAlive: true,
             serverErrorIsFatal: false,
-            serverDeadError: "",
+            serverDeadError: '',
 
             // Our matrix client - part of state because we can't render the UI auth
             // component without it.
@@ -103,7 +107,7 @@ module.exports = React.createClass({
 
             // if a different user ID to the one we just registered is logged in,
             // this is the user ID that's logged in.
-            differentLoggedInUserId: null,
+            differentLoggedInUserId: null
         };
     },
 
@@ -113,19 +117,24 @@ module.exports = React.createClass({
     },
 
     componentWillReceiveProps(newProps) {
-        if (newProps.serverConfig.hsUrl === this.props.serverConfig.hsUrl &&
-            newProps.serverConfig.isUrl === this.props.serverConfig.isUrl) return;
+        if (
+            newProps.serverConfig.hsUrl === this.props.serverConfig.hsUrl &&
+            newProps.serverConfig.isUrl === this.props.serverConfig.isUrl
+        )
+            return;
 
         this._replaceClient(newProps.serverConfig);
 
         // Handle cases where the user enters "https://matrix.org" for their server
         // from the advanced option - we should default to FREE at that point.
-        const serverType = ServerType.getTypeFromServerConfig(newProps.serverConfig);
+        const serverType = ServerType.getTypeFromServerConfig(
+            newProps.serverConfig
+        );
         if (serverType !== this.state.serverType) {
             // Reset the phase to default phase for the server type.
             this.setState({
                 serverType,
-                phase: this.getDefaultPhaseForServerType(serverType),
+                phase: this.getDefaultPhaseForServerType(serverType)
             });
         }
     },
@@ -145,7 +154,7 @@ module.exports = React.createClass({
 
     onServerTypeChange(type) {
         this.setState({
-            serverType: type,
+            serverType: type
         });
 
         // When changing server types, set the HS / IS URLs to reasonable defaults for the
@@ -162,13 +171,15 @@ module.exports = React.createClass({
                 break;
             case ServerType.ADVANCED:
                 // Use the default config from the config
-                this.props.onServerConfigChange(SdkConfig.get()["validated_server_config"]);
+                this.props.onServerConfigChange(
+                    SdkConfig.get()['validated_server_config']
+                );
                 break;
         }
 
         // Reset the phase to default phase for the server type.
         this.setState({
-            phase: this.getDefaultPhaseForServerType(type),
+            phase: this.getDefaultPhaseForServerType(type)
         });
     },
 
@@ -179,7 +190,7 @@ module.exports = React.createClass({
             serverErrorIsFatal: false,
             // busy while we do liveness check (we need to avoid trying to render
             // the UI auth component while we don't have a matrix client)
-            busy: true,
+            busy: true
         });
         if (!serverConfig) serverConfig = this.props.serverConfig;
 
@@ -187,48 +198,55 @@ module.exports = React.createClass({
         try {
             await AutoDiscoveryUtils.validateServerConfigWithStaticUrls(
                 serverConfig.hsUrl,
-                serverConfig.isUrl,
+                serverConfig.isUrl
             );
             this.setState({
                 serverIsAlive: true,
-                serverErrorIsFatal: false,
+                serverErrorIsFatal: false
             });
         } catch (e) {
             this.setState({
                 busy: false,
-                ...AutoDiscoveryUtils.authComponentStateForError(e, "register"),
+                ...AutoDiscoveryUtils.authComponentStateForError(e, 'register')
             });
             if (this.state.serverErrorIsFatal) {
                 return; // Server is dead - do not continue.
             }
         }
 
-        const {hsUrl, isUrl} = serverConfig;
+        const { hsUrl, isUrl } = serverConfig;
         this.setState({
             matrixClient: Matrix.createClient({
                 baseUrl: hsUrl,
-                idBaseUrl: isUrl,
-            }),
+                idBaseUrl: isUrl
+            })
         });
-        this.setState({busy: false});
+        this.setState({ busy: false });
         try {
             await this._makeRegisterRequest({});
             // This should never succeed since we specified an empty
             // auth object.
-            console.log("Expecting 401 from register request but got success!");
+            console.log('Expecting 401 from register request but got success!');
         } catch (e) {
             if (e.httpStatus === 401) {
                 this.setState({
-                    flows: e.data.flows,
+                    flows: e.data.flows
                 });
-            } else if (e.httpStatus === 403 && e.errcode === "M_UNKNOWN") {
+            } else if (e.httpStatus === 403 && e.errcode === 'M_UNKNOWN') {
                 this.setState({
-                    errorText: _t("Registration has been disabled on this homeserver."),
+                    errorText: _t(
+                        'Registration has been disabled on this homeserver.'
+                    )
                 });
             } else {
-                console.log("Unable to query for supported registration methods.", e);
+                console.log(
+                    'Unable to query for supported registration methods.',
+                    e
+                );
                 this.setState({
-                    errorText: _t("Unable to query for supported registration methods."),
+                    errorText: _t(
+                        'Unable to query for supported registration methods.'
+                    )
                 });
             }
         }
@@ -236,14 +254,19 @@ module.exports = React.createClass({
 
     onFormSubmit: function(formVals) {
         this.setState({
-            errorText: "",
+            errorText: '',
             busy: true,
             formVals: formVals,
-            doingUIAuth: true,
+            doingUIAuth: true
         });
     },
 
-    _requestEmailToken: function(emailAddress, clientSecret, sendAttempt, sessionId) {
+    _requestEmailToken: function(
+        emailAddress,
+        clientSecret,
+        sendAttempt,
+        sessionId
+    ) {
         return this.state.matrixClient.requestRegisterEmailToken(
             emailAddress,
             clientSecret,
@@ -252,8 +275,8 @@ module.exports = React.createClass({
                 client_secret: clientSecret,
                 hs_url: this.state.matrixClient.getHomeserverUrl(),
                 is_url: this.state.matrixClient.getIdentityServerUrl(),
-                session_id: sessionId,
-            }),
+                session_id: sessionId
+            })
         );
     },
 
@@ -264,38 +287,50 @@ module.exports = React.createClass({
             if (response.errcode === 'M_RESOURCE_LIMIT_EXCEEDED') {
                 const errorTop = messageForResourceLimitError(
                     response.data.limit_type,
-                    response.data.admin_contact, {
-                    'monthly_active_user': _td(
-                        "This homeserver has hit its Monthly Active User limit.",
-                    ),
-                    '': _td(
-                        "This homeserver has exceeded one of its resource limits.",
-                    ),
-                });
+                    response.data.admin_contact,
+                    {
+                        monthly_active_user: _td(
+                            'This homeserver has hit its Monthly Active User limit.'
+                        ),
+                        '': _td(
+                            'This homeserver has exceeded one of its resource limits.'
+                        )
+                    }
+                );
                 const errorDetail = messageForResourceLimitError(
                     response.data.limit_type,
-                    response.data.admin_contact, {
-                    '': _td(
-                        "Please <a>contact your service administrator</a> to continue using this service.",
-                    ),
-                });
-                msg = <div>
-                    <p>{errorTop}</p>
-                    <p>{errorDetail}</p>
-                </div>;
-            } else if (response.required_stages && response.required_stages.indexOf('m.login.msisdn') > -1) {
+                    response.data.admin_contact,
+                    {
+                        '': _td(
+                            'Please <a>contact your service administrator</a> to continue using this service.'
+                        )
+                    }
+                );
+                msg = (
+                    <div>
+                        <p>{errorTop}</p>
+                        <p>{errorDetail}</p>
+                    </div>
+                );
+            } else if (
+                response.required_stages &&
+                response.required_stages.indexOf('m.login.msisdn') > -1
+            ) {
                 let msisdnAvailable = false;
                 for (const flow of response.available_flows) {
-                    msisdnAvailable |= flow.stages.indexOf('m.login.msisdn') > -1;
+                    msisdnAvailable |=
+                        flow.stages.indexOf('m.login.msisdn') > -1;
                 }
                 if (!msisdnAvailable) {
-                    msg = _t('This server does not support authentication with a phone number.');
+                    msg = _t(
+                        'This server does not support authentication with a phone number.'
+                    );
                 }
             }
             this.setState({
                 busy: false,
                 doingUIAuth: false,
-                errorText: msg,
+                errorText: msg
             });
             return;
         }
@@ -304,7 +339,7 @@ module.exports = React.createClass({
 
         const newState = {
             doingUIAuth: false,
-            registeredUsername: response.user_id,
+            registeredUsername: response.user_id
         };
 
         // The user came in through an email validation link. To avoid overwriting
@@ -314,9 +349,15 @@ module.exports = React.createClass({
         // the user had a separate guest session they didn't actually mean to replace.
         const sessionOwner = Lifecycle.getStoredSessionOwner();
         const sessionIsGuest = Lifecycle.getStoredSessionIsGuest();
-        if (sessionOwner && !sessionIsGuest && sessionOwner !== response.userId) {
+        if (
+            sessionOwner &&
+            !sessionIsGuest &&
+            sessionOwner !== response.userId
+        ) {
             console.log(
-                `Found a session for ${sessionOwner} but ${response.userId} has just registered.`,
+                `Found a session for ${sessionOwner} but ${
+                    response.userId
+                } has just registered.`
             );
             newState.differentLoggedInUserId = sessionOwner;
         } else {
@@ -329,7 +370,7 @@ module.exports = React.createClass({
                 deviceId: response.device_id,
                 homeserverUrl: this.state.matrixClient.getHomeserverUrl(),
                 identityServerUrl: this.state.matrixClient.getIdentityServerUrl(),
-                accessToken: response.access_token,
+                accessToken: response.access_token
             });
 
             this._setupPushers(cli);
@@ -347,22 +388,32 @@ module.exports = React.createClass({
         if (!this.props.brand) {
             return Promise.resolve();
         }
-        return matrixClient.getPushers().then((resp)=>{
-            const pushers = resp.pushers;
-            for (let i = 0; i < pushers.length; ++i) {
-                if (pushers[i].kind === 'email') {
-                    const emailPusher = pushers[i];
-                    emailPusher.data = { brand: this.props.brand };
-                    matrixClient.setPusher(emailPusher).done(() => {
-                        console.log("Set email branding to " + this.props.brand);
-                    }, (error) => {
-                        console.error("Couldn't set email branding: " + error);
-                    });
+        return matrixClient.getPushers().then(
+            resp => {
+                const pushers = resp.pushers;
+                for (let i = 0; i < pushers.length; ++i) {
+                    if (pushers[i].kind === 'email') {
+                        const emailPusher = pushers[i];
+                        emailPusher.data = { brand: this.props.brand };
+                        matrixClient.setPusher(emailPusher).done(
+                            () => {
+                                console.log(
+                                    'Set email branding to ' + this.props.brand
+                                );
+                            },
+                            error => {
+                                console.error(
+                                    "Couldn't set email branding: " + error
+                                );
+                            }
+                        );
+                    }
                 }
+            },
+            error => {
+                console.error("Couldn't get pushers: " + error);
             }
-        }, (error) => {
-            console.error("Couldn't get pushers: " + error);
-        });
+        );
     },
 
     onLoginClick: function(ev) {
@@ -378,13 +429,13 @@ module.exports = React.createClass({
         this.setState({
             busy: false,
             doingUIAuth: false,
-            phase: PHASE_REGISTRATION,
+            phase: PHASE_REGISTRATION
         });
     },
 
     async onServerDetailsNextPhaseClick() {
         this.setState({
-            phase: PHASE_REGISTRATION,
+            phase: PHASE_REGISTRATION
         });
     },
 
@@ -392,7 +443,7 @@ module.exports = React.createClass({
         ev.preventDefault();
         ev.stopPropagation();
         this.setState({
-            phase: PHASE_SERVER_DETAILS,
+            phase: PHASE_SERVER_DETAILS
         });
     },
 
@@ -406,10 +457,12 @@ module.exports = React.createClass({
         // Only send the bind params if we're sending username / pw params
         // (Since we need to send no params at all to use the ones saved in the
         // session).
-        const bindThreepids = this.state.formVals.password ? {
-            email: true,
-            msisdn: true,
-        } : {};
+        const bindThreepids = this.state.formVals.password
+            ? {
+                  email: true,
+                  msisdn: true
+              }
+            : {};
         // Likewise inhibitLogin
         if (!this.state.formVals.password) inhibitLogin = null;
 
@@ -420,7 +473,7 @@ module.exports = React.createClass({
             auth,
             bindThreepids,
             null,
-            inhibitLogin,
+            inhibitLogin
         );
     },
 
@@ -428,7 +481,7 @@ module.exports = React.createClass({
         return {
             emailAddress: this.state.formVals.email,
             phoneCountry: this.state.formVals.phoneCountry,
-            phoneNumber: this.state.formVals.phoneNumber,
+            phoneNumber: this.state.formVals.phoneNumber
         };
     },
 
@@ -446,9 +499,11 @@ module.exports = React.createClass({
     },
 
     renderServerComponent() {
-        const ServerTypeSelector = sdk.getComponent("auth.ServerTypeSelector");
-        const ServerConfig = sdk.getComponent("auth.ServerConfig");
-        const ModularServerConfig = sdk.getComponent("auth.ModularServerConfig");
+        const ServerTypeSelector = sdk.getComponent('auth.ServerTypeSelector');
+        const ServerConfig = sdk.getComponent('auth.ServerConfig');
+        const ModularServerConfig = sdk.getComponent(
+            'auth.ModularServerConfig'
+        );
 
         if (SdkConfig.get()['disable_custom_urls']) {
             return null;
@@ -458,20 +513,26 @@ module.exports = React.createClass({
         // which is always shown if we allow custom URLs at all.
         // (if there's a fatal server error, we need to show the full server
         // config as the user may need to change servers to resolve the error).
-        if (PHASES_ENABLED && this.state.phase !== PHASE_SERVER_DETAILS && !this.state.serverErrorIsFatal) {
-            return <div>
-                <ServerTypeSelector
-                    selected={this.state.serverType}
-                    onChange={this.onServerTypeChange}
-                />
-            </div>;
+        if (
+            PHASES_ENABLED &&
+            this.state.phase !== PHASE_SERVER_DETAILS &&
+            !this.state.serverErrorIsFatal
+        ) {
+            return (
+                <div>
+                    <ServerTypeSelector
+                        selected={this.state.serverType}
+                        onChange={this.onServerTypeChange}
+                    />
+                </div>
+            );
         }
 
         const serverDetailsProps = {};
         if (PHASES_ENABLED) {
             serverDetailsProps.onAfterSubmit = this.onServerDetailsNextPhaseClick;
-            serverDetailsProps.submitText = _t("Next");
-            serverDetailsProps.submitClass = "mx_Login_submit";
+            serverDetailsProps.submitText = _t('Next');
+            serverDetailsProps.submitClass = 'mx_Login_submit';
         }
 
         let serverDetails = null;
@@ -479,30 +540,36 @@ module.exports = React.createClass({
             case ServerType.FREE:
                 break;
             case ServerType.PREMIUM:
-                serverDetails = <ModularServerConfig
-                    serverConfig={this.props.serverConfig}
-                    onServerConfigChange={this.props.onServerConfigChange}
-                    delayTimeMs={250}
-                    {...serverDetailsProps}
-                />;
+                serverDetails = (
+                    <ModularServerConfig
+                        serverConfig={this.props.serverConfig}
+                        onServerConfigChange={this.props.onServerConfigChange}
+                        delayTimeMs={250}
+                        {...serverDetailsProps}
+                    />
+                );
                 break;
             case ServerType.ADVANCED:
-                serverDetails = <ServerConfig
-                    serverConfig={this.props.serverConfig}
-                    onServerConfigChange={this.props.onServerConfigChange}
-                    delayTimeMs={250}
-                    {...serverDetailsProps}
-                />;
+                serverDetails = (
+                    <ServerConfig
+                        serverConfig={this.props.serverConfig}
+                        onServerConfigChange={this.props.onServerConfigChange}
+                        delayTimeMs={250}
+                        {...serverDetailsProps}
+                    />
+                );
                 break;
         }
 
-        return <div>
-            <ServerTypeSelector
-                selected={this.state.serverType}
-                onChange={this.onServerTypeChange}
-            />
-            {serverDetails}
-        </div>;
+        return (
+            <div>
+                <ServerTypeSelector
+                    selected={this.state.serverType}
+                    onChange={this.onServerTypeChange}
+                />
+                {serverDetails}
+            </div>
+        );
     },
 
     renderRegisterComponent() {
@@ -515,23 +582,27 @@ module.exports = React.createClass({
         const RegistrationForm = sdk.getComponent('auth.RegistrationForm');
 
         if (this.state.matrixClient && this.state.doingUIAuth) {
-            return <InteractiveAuth
-                matrixClient={this.state.matrixClient}
-                makeRequest={this._makeRegisterRequest}
-                onAuthFinished={this._onUIAuthFinished}
-                inputs={this._getUIAuthInputs()}
-                requestEmailToken={this._requestEmailToken}
-                sessionId={this.props.sessionId}
-                clientSecret={this.props.clientSecret}
-                emailSid={this.props.idSid}
-                poll={true}
-            />;
+            return (
+                <InteractiveAuth
+                    matrixClient={this.state.matrixClient}
+                    makeRequest={this._makeRegisterRequest}
+                    onAuthFinished={this._onUIAuthFinished}
+                    inputs={this._getUIAuthInputs()}
+                    requestEmailToken={this._requestEmailToken}
+                    sessionId={this.props.sessionId}
+                    clientSecret={this.props.clientSecret}
+                    emailSid={this.props.idSid}
+                    poll={true}
+                />
+            );
         } else if (!this.state.matrixClient && !this.state.busy) {
             return null;
         } else if (this.state.busy || !this.state.flows) {
-            return <div className="mx_AuthBody_spinner">
-                <Spinner />
-            </div>;
+            return (
+                <div className='mx_AuthBody_spinner'>
+                    <Spinner />
+                </div>
+            );
         } else {
             let onEditServerDetailsClick = null;
             // If custom URLs are allowed and we haven't selected the Free server type, wire
@@ -544,117 +615,169 @@ module.exports = React.createClass({
                 onEditServerDetailsClick = this.onEditServerDetailsClick;
             }
 
-            return <RegistrationForm
-                defaultUsername={this.state.formVals.username}
-                defaultEmail={this.state.formVals.email}
-                defaultPhoneCountry={this.state.formVals.phoneCountry}
-                defaultPhoneNumber={this.state.formVals.phoneNumber}
-                defaultPassword={this.state.formVals.password}
-                onRegisterClick={this.onFormSubmit}
-                onEditServerDetailsClick={onEditServerDetailsClick}
-                flows={this.state.flows}
-                serverConfig={this.props.serverConfig}
-                canSubmit={!this.state.serverErrorIsFatal}
-            />;
+            return (
+                <RegistrationForm
+                    defaultUsername={this.state.formVals.username}
+                    defaultEmail={this.state.formVals.email}
+                    defaultPhoneCountry={this.state.formVals.phoneCountry}
+                    defaultPhoneNumber={this.state.formVals.phoneNumber}
+                    defaultPassword={this.state.formVals.password}
+                    onRegisterClick={this.onFormSubmit}
+                    onEditServerDetailsClick={onEditServerDetailsClick}
+                    flows={this.state.flows}
+                    serverConfig={this.props.serverConfig}
+                    canSubmit={!this.state.serverErrorIsFatal}
+                />
+            );
         }
     },
 
     render: function() {
         const AuthHeader = sdk.getComponent('auth.AuthHeader');
-        const AuthBody = sdk.getComponent("auth.AuthBody");
+        const AuthBody = sdk.getComponent('auth.AuthBody');
         const AuthPage = sdk.getComponent('auth.AuthPage');
         const AccessibleButton = sdk.getComponent('elements.AccessibleButton');
 
         let errorText;
         const err = this.state.errorText;
         if (err) {
-            errorText = <div className="mx_Login_error">{ err }</div>;
+            errorText = <div className='mx_Login_error'>{err}</div>;
         }
 
         let serverDeadSection;
         if (!this.state.serverIsAlive) {
             const classes = classNames({
-                "mx_Login_error": true,
-                "mx_Login_serverError": true,
-                "mx_Login_serverErrorNonFatal": !this.state.serverErrorIsFatal,
+                mx_Login_error: true,
+                mx_Login_serverError: true,
+                mx_Login_serverErrorNonFatal: !this.state.serverErrorIsFatal
             });
             serverDeadSection = (
-                <div className={classes}>
-                    {this.state.serverDeadError}
-                </div>
+                <div className={classes}>{this.state.serverDeadError}</div>
             );
         }
 
-        const signIn = <a className="mx_AuthBody_changeFlow" onClick={this.onLoginClick} href="#">
-            { _t('Sign in instead') }
-        </a>;
+        const signIn = (
+            <a
+                className='mx_AuthBody_changeFlow'
+                onClick={this.onLoginClick}
+                href='#'
+            >
+                {_t('Sign in instead')}
+            </a>
+        );
 
         // Only show the 'go back' button if you're not looking at the form
         let goBack;
-        if ((PHASES_ENABLED && this.state.phase !== PHASE_REGISTRATION) || this.state.doingUIAuth) {
-            goBack = <a className="mx_AuthBody_changeFlow" onClick={this.onGoToFormClicked} href="#">
-                { _t('Go back') }
-            </a>;
+        if (
+            (PHASES_ENABLED && this.state.phase !== PHASE_REGISTRATION) ||
+            this.state.doingUIAuth
+        ) {
+            goBack = (
+                <a
+                    className='mx_AuthBody_changeFlow'
+                    onClick={this.onGoToFormClicked}
+                    href='#'
+                >
+                    {_t('Go back')}
+                </a>
+            );
         }
 
         let body;
         if (this.state.completedNoSignin) {
             let regDoneText;
             if (this.state.differentLoggedInUserId) {
-                regDoneText = <div>
-                    <p>{_t(
-                        "Your new account (%(newAccountId)s) is registered, but you're already " +
-                        "logged into a different account (%(loggedInUserId)s).", {
-                            newAccountId: this.state.registeredUsername,
-                            loggedInUserId: this.state.differentLoggedInUserId,
-                        },
-                    )}</p>
-                    <p><AccessibleButton element="span" className="mx_linkButton" onClick={this._onLoginClickWithCheck}>
-                        {_t("Continue with previous account")}
-                    </AccessibleButton></p>
-                </div>;
+                regDoneText = (
+                    <div>
+                        <p>
+                            {_t(
+                                "Your new account (%(newAccountId)s) is registered, but you're already " +
+                                    'logged into a different account (%(loggedInUserId)s).',
+                                {
+                                    newAccountId: this.state.registeredUsername,
+                                    loggedInUserId: this.state
+                                        .differentLoggedInUserId
+                                }
+                            )}
+                        </p>
+                        <p>
+                            <AccessibleButton
+                                element='span'
+                                className='mx_linkButton'
+                                onClick={this._onLoginClickWithCheck}
+                            >
+                                {_t('Continue with previous account')}
+                            </AccessibleButton>
+                        </p>
+                    </div>
+                );
             } else if (this.state.formVals.password) {
                 // We're the client that started the registration
-                regDoneText = <h3>{_t(
-                    "<a>Log in</a> to your new account.", {},
-                    {
-                        a: (sub) => <a href="#/login" onClick={this._onLoginClickWithCheck}>{sub}</a>,
-                    },
-                )}</h3>;
+                regDoneText = (
+                    <h3>
+                        {_t(
+                            '<a>Log in</a> to your new account.',
+                            {},
+                            {
+                                a: sub => (
+                                    <a
+                                        href='#/login'
+                                        onClick={this._onLoginClickWithCheck}
+                                    >
+                                        {sub}
+                                    </a>
+                                )
+                            }
+                        )}
+                    </h3>
+                );
             } else {
                 // We're not the original client: the user probably got to us by clicking the
                 // email validation link. We can't offer a 'go straight to your account' link
                 // as we don't have the original creds.
-                regDoneText = <h3>{_t(
-                    "You can now close this window or <a>log in</a> to your new account.", {},
-                    {
-                        a: (sub) => <a href="#/login" onClick={this._onLoginClickWithCheck}>{sub}</a>,
-                    },
-                )}</h3>;
+                regDoneText = (
+                    <h3>
+                        {_t(
+                            'You can now close this window or <a>log in</a> to your new account.',
+                            {},
+                            {
+                                a: sub => (
+                                    <a
+                                        href='#/login'
+                                        onClick={this._onLoginClickWithCheck}
+                                    >
+                                        {sub}
+                                    </a>
+                                )
+                            }
+                        )}
+                    </h3>
+                );
             }
-            body = <div>
-                <h2>{_t("Registration Successful")}</h2>
-                { regDoneText }
-            </div>;
+            body = (
+                <div>
+                    <h2>{_t('Registration Successful')}</h2>
+                    {regDoneText}
+                </div>
+            );
         } else {
-            body = <div>
-                <h2>{ _t('Create your account') }</h2>
-                { errorText }
-                { serverDeadSection }
-                { this.renderServerComponent() }
-                { this.renderRegisterComponent() }
-                { goBack }
-                { signIn }
-            </div>;
+            body = (
+                <div>
+                    <h2>{_t('Create your account')}</h2>
+                    {errorText}
+                    {serverDeadSection}
+                    {this.renderRegisterComponent()}
+                    {goBack}
+                    {signIn}
+                </div>
+            );
         }
 
         return (
             <AuthPage>
                 <AuthHeader />
-                <AuthBody>
-                    { body }
-                </AuthBody>
+                <AuthBody>{body}</AuthBody>
             </AuthPage>
         );
-    },
+    }
 });
