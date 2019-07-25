@@ -116,7 +116,9 @@ module.exports = React.createClass({
         const promise = this.props.onRegisterClick({
             username: this.state.username.trim(),
             password: this.state.password.trim(),
-            email: email
+            email: email,
+            phoneCountry: '',
+            phoneNumber: ''
         });
 
         if (promise) {
