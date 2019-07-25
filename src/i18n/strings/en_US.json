@@ -939,7 +939,7 @@
     "%(senderName)s removed the main address for this room.": "%(senderName)s removed the main address for this room.",
     "%(senderName)s revoked the invitation for %(targetDisplayName)s to join the room.": "%(senderName)s revoked the invitation for %(targetDisplayName)s to join the room.",
     "%(widgetName)s widget modified by %(senderName)s": "%(widgetName)s widget modified by %(senderName)s",
-    "%(displayName)s is typing …": "%(displayName)s is typing …",
+    "%(displayName)s is typing …": "%(displayName)s is typing",
     "%(names)s and %(count)s others are typing …|other": "%(names)s and %(count)s others are typing …",
     "Your ClearKeep is misconfigured": "Your ClearKeep is misconfigured"
 }
