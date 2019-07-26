@@ -65,7 +65,6 @@ module.exports = React.createClass({
         const that = this;
         this.watchPartnerInterval = setInterval(() => {
             if (partner && partner.user && partner.user.presence === 'online') {
-                console.log('online');
                 that.setState({ isPartnerOnline: true });
             } else {
                 that.setState({ isPartnerOnline: false });
