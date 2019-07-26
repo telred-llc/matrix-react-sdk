@@ -21,7 +21,7 @@ const React = require('react');
 
 const MatrixClientPeg = require('../../../MatrixClientPeg');
 
-import {formatDate} from '../../../DateUtils';
+import { formatDate } from '../../../DateUtils';
 const filesize = require('filesize');
 const AccessibleButton = require('../../../components/views/elements/AccessibleButton');
 const Modal = require('../../../Modal');
@@ -42,7 +42,7 @@ export default class ImageView extends React.Component {
         // redactions, senders, timestamps etc.  Other descriptors are taken from the explicit
         // properties above, which let us use lightboxes to display images which aren't associated
         // with events.
-        mxEvent: React.PropTypes.object,
+        mxEvent: React.PropTypes.object
     };
 
     constructor(props) {
@@ -53,15 +53,16 @@ export default class ImageView extends React.Component {
     // XXX: keyboard shortcuts for managing dialogs should be done by the modal
     // dialog base class somehow, surely...
     componentDidMount() {
-        document.addEventListener("keydown", this.onKeyDown);
+        document.addEventListener('keydown', this.onKeyDown);
     }
 
     componentWillUnmount() {
-        document.removeEventListener("keydown", this.onKeyDown);
+        document.removeEventListener('keydown', this.onKeyDown);
     }
 
-    onKeyDown = (ev) => {
-        if (ev.keyCode === 27) { // escape
+    onKeyDown = ev => {
+        if (ev.keyCode === 27) {
+            // escape
             ev.stopPropagation();
             ev.preventDefault();
             this.props.onFinished();
@@ -69,29 +70,54 @@ export default class ImageView extends React.Component {
     };
 
     onRedactClick = () => {
-        const ConfirmRedactDialog = sdk.getComponent("dialogs.ConfirmRedactDialog");
-        Modal.createTrackedDialog('Confirm Redact Dialog', 'Image View', ConfirmRedactDialog, {
-            onFinished: (proceed) => {
-                if (!proceed) return;
-                MatrixClientPeg.get().redactEvent(
-                    this.props.mxEvent.getRoomId(), this.props.mxEvent.getId(),
-                ).catch(function(e) {
-                    const ErrorDialog = sdk.getComponent("dialogs.ErrorDialog");
-                    // display error message stating you couldn't delete this.
-                    const code = e.errcode || e.statusCode;
-                    Modal.createTrackedDialog('You cannot delete this image.', '', ErrorDialog, {
-                        title: _t('Error'),
-                        description: _t('You cannot delete this image. (%(code)s)', {code: code}),
-                    });
-                }).done();
-            },
-        });
+        const ConfirmRedactDialog = sdk.getComponent(
+            'dialogs.ConfirmRedactDialog'
+        );
+        Modal.createTrackedDialog(
+            'Confirm Redact Dialog',
+            'Image View',
+            ConfirmRedactDialog,
+            {
+                onFinished: proceed => {
+                    if (!proceed) return;
+                    MatrixClientPeg.get()
+                        .redactEvent(
+                            this.props.mxEvent.getRoomId(),
+                            this.props.mxEvent.getId()
+                        )
+                        .catch(function(e) {
+                            const ErrorDialog = sdk.getComponent(
+                                'dialogs.ErrorDialog'
+                            );
+                            // display error message stating you couldn't delete this.
+                            const code = e.errcode || e.statusCode;
+                            Modal.createTrackedDialog(
+                                'You cannot delete this image.',
+                                '',
+                                ErrorDialog,
+                                {
+                                    title: _t('Error'),
+                                    description: _t(
+                                        'You cannot delete this image. (%(code)s)',
+                                        { code: code }
+                                    )
+                                }
+                            );
+                        })
+                        .done();
+                }
+            }
+        );
     };
 
     getName() {
         let name = this.props.name;
         if (name && this.props.link) {
-            name = <a href={ this.props.link } target="_blank" rel="noopener">{ name }</a>;
+            name = (
+                <a href={this.props.link} target='_blank' rel='noopener'>
+                    {name}
+                </a>
+            );
         }
         return name;
     }
@@ -109,7 +135,7 @@ export default class ImageView extends React.Component {
     };
 
     render() {
-/*
+        /*
         // In theory max-width: 80%, max-height: 80% on the CSS should work
         // but in practice, it doesn't, so do it manually:
 
@@ -143,9 +169,9 @@ export default class ImageView extends React.Component {
         if (this.props.width && this.props.height) {
             style = {
                 width: this.props.width,
-                height: this.props.height,
+                height: this.props.height
             };
-            res = style.width + "x" + style.height + "px";
+            res = style.width + 'x' + style.height + 'px';
         }
 
         let size;
@@ -155,12 +181,12 @@ export default class ImageView extends React.Component {
 
         let sizeRes;
         if (size && res) {
-            sizeRes = size + ", " + res;
+            sizeRes = size + ', ' + res;
         } else {
             sizeRes = size || res;
         }
 
-        let mayRedact = false;
+        let mayRedact = true;
         const showEventMeta = !!this.props.mxEvent;
 
         let eventMeta;
@@ -170,66 +196,116 @@ export default class ImageView extends React.Component {
             const cli = MatrixClientPeg.get();
             const room = cli.getRoom(this.props.mxEvent.getRoomId());
             if (room) {
-                mayRedact = room.currentState.maySendRedactionForEvent(this.props.mxEvent, cli.credentials.userId);
+                mayRedact = room.currentState.maySendRedactionForEvent(
+                    this.props.mxEvent,
+                    cli.credentials.userId
+                );
                 const member = room.getMember(sender);
                 if (member) sender = member.name;
             }
 
-            eventMeta = (<div className="mx_ImageView_metadata">
-                { _t('Uploaded on %(date)s by %(user)s', {
-                    date: formatDate(new Date(this.props.mxEvent.getTs())),
-                    user: sender,
-                }) }
-            </div>);
+            eventMeta = (
+                <div className='mx_ImageView_metadata'>
+                    {_t('Uploaded on %(date)s by %(user)s', {
+                        date: formatDate(new Date(this.props.mxEvent.getTs())),
+                        user: sender
+                    })}
+                </div>
+            );
         }
 
         let eventRedact;
         if (mayRedact) {
-            eventRedact = (<div className="mx_ImageView_button" onClick={this.onRedactClick}>
-                { _t('Remove') }
-            </div>);
+            eventRedact = (
+                <div
+                    className='mx_ImageView_button'
+                    onClick={this.onRedactClick}
+                >
+                    {_t('Remove')}
+                </div>
+            );
         }
 
         const rotationDegrees = this.state.rotationDegrees;
-        const effectiveStyle = {transform: `rotate(${rotationDegrees}deg)`, ...style};
+        const effectiveStyle = {
+            transform: `rotate(${rotationDegrees}deg)`,
+            ...style
+        };
 
         return (
-            <div className="mx_ImageView">
-                <div className="mx_ImageView_lhs">
-                </div>
-                <div className="mx_ImageView_content">
-                    <img src={this.props.src} title={this.props.name} style={effectiveStyle} className="mainImage" />
-                    <div className="mx_ImageView_labelWrapper">
-                        <div className="mx_ImageView_label">
-                            <AccessibleButton className="mx_ImageView_rotateCounterClockwise" title={_t("Rotate Left")} onClick={ this.rotateCounterClockwise }>
-                                <img src={require("../../../../res/img/rotate-ccw.svg")} alt={ _t('Rotate counter-clockwise') } width="18" height="18" />
+            <div className='mx_ImageView'>
+                <div className='mx_ImageView_lhs' />
+                <div className='mx_ImageView_content'>
+                    <img
+                        src={this.props.src}
+                        title={this.props.name}
+                        style={effectiveStyle}
+                        className='mainImage'
+                    />
+                    <div className='mx_ImageView_labelWrapper'>
+                        <div className='mx_ImageView_label'>
+                            <AccessibleButton
+                                className='mx_ImageView_rotateCounterClockwise'
+                                title={_t('Rotate Left')}
+                                onClick={this.rotateCounterClockwise}
+                            >
+                                <img
+                                    src={require('../../../../res/img/rotate-ccw.svg')}
+                                    alt={_t('Rotate counter-clockwise')}
+                                    width='18'
+                                    height='18'
+                                />
                             </AccessibleButton>
-                            <AccessibleButton className="mx_ImageView_rotateClockwise" title={_t("Rotate Right")} onClick={ this.rotateClockwise }>
-                                <img src={require("../../../../res/img/rotate-cw.svg")} alt={ _t('Rotate clockwise') } width="18" height="18" />
+                            <AccessibleButton
+                                className='mx_ImageView_rotateClockwise'
+                                title={_t('Rotate Right')}
+                                onClick={this.rotateClockwise}
+                            >
+                                <img
+                                    src={require('../../../../res/img/rotate-cw.svg')}
+                                    alt={_t('Rotate clockwise')}
+                                    width='18'
+                                    height='18'
+                                />
                             </AccessibleButton>
-                            <AccessibleButton className="mx_ImageView_cancel" title={_t("Close")} onClick={ this.props.onFinished }>
-                              <img src={require("../../../../res/img/cancel-white.svg")} width="18" height="18" alt={ _t('Close') } />
+                            <AccessibleButton
+                                className='mx_ImageView_cancel'
+                                title={_t('Close')}
+                                onClick={this.props.onFinished}
+                            >
+                                <img
+                                    src={require('../../../../res/img/cancel-white.svg')}
+                                    width='18'
+                                    height='18'
+                                    alt={_t('Close')}
+                                />
                             </AccessibleButton>
-                            <div className="mx_ImageView_shim">
+                            <div className='mx_ImageView_shim' />
+                            <div className='mx_ImageView_name'>
+                                {this.getName()}
                             </div>
-                            <div className="mx_ImageView_name">
-                                { this.getName() }
-                            </div>
-                            { eventMeta }
-                            <a className="mx_ImageView_link" href={ this.props.src } download={ this.props.name } target="_blank" rel="noopener">
-                                <div className="mx_ImageView_download">
-                                        { _t('Download this file') }<br />
-                                         <span className="mx_ImageView_size">{ sizeRes }</span>
+                            {eventMeta}
+                            <a
+                                className='mx_ImageView_link'
+                                href={this.props.src}
+                                download={this.props.name}
+                                target='_blank'
+                                rel='noopener'
+                            >
+                                <div className='mx_ImageView_download'>
+                                    {_t('Download this file')}
+                                    <br />
+                                    <span className='mx_ImageView_size'>
+                                        {sizeRes}
+                                    </span>
                                 </div>
                             </a>
-                            { eventRedact }
-                            <div className="mx_ImageView_shim">
-                            </div>
+                            {eventRedact}
+                            <div className='mx_ImageView_shim' />
                         </div>
                     </div>
                 </div>
-                <div className="mx_ImageView_rhs">
-                </div>
+                <div className='mx_ImageView_rhs' />
             </div>
         );
     }

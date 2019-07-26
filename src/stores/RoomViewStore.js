@@ -111,10 +111,13 @@ class RoomViewStore extends Store {
                 // this._setState({
                 //     forwardingEvent: payload.event,
                 // });
+                const ForwardMessageDialog = sdk.getComponent(
+                    'dialogs.ForwardMessageDialog'
+                );
                 Modal.createTrackedDialog(
                     'Forward Message',
                     '',
-                    sdk.getComponent('dialogs.ForwardMessageDialog'),
+                    ForwardMessageDialog,
                     { forwardingEvent: payload.event },
                     'mx_SettingsDialog'
                 );

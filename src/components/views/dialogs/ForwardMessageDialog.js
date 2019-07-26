@@ -72,7 +72,6 @@ export default React.createClass({
     },
 
     onForwardClick: function(e) {
-        console.log(e);
         const roomElementId = e.roomId;
         const newRoomList = this.state.roomList.map(item => {
             console.log(item.roomId);
@@ -107,7 +106,7 @@ export default React.createClass({
             ) : (
                 <button
                     style={{ color: 'red' }}
-                    onClick={this.onForwardClick.bind(this, item)}
+                    onClick={() => this.onForwardClick(item)}
                 >
                     Send
                 </button>
