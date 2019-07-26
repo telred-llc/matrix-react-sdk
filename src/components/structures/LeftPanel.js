@@ -26,9 +26,8 @@ import dis from '../../dispatcher';
 import VectorConferenceHandler from '../../VectorConferenceHandler';
 import TagPanelButtons from './TagPanelButtons';
 import SettingsStore from '../../settings/SettingsStore';
-import {_t} from "../../languageHandler";
-import Analytics from "../../Analytics";
-
+import { _t } from '../../languageHandler';
+import Analytics from '../../Analytics';
 
 const LeftPanel = React.createClass({
     displayName: 'LeftPanel',
@@ -36,17 +35,17 @@ const LeftPanel = React.createClass({
     // NB. If you add props, don't forget to update
     // shouldComponentUpdate!
     propTypes: {
-        collapsed: PropTypes.bool.isRequired,
+        collapsed: PropTypes.bool.isRequired
     },
 
     contextTypes: {
-        matrixClient: PropTypes.instanceOf(MatrixClient),
+        matrixClient: PropTypes.instanceOf(MatrixClient)
     },
 
     getInitialState: function() {
         return {
             searchFilter: '',
-            breadcrumbs: false,
+            breadcrumbs: false
         };
     },
 
@@ -54,11 +53,14 @@ const LeftPanel = React.createClass({
         this.focusedElement = null;
 
         this._settingWatchRef = SettingsStore.watchSetting(
-            "breadcrumbs", null, this._onBreadcrumbsChanged);
+            'breadcrumbs',
+            null,
+            this._onBreadcrumbsChanged
+        );
 
-        const useBreadcrumbs = !!SettingsStore.getValue("breadcrumbs");
+        const useBreadcrumbs = !!SettingsStore.getValue('breadcrumbs');
         Analytics.setBreadcrumbs(useBreadcrumbs);
-        this.setState({breadcrumbs: useBreadcrumbs});
+        this.setState({ breadcrumbs: useBreadcrumbs });
     },
 
     componentWillUnmount: function() {
@@ -92,10 +94,16 @@ const LeftPanel = React.createClass({
         }
     },
 
-    _onBreadcrumbsChanged: function(settingName, roomId, level, valueAtLevel, value) {
+    _onBreadcrumbsChanged: function(
+        settingName,
+        roomId,
+        level,
+        valueAtLevel,
+        value
+    ) {
         // Features are only possible at a single level, so we can get away with using valueAtLevel.
         // The SettingsStore runs on the same tick as the update, so `value` will be wrong.
-        this.setState({breadcrumbs: valueAtLevel});
+        this.setState({ breadcrumbs: valueAtLevel });
 
         // For some reason the setState doesn't trigger a render of the component, so force one.
         // Probably has to do with the change happening outside of a change detector cycle.
@@ -151,8 +159,12 @@ const LeftPanel = React.createClass({
         let classes;
 
         do {
-            const child = up ? element.lastElementChild : element.firstElementChild;
-            const sibling = up ? element.previousElementSibling : element.nextElementSibling;
+            const child = up
+                ? element.lastElementChild
+                : element.firstElementChild;
+            const sibling = up
+                ? element.previousElementSibling
+                : element.nextElementSibling;
 
             if (descending) {
                 if (child) {
@@ -174,14 +186,21 @@ const LeftPanel = React.createClass({
 
             if (element) {
                 classes = element.classList;
-                if (classes.contains("mx_LeftPanel")) { // we hit the top
-                    element = up ? element.lastElementChild : element.firstElementChild;
+                if (classes.contains('mx_LeftPanel')) {
+                    // we hit the top
+                    element = up
+                        ? element.lastElementChild
+                        : element.firstElementChild;
                     descending = true;
                 }
             }
-        } while (element && !(
-            classes.contains("mx_RoomTile") ||
-            classes.contains("mx_textinput_search")));
+        } while (
+            element &&
+            !(
+                classes.contains('mx_RoomTile') ||
+                classes.contains('mx_textinput_search')
+            )
+        );
 
         if (element) {
             element.focus();
@@ -192,7 +211,7 @@ const LeftPanel = React.createClass({
 
     onHideClick: function() {
         dis.dispatch({
-            action: 'hide_left_panel',
+            action: 'hide_left_panel'
         });
     },
 
@@ -201,8 +220,8 @@ const LeftPanel = React.createClass({
     },
 
     onSearchCleared: function(source) {
-        if (source === "keyboard") {
-            dis.dispatch({action: 'focus_composer'});
+        if (source === 'keyboard') {
+            dis.dispatch({ action: 'focus_composer' });
         }
     },
 
@@ -214,63 +233,83 @@ const LeftPanel = React.createClass({
         const RoomList = sdk.getComponent('rooms.RoomList');
         const RoomBreadcrumbs = sdk.getComponent('rooms.RoomBreadcrumbs');
         const TagPanel = sdk.getComponent('structures.TagPanel');
-        const CustomRoomTagPanel = sdk.getComponent('structures.CustomRoomTagPanel');
-        const TopLeftMenuButton = sdk.getComponent('structures.TopLeftMenuButton');
+        const CustomRoomTagPanel = sdk.getComponent(
+            'structures.CustomRoomTagPanel'
+        );
+        const TopLeftMenuButton = sdk.getComponent(
+            'structures.TopLeftMenuButton'
+        );
         const SearchBox = sdk.getComponent('structures.SearchBox');
         const CallPreview = sdk.getComponent('voip.CallPreview');
 
-        const tagPanelEnabled = SettingsStore.getValue("TagPanel.enableTagPanel");
+        const tagPanelEnabled = SettingsStore.getValue(
+            'TagPanel.enableTagPanel'
+        );
         let tagPanelContainer;
 
-        const isCustomTagsEnabled = SettingsStore.isFeatureEnabled("feature_custom_tags");
+        const isCustomTagsEnabled = SettingsStore.isFeatureEnabled(
+            'feature_custom_tags'
+        );
 
         if (tagPanelEnabled) {
-            tagPanelContainer = (<div className="mx_LeftPanel_tagPanelContainer">
-                <TagPanel />
-                { isCustomTagsEnabled ? <CustomRoomTagPanel /> : undefined }
-                <TagPanelButtons />
-            </div>);
+            tagPanelContainer = (
+                <div className='mx_LeftPanel_tagPanelContainer'>
+                    <TagPanel />
+                    {isCustomTagsEnabled ? <CustomRoomTagPanel /> : undefined}
+                    <TagPanelButtons />
+                </div>
+            );
         }
 
         const containerClasses = classNames(
-            "mx_LeftPanel_container", "mx_fadable",
+            'mx_LeftPanel_container',
+            'mx_fadable',
             {
-                "collapsed": this.props.collapsed,
-                "mx_LeftPanel_container_hasTagPanel": tagPanelEnabled,
-                "mx_fadable_faded": this.props.disabled,
-            },
+                collapsed: this.props.collapsed,
+                mx_LeftPanel_container_hasTagPanel: tagPanelEnabled,
+                mx_fadable_faded: this.props.disabled
+            }
         );
 
-        const searchBox = (<SearchBox
-            enableRoomSearchFocus={true}
-            placeholder={ _t('Filter room names') }
-            onSearch={ this.onSearch }
-            onCleared={ this.onSearchCleared }
-            collapsed={this.props.collapsed} />);
+        const searchBox = (
+            <SearchBox
+                enableRoomSearchFocus={true}
+                placeholder={_t('Filter room names')}
+                onSearch={this.onSearch}
+                onCleared={this.onSearchCleared}
+                collapsed={this.props.collapsed}
+            />
+        );
 
         let breadcrumbs;
         if (this.state.breadcrumbs) {
-            breadcrumbs = (<RoomBreadcrumbs collapsed={this.props.collapsed} />);
+            breadcrumbs = <RoomBreadcrumbs collapsed={this.props.collapsed} />;
         }
 
         return (
             <div className={containerClasses}>
-                { tagPanelContainer }
-                <aside className={"mx_LeftPanel dark-panel"} onKeyDown={ this._onKeyDown } onFocus={ this._onFocus } onBlur={ this._onBlur }>
-                    <TopLeftMenuButton collapsed={ this.props.collapsed } />
-                    { breadcrumbs }
-                    { searchBox }
+                {tagPanelContainer}
+                <aside
+                    className={'mx_LeftPanel dark-panel'}
+                    onKeyDown={this._onKeyDown}
+                    onFocus={this._onFocus}
+                    onBlur={this._onBlur}
+                >
+                    <TopLeftMenuButton collapsed={this.props.collapsed} />
+                    {/* breadcrumbs */}
+                    {searchBox}
                     <CallPreview ConferenceHandler={VectorConferenceHandler} />
                     <RoomList
                         ref={this.collectRoomList}
                         resizeNotifier={this.props.resizeNotifier}
                         collapsed={this.props.collapsed}
                         searchFilter={this.state.searchFilter}
-                        ConferenceHandler={VectorConferenceHandler} />
+                        ConferenceHandler={VectorConferenceHandler}
+                    />
                 </aside>
             </div>
         );
-    },
+    }
 });
 
 module.exports = LeftPanel;
