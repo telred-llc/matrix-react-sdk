@@ -104,7 +104,7 @@ export default class ImageView extends React.Component {
                                 }
                             );
                         })
-                        .done();
+                        .done(this.props.onFinished());
                 }
             }
         );
@@ -186,7 +186,7 @@ export default class ImageView extends React.Component {
             sizeRes = size || res;
         }
 
-        let mayRedact = true;
+        let mayRedact = false;
         const showEventMeta = !!this.props.mxEvent;
 
         let eventMeta;
