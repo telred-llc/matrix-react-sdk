@@ -23,9 +23,16 @@ import { _t } from '../../../languageHandler';
 export default React.createClass({
     displayName: 'CreateRoomDialog',
     propTypes: {
-        onFinished: PropTypes.func.isRequired,
+        onFinished: PropTypes.func.isRequired
     },
-
+    getInitialState: function() {
+        return {
+            joinRule: 'invite',
+            guestAccess: 'can_join',
+            history: 'shared',
+            encrypted: false
+        };
+    },
     componentWillMount: function() {
         const config = SdkConfig.get();
         // Dialog shows inverse of m.federate (noFederate) strict false check to skip undefined check (default = true)
@@ -33,7 +40,79 @@ export default React.createClass({
     },
 
     onOk: function() {
-        this.props.onFinished(true, this.refs.textinput.value, this.refs.checkbox.checked);
+        const guestAccessState = {
+            guest_access: this.state.guestAccess
+        };
+        const joinRuleState = {
+            join_rule: this.state.joinRule
+        };
+        this.props.onFinished(
+            true,
+            this.refs.textinput.value,
+            guestAccessState,
+            joinRuleState
+        );
+    },
+    _onRoomAccessRadioToggle: function(ev) {
+        let joinRule = 'invite';
+        let guestAccess = 'can_join';
+
+        switch (ev.target.value) {
+            case 'invite_only':
+                // no change - use defaults above
+                break;
+            case 'public_no_guests':
+                joinRule = 'public';
+                guestAccess = 'forbidden';
+                break;
+            case 'public_with_guests':
+                joinRule = 'public';
+                guestAccess = 'can_join';
+                break;
+        }
+        this.setState({ joinRule: joinRule, guestAccess: guestAccess });
+    },
+    _renderRoomAccess() {
+        const joinRule = this.state.joinRule;
+        const guestAccess = this.state.guestAccess;
+        return (
+            <div>
+                <label>
+                    <input
+                        type='radio'
+                        name='roomVis'
+                        value='invite_only'
+                        onChange={this._onRoomAccessRadioToggle}
+                        checked={joinRule !== 'public'}
+                    />
+                    {_t('Only people who have been invited')}
+                </label>
+                <label>
+                    <input
+                        type='radio'
+                        name='roomVis'
+                        value='public_no_guests'
+                        onChange={this._onRoomAccessRadioToggle}
+                        checked={
+                            joinRule === 'public' && guestAccess !== 'can_join'
+                        }
+                    />
+                    {_t("Anyone who knows the room's link, apart from guests")}
+                </label>
+                <label>
+                    <input
+                        type='radio'
+                        name='roomVis'
+                        value='public_with_guests'
+                        onChange={this._onRoomAccessRadioToggle}
+                        checked={
+                            joinRule === 'public' && guestAccess === 'can_join'
+                        }
+                    />
+                    {_t("Anyone who knows the room's link, including guests")}
+                </label>
+            </div>
+        );
     },
 
     onCancel: function() {
@@ -44,36 +123,52 @@ export default React.createClass({
         const BaseDialog = sdk.getComponent('views.dialogs.BaseDialog');
         const DialogButtons = sdk.getComponent('views.elements.DialogButtons');
         return (
-            <BaseDialog className="mx_CreateRoomDialog" onFinished={this.props.onFinished}
+            <BaseDialog
+                className='mx_CreateRoomDialog'
+                onFinished={this.props.onFinished}
                 title={_t('Create Room')}
             >
                 <form onSubmit={this.onOk}>
-                    <div className="mx_Dialog_content">
-                        <div className="mx_CreateRoomDialog_label">
-                            <label htmlFor="textinput"> { _t('Room name (optional)') } </label>
+                    <div className='mx_Dialog_content'>
+                        <div className='mx_CreateRoomDialog_label'>
+                            <label htmlFor='textinput'>
+                                {' '}
+                                {_t('Room name (optional)')}{' '}
+                            </label>
                         </div>
-                        <div className="mx_CreateRoomDialog_input_container">
-                            <input id="textinput" ref="textinput" className="mx_CreateRoomDialog_input" autoFocus={true} />
+                        <div className='mx_CreateRoomDialog_input_container'>
+                            <input
+                                id='textinput'
+                                ref='textinput'
+                                className='mx_CreateRoomDialog_input'
+                                autoFocus={true}
+                            />
                         </div>
                         <br />
 
-                        <details className="mx_CreateRoomDialog_details">
-                            <summary className="mx_CreateRoomDialog_details_summary">{ _t('Advanced options') }</summary>
+                        <details className='mx_CreateRoomDialog_details'>
+                            <summary className='mx_CreateRoomDialog_details_summary'>
+                                {_t('Advanced options')}
+                            </summary>
                             <div>
-                                <input type="checkbox" id="checkbox" ref="checkbox" defaultChecked={this.defaultNoFederate} />
-                                <label htmlFor="checkbox">
-                                { _t('Block users on other matrix homeservers from joining this room') }
-                                    <br />
-                                    ({ _t('This setting cannot be changed later!') })
-                                </label>
+                                <div className='mx_SettingsTab mx_SecurityRoomSettingsTab'>
+                                    <span className='mx_SettingsTab_subheading'>
+                                        {_t('Who can access this room?')}
+                                    </span>
+                                    <div className='mx_SettingsTab_section mx_SettingsTab_subsectionText'>
+                                        {this._renderRoomAccess()}
+                                    </div>
+                                </div>
                             </div>
                         </details>
                     </div>
                 </form>
-                <DialogButtons primaryButton={_t('Create Room')}
+                <DialogButtons
+                    primaryButton={_t('Create Room')}
                     onPrimaryButtonClick={this.onOk}
-                    onCancel={this.onCancel} />
+                    onCancel={this.onCancel}
+                />
             </BaseDialog>
         );
-    },
+    }
 });

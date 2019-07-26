@@ -884,7 +884,7 @@ module.exports = React.createClass({
                 order: 'recent',
                 incomingCall: incomingCallIfTaggedAs('im.vector.fake.recent'),
                 onAddRoom: () => {
-                    dis.dispatch({ action: 'view_room_directory' });
+                    dis.dispatch({ action: 'view_create_room' });
                 }
             }
         ];
