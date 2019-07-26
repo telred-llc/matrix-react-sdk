@@ -108,6 +108,9 @@ function createRoom(opts) {
         })
         .then(function(res) {
             roomId = res.room_id;
+            MatrixClientPeg.get().sendStateEvent(roomId, 'm.room.encryption', {
+                algorithm: 'm.megolm.v1.aes-sha2'
+            });
             MatrixClientPeg.get()
                 .sendStateEvent(
                     roomId,
