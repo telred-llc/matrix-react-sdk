@@ -37,7 +37,6 @@ import { getAddressType } from './UserAddress';
  * action was aborted or failed.
  */
 function createRoom(opts) {
-    debugger;
     opts = opts || {};
     if (opts.spinner === undefined) opts.spinner = true;
 
@@ -109,6 +108,26 @@ function createRoom(opts) {
         })
         .then(function(res) {
             roomId = res.room_id;
+            MatrixClientPeg.get()
+                .sendStateEvent(
+                    roomId,
+                    'm.room.guest_access',
+                    createOpts.guest_access,
+                    ''
+                )
+                .catch(e => {
+                    console.error(e);
+                });
+            MatrixClientPeg.get()
+                .sendStateEvent(
+                    roomId,
+                    'm.room.join_rules',
+                    createOpts.join_rule,
+                    ''
+                )
+                .catch(e => {
+                    console.error(e);
+                });
             if (opts.dmUserId) {
                 return Rooms.setDMRoom(roomId, opts.dmUserId);
             } else {
