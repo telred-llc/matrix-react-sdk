@@ -305,7 +305,7 @@ export const SETTINGS = {
                 'Never send encrypted messages to unverified devices in this room from this device'
             )
         },
-        default: true
+        default: false
     },
     urlPreviewsEnabled: {
         supportedLevels: LEVELS_ROOM_SETTINGS_WITH_ROOM,
