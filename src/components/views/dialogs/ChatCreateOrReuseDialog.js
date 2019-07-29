@@ -131,10 +131,29 @@ export default class ChatCreateOrReuseDialog extends React.Component {
         this.props.onFinished(false);
     }
 
+    renderDirectMsgExistedTile(roomId) {
+        const RoomTile = sdk.getComponent('rooms.RoomTile');
+        const client = MatrixClientPeg.get();
+        const room = client.getRoom(roomId);
+        return (
+            <RoomTile
+                key={roomId}
+                room={room}
+                transparent={true}
+                collapsed={false}
+                selected={false}
+                unread={Unread.doesRoomHaveUnreadMessages(room)}
+                onClick={this.onRoomTileClick}
+                highlight={false}
+                isInvite={false}
+            />
+        );
+    }
+
     render() {
         let title = '';
         let content = null;
-        if (this.state.tiles.length > 0) {
+        if (this.state.tiles.length > 0 || this.props.directMsgExistedRoom) {
             // Show the existing rooms with a "+" to add a new dm
             title = _t('Create a new chat or reuse an existing one');
             const labelClasses = classNames({
@@ -164,7 +183,13 @@ export default class ChatCreateOrReuseDialog extends React.Component {
                         'You already have existing direct chats with this user:'
                     )}
                     <div className='mx_ChatCreateOrReuseDialog_tiles'>
-                        {this.state.tiles}
+                        {this.props.directMsgExistedRoom
+                            ? this.renderDirectMsgExistedTile(
+                                  this.props.directMsgExistedRoom
+                              )
+                            : this.state.tiles}
+                        {/*this.state.tiles*/}
+
                         {/*{ startNewChat }*/}
                     </div>
                 </div>
