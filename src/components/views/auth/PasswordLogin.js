@@ -20,9 +20,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import sdk from '../../../index';
-import { _t } from '../../../languageHandler';
+import {_t} from '../../../languageHandler';
 import SdkConfig from '../../../SdkConfig';
-import { ValidatedServerConfig } from '../../../utils/AutoDiscoveryUtils';
+import {ValidatedServerConfig} from '../../../utils/AutoDiscoveryUtils';
 
 /**
  * A pure UI component which displays a username/password form.
@@ -42,11 +42,15 @@ export default class PasswordLogin extends React.Component {
     };
 
     static defaultProps = {
-        onError: function() {},
+        onError: function () {
+        },
         onEditServerDetailsClick: null,
-        onUsernameChanged: function() {},
-        onUsernameBlur: function() {},
-        onPasswordChanged: function() {},
+        onUsernameChanged: function () {
+        },
+        onUsernameBlur: function () {
+        },
+        onPasswordChanged: function () {
+        },
         initialUsername: '',
         initialPassword: '',
         loginIncorrect: false,
@@ -121,7 +125,7 @@ export default class PasswordLogin extends React.Component {
     }
 
     onUsernameChanged(ev) {
-        this.setState({ username: ev.target.value });
+        this.setState({username: ev.target.value});
         this.props.onUsernameChanged(ev.target.value);
     }
 
@@ -139,7 +143,7 @@ export default class PasswordLogin extends React.Component {
     }
 
     onPasswordChanged(ev) {
-        this.setState({ password: ev.target.value });
+        this.setState({password: ev.target.value});
         this.props.onPasswordChanged(ev.target.value);
     }
 
@@ -148,43 +152,23 @@ export default class PasswordLogin extends React.Component {
 
         const classes = {};
 
-        switch (loginType) {
-            case PasswordLogin.LOGIN_FIELD_EMAIL:
-                classes.error =
-                    this.props.loginIncorrect && !this.state.username;
-                return (
-                    <Field
-                        className={classNames(classes)}
-                        id='mx_PasswordLogin_email'
-                        name='username' // make it a little easier for browser's remember-password
-                        key='email_input'
-                        type='text'
-                        label={_t('Email')}
-                        placeholder='joe@example.com'
-                        value={this.state.username}
-                        onChange={this.onUsernameChanged}
-                        onBlur={this.onUsernameBlur}
-                        autoFocus
-                    />
-                );
-            case PasswordLogin.LOGIN_FIELD_MXID:
-                classes.error =
-                    this.props.loginIncorrect && !this.state.username;
-                return (
-                    <Field
-                        className={classNames(classes)}
-                        id='mx_PasswordLogin_username'
-                        name='username' // make it a little easier for browser's remember-password
-                        key='username_input'
-                        type='text'
-                        label={_t('Username')}
-                        value={this.state.username}
-                        onChange={this.onUsernameChanged}
-                        onBlur={this.onUsernameBlur}
-                        autoFocus
-                    />
-                );
-        }
+        classes.error =
+            this.props.loginIncorrect && !this.state.username;
+        return (
+            <Field
+                className={classNames(classes)}
+                id='mx_PasswordLogin_email'
+                name='username' // make it a little easier for browser's remember-password
+                key='email_input'
+                type='text'
+                label={_t('Username')}
+                placeholder='username'
+                value={this.state.username}
+                onChange={this.onUsernameChanged}
+                onBlur={this.onUsernameBlur}
+                autoFocus
+            />
+        );
     }
 
     isLoginEmpty() {
@@ -222,92 +206,20 @@ export default class PasswordLogin extends React.Component {
             );
         }
 
-        let signInToText = _t(
-            'Sign in to your Matrix account on %(serverName)s',
-            {
-                serverName: this.props.serverConfig.hsName
-            }
-        );
         if (this.props.serverConfig.hsNameIsDifferent) {
             const TextWithTooltip = sdk.getComponent(
                 'elements.TextWithTooltip'
             );
-
-            signInToText = _t(
-                'Sign in to your Matrix account on <underlinedServerName />',
-                {},
-                {
-                    underlinedServerName: () => {
-                        return (
-                            <TextWithTooltip
-                                class='mx_Login_underlinedServerName'
-                                tooltip={this.props.serverConfig.hsUrl}
-                            >
-                                {this.props.serverConfig.hsName}
-                            </TextWithTooltip>
-                        );
-                    }
-                }
-            );
         }
-
-        let editLink = null;
-        if (this.props.onEditServerDetailsClick) {
-            editLink = (
-                <a
-                    className='mx_AuthBody_editServerDetails'
-                    href='#'
-                    onClick={this.props.onEditServerDetailsClick}
-                >
-                    {_t('Change')}
-                </a>
-            );
-        }
-
         const pwFieldClass = classNames({
             error: this.props.loginIncorrect && !this.isLoginEmpty() // only error password if error isn't top field
         });
 
         const loginField = this.renderLoginField(this.state.loginType);
 
-        let loginType;
-        if (!SdkConfig.get().disable_3pid_login) {
-            loginType = (
-                <div className='mx_Login_type_container'>
-                    <label className='mx_Login_type_label'>
-                        {_t('Sign in with')}
-                    </label>
-                    <Field
-                        id='mx_PasswordLogin_type'
-                        element='select'
-                        value={this.state.loginType}
-                        onChange={this.onLoginTypeChange}
-                    >
-                        <option
-                            key={PasswordLogin.LOGIN_FIELD_MXID}
-                            value={PasswordLogin.LOGIN_FIELD_MXID}
-                        >
-                            {_t('Username')}
-                        </option>
-                        <option
-                            key={PasswordLogin.LOGIN_FIELD_EMAIL}
-                            value={PasswordLogin.LOGIN_FIELD_EMAIL}
-                        >
-                            {_t('Email address')}
-                        </option>
-                    </Field>
-                </div>
-            );
-        }
-
         return (
             <div>
-                <h3>
-                    {signInToText}
-                    {editLink}
-                </h3>
                 <form onSubmit={this.onSubmitForm}>
-                    {loginType}
                     {loginField}
                     <Field
                         className={pwFieldClass}
