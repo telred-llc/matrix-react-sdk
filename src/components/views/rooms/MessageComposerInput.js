@@ -1117,6 +1117,9 @@ export default class MessageComposerInput extends React.Component {
                 action: 'message_sent',
             });
         }).catch((e) => {
+            if (e.name === 'UnknownDeviceError') {
+                console.log('resend');
+            }
             onSendMessageFailed(e, this.props.room);
         });
 

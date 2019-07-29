@@ -49,9 +49,10 @@ function createRoom(opts) {
         return Promise.resolve(null);
     }
 
-    const defaultPreset = opts.dmUserId
-        ? 'trusted_private_chat'
-        : 'private_chat';
+    // const defaultPreset = opts.dmUserId
+    //     ? 'trusted_private_chat'
+    //     : 'private_chat';
+    const defaultPreset = 'private_chat';
 
     // set some defaults for the creation
     const createOpts = opts.createOpts || {};

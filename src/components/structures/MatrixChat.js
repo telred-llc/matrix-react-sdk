@@ -669,7 +669,6 @@ export default React.createClass({
                 this.setState({ checkingForUpdate: payload.value });
                 break;
             case 'send_event':
-                debugger;
                 this.onSendEvent(payload.room_id, payload.event);
                 break;
             case 'aria_hide_main_app':
@@ -1798,7 +1797,6 @@ export default React.createClass({
     },
 
     onSendEvent: function(roomId, event) {
-        debugger;
         const cli = MatrixClientPeg.get();
         if (!cli) {
             dis.dispatch({action: 'message_send_failed'});
