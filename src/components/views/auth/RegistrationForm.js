@@ -529,10 +529,6 @@ module.exports = React.createClass({
 
         return (
             <div>
-                <h3>
-                    {yourMatrixAccountText}
-                    {editLink}
-                </h3>
                 <form onSubmit={this.onSubmit}>
                     <div className='mx_AuthBody_fieldRow'>
                         {this.renderUsername()}
