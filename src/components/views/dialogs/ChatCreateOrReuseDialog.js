@@ -144,8 +144,8 @@ export default class ChatCreateOrReuseDialog extends React.Component {
                 selected={false}
                 unread={Unread.doesRoomHaveUnreadMessages(room)}
                 onClick={this.onRoomTileClick}
-                highlight={false}
-                isInvite={false}
+                highlight={true}
+                isInvite={true}
             />
         );
     }

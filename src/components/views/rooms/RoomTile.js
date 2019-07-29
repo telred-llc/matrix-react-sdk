@@ -31,7 +31,7 @@ import AccessibleButton from '../elements/AccessibleButton';
 import ActiveRoomObserver from '../../../ActiveRoomObserver';
 import RoomViewStore from '../../../stores/RoomViewStore';
 import SettingsStore from '../../../settings/SettingsStore';
-import { setInterval } from 'timers';
+// import { setInterval } from 'timers';
 
 module.exports = React.createClass({
     displayName: 'RoomTile',
