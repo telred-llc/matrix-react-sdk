@@ -108,7 +108,6 @@ function createRoom(opts) {
             if (modal) modal.close();
         })
         .then(function(res) {
-            debugger;
             roomId = res.room_id;
             MatrixClientPeg.get()
                 .getRoom(roomId)
@@ -137,8 +136,10 @@ function createRoom(opts) {
                     console.error(e);
                 });
             if (opts.dmUserId) {
+                console.log('**** IF BLOCK');
                 return Rooms.setDMRoom(roomId, opts.dmUserId);
             } else {
+                console.log('**** ELSE BLOCK');
                 return Promise.resolve();
             }
         })
