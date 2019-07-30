@@ -261,6 +261,9 @@ module.exports = withMatrixClient(React.createClass({
             this.props.onHeightChanged();
         });
     },
+    _isMyMessage: function() {
+        return this.props.mxEvent.sender.userId === this.props.matrixClient.credentials.userId;
+    },
 
     _propsEqual: function(objA, objB) {
         const keysA = Object.keys(objA);
@@ -577,6 +580,7 @@ module.exports = withMatrixClient(React.createClass({
             mx_EventTile_bad: isEncryptionFailure,
             mx_EventTile_emote: msgtype === 'm.emote',
             mx_EventTile_redacted: isRedacted,
+            mx_EventTile_myMsg: this._isMyMessage()
         });
 
         let permalink = "#";
