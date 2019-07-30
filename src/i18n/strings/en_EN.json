@@ -248,7 +248,7 @@
     "%(widgetName)s widget added by %(senderName)s": "%(widgetName)s widget added by %(senderName)s",
     "%(widgetName)s widget removed by %(senderName)s": "%(widgetName)s widget removed by %(senderName)s",
     "%(displayName)s is typing …": "%(displayName)s is typing...",
-    "%(names)s and %(count)s others are typing …|other": "%(names)s and %(count)s others are typing …",
+    "%(names)s and %(count)s others are typing …|other": "%(names)s and %(count)s others are typing...",
     "%(names)s and %(count)s others are typing …|one": "%(names)s and one other is typing...",
     "%(names)s and %(lastPerson)s are typing …": "%(names)s and %(lastPerson)s are typing...",
     "Cannot reach homeserver": "Cannot reach homeserver",
