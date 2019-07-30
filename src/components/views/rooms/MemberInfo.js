@@ -776,6 +776,11 @@ module.exports = withMatrixClient(React.createClass({
         );
     },
 
+    _isDirectMessageRoom: function(roomId) {
+        const dmRooms = DMRoomMap.shared().getUserIdForRoomId(roomId);
+        return Boolean(dmRooms);
+    },
+
     render: function() {
         let startChat;
         let kickButton;
@@ -826,7 +831,7 @@ module.exports = withMatrixClient(React.createClass({
                 mx_MemberInfo_createRoom_label: true,
                 mx_RoomTile_name: true,
             });
-            const startNewChat = <AccessibleButton
+            const startNewChat = this._isDirectMessageRoom() ? null : <AccessibleButton
                 className="mx_MemberInfo_createRoom"
                 onClick={this.onNewDMClick}
             >
