@@ -531,10 +531,11 @@ module.exports = withMatrixClient(React.createClass({
     },
 
     onNewDMClick: function() {
-        this.setState({ updating: this.state.updating + 1 });
-        createRoom({dmUserId: this.props.member.userId}).finally(() => {
-            this.setState({ updating: this.state.updating - 1 });
-        }).done();
+        // this.setState({ updating: this.state.updating + 1 });
+        // createRoom({dmUserId: this.props.member.userId}).finally(() => {
+        //     this.setState({ updating: this.state.updating - 1 });
+        // }).done();
+        dis.dispatch({ action: 'view_create_chat' });
     },
 
     onLeaveClick: function() {
@@ -1013,7 +1014,7 @@ module.exports = withMatrixClient(React.createClass({
 
                             { startChat }
 
-                            { this._renderDevices() }
+                            { /* this._renderDevices() */}
 
                             { spinner }
                         </div>

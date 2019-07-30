@@ -587,6 +587,7 @@ export default React.createClass({
                 this._chatCreateOrReuse(payload.user_id, payload.go_home_on_cancel);
                 break;
             case 'view_create_chat':
+                debugger;
                 showStartChatInviteDialog();
                 break;
             case 'view_invite':
