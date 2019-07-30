@@ -831,7 +831,7 @@ module.exports = withMatrixClient(React.createClass({
                 mx_MemberInfo_createRoom_label: true,
                 mx_RoomTile_name: true,
             });
-            const startNewChat = this._isDirectMessageRoom() ? null : <AccessibleButton
+            const startNewChat = <AccessibleButton
                 className="mx_MemberInfo_createRoom"
                 onClick={this.onNewDMClick}
             >
@@ -840,8 +840,7 @@ module.exports = withMatrixClient(React.createClass({
                 </div>
                 <div className={labelClasses}><i>{ _t("Start a chat") }</i></div>
             </AccessibleButton>;
-
-            startChat = <div>
+            startChat = this._isDirectMessageRoom(this.props.member.roomId) ? null : <div>
                 <h3>{ _t("Direct chats") }</h3>
                 { tiles }
                 { startNewChat }
