@@ -1012,7 +1012,7 @@ module.exports = withMatrixClient(React.createClass({
 
                             { adminTools }
 
-                            { startChat }
+                            {/* startChat */}
 
                             { /* this._renderDevices() */}
 

@@ -89,7 +89,6 @@ function _onStartChatFinished(shouldInvite, addrs) {
     if (!shouldInvite) return;
 
     const addrTexts = addrs.map(addr => addr.address);
-    debugger;
 
     if (_isDmChat(addrTexts)) {
         const rooms = _getDirectMessageRooms(addrTexts[0]);
