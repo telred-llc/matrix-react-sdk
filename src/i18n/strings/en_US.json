@@ -185,7 +185,7 @@
     "Invites user with given id to current room": "Invites user with given id to current room",
     "'%(alias)s' is not a valid format for an address": "'%(alias)s' is not a valid format for an address",
     "'%(alias)s' is not a valid format for an alias": "'%(alias)s' is not a valid format for an alias",
-    "%(displayName)s is typing": "%(displayName)s is typing",
+    "%(displayName)s is typing": "%(displayName)s is typing...",
     "Sign in with": "Sign in with",
     "Join Room": "Join Room",
     "%(targetName)s joined the room.": "%(targetName)s joined the room.",
@@ -939,7 +939,7 @@
     "%(senderName)s removed the main address for this room.": "%(senderName)s removed the main address for this room.",
     "%(senderName)s revoked the invitation for %(targetDisplayName)s to join the room.": "%(senderName)s revoked the invitation for %(targetDisplayName)s to join the room.",
     "%(widgetName)s widget modified by %(senderName)s": "%(widgetName)s widget modified by %(senderName)s",
-    "%(displayName)s is typing …": "%(displayName)s is typing",
+    "%(displayName)s is typing …": "%(displayName)s is typing...",
     "%(names)s and %(count)s others are typing …|other": "%(names)s and %(count)s others are typing …",
     "Your ClearKeep is misconfigured": "Your ClearKeep is misconfigured"
 }
