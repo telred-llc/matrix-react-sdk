@@ -873,7 +873,6 @@ module.exports = React.createClass({
                 order: 'recent',
                 incomingCall: incomingCallIfTaggedAs('im.vector.fake.direct'),
                 onAddRoom: () => {
-                    debugger;
                     dis.dispatch({ action: 'view_create_chat' });
                 },
                 addRoomLabel: _t('Start chat')

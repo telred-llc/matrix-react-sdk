@@ -88,7 +88,6 @@ export default class TopLeftMenuButton extends React.Component {
         } else if (payload.action === 'profile_name_changed') {
             this._getProfileInfo()
                 .then(profileInfo => {
-                    debugger;
                     this.setState({ profileInfo });
                 })
                 .catch(err => console.err(err));

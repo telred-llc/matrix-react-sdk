@@ -108,6 +108,7 @@ function createRoom(opts) {
             if (modal) modal.close();
         })
         .then(function(res) {
+            debugger;
             roomId = res.room_id;
             MatrixClientPeg.get()
                 .getRoom(roomId)
