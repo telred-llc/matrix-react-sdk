@@ -109,32 +109,32 @@ function createRoom(opts) {
         })
         .then(function(res) {
             roomId = res.room_id;
-            MatrixClientPeg.get()
-                .getRoom(roomId)
-                .setBlacklistUnverifiedDevices(false);
-            MatrixClientPeg.get().sendStateEvent(roomId, 'm.room.encryption', {
-                algorithm: 'm.megolm.v1.aes-sha2'
-            });
-            MatrixClientPeg.get()
-                .sendStateEvent(
-                    roomId,
-                    'm.room.guest_access',
-                    createOpts.guest_access,
-                    ''
-                )
-                .catch(e => {
-                    console.error(e);
-                });
-            MatrixClientPeg.get()
-                .sendStateEvent(
-                    roomId,
-                    'm.room.join_rules',
-                    createOpts.join_rule,
-                    ''
-                )
-                .catch(e => {
-                    console.error(e);
-                });
+            // MatrixClientPeg.get()
+            //     .getRoom(roomId)
+            //     .setBlacklistUnverifiedDevices(false);
+            // MatrixClientPeg.get().sendStateEvent(roomId, 'm.room.encryption', {
+            //     algorithm: 'm.megolm.v1.aes-sha2'
+            // });
+            // MatrixClientPeg.get()
+            //     .sendStateEvent(
+            //         roomId,
+            //         'm.room.guest_access',
+            //         createOpts.guest_access,
+            //         ''
+            //     )
+            //     .catch(e => {
+            //         console.error(e);
+            //     });
+            // MatrixClientPeg.get()
+            //     .sendStateEvent(
+            //         roomId,
+            //         'm.room.join_rules',
+            //         createOpts.join_rule,
+            //         ''
+            //     )
+            //     .catch(e => {
+            //         console.error(e);
+            //     });
             if (opts.dmUserId) {
                 console.log('**** IF BLOCK');
                 return Rooms.setDMRoom(roomId, opts.dmUserId);
