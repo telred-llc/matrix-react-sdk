@@ -20,9 +20,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import sdk from '../../../index';
-import {_t} from '../../../languageHandler';
+import { _t } from '../../../languageHandler';
 import SdkConfig from '../../../SdkConfig';
-import {ValidatedServerConfig} from '../../../utils/AutoDiscoveryUtils';
+import { ValidatedServerConfig } from '../../../utils/AutoDiscoveryUtils';
 
 /**
  * A pure UI component which displays a username/password form.
@@ -42,15 +42,11 @@ export default class PasswordLogin extends React.Component {
     };
 
     static defaultProps = {
-        onError: function () {
-        },
+        onError: function() {},
         onEditServerDetailsClick: null,
-        onUsernameChanged: function () {
-        },
-        onUsernameBlur: function () {
-        },
-        onPasswordChanged: function () {
-        },
+        onUsernameChanged: function() {},
+        onUsernameBlur: function() {},
+        onPasswordChanged: function() {},
         initialUsername: '',
         initialPassword: '',
         loginIncorrect: false,
@@ -125,7 +121,7 @@ export default class PasswordLogin extends React.Component {
     }
 
     onUsernameChanged(ev) {
-        this.setState({username: ev.target.value});
+        this.setState({ username: ev.target.value });
         this.props.onUsernameChanged(ev.target.value);
     }
 
@@ -143,7 +139,7 @@ export default class PasswordLogin extends React.Component {
     }
 
     onPasswordChanged(ev) {
-        this.setState({password: ev.target.value});
+        this.setState({ password: ev.target.value });
         this.props.onPasswordChanged(ev.target.value);
     }
 
@@ -152,8 +148,7 @@ export default class PasswordLogin extends React.Component {
 
         const classes = {};
 
-        classes.error =
-            this.props.loginIncorrect && !this.state.username;
+        classes.error = this.props.loginIncorrect && !this.state.username;
         return (
             <Field
                 className={classNames(classes)}
@@ -162,7 +157,7 @@ export default class PasswordLogin extends React.Component {
                 key='email_input'
                 type='text'
                 label={_t('Username')}
-                placeholder='username'
+                placeholder='Username'
                 value={this.state.username}
                 onChange={this.onUsernameChanged}
                 onBlur={this.onUsernameBlur}
