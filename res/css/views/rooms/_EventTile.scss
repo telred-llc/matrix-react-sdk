@@ -41,6 +41,11 @@ limitations under the License.
     left: 8px !important;
     max-width: calc(27px * 4);
   }
+
+  & .mx_MessageEditor_editor {
+    overflow-x: inherit;
+    text-align: left;
+  }
 }
 
 .mx_EventTile.mx_EventTile_info {
