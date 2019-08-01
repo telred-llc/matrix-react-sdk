@@ -91,6 +91,7 @@ export default class ProfileSettings extends React.Component {
             );
             newState.originalAvatarUrl = newState.avatarUrl;
             newState.avatarFile = null;
+            dis.dispatch({ action: 'profile_img_changed' });
         }
 
         this.setState(newState);

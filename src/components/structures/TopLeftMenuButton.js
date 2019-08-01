@@ -85,7 +85,10 @@ export default class TopLeftMenuButton extends React.Component {
         // For accessibility
         if (payload.action === 'toggle_top_left_menu') {
             if (this._buttonRef) this._buttonRef.click();
-        } else if (payload.action === 'profile_name_changed') {
+        } else if (
+            payload.action === 'profile_name_changed' ||
+            payload.action === 'profile_img_changed'
+        ) {
             this._getProfileInfo()
                 .then(profileInfo => {
                     this.setState({ profileInfo });
