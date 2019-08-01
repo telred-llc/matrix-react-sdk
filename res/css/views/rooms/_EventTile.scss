@@ -46,6 +46,10 @@ limitations under the License.
     overflow-x: inherit;
     text-align: left;
   }
+
+  & .mx_EventTile_readAvatars {
+    top: 7px;
+  }
 }
 
 .mx_EventTile.mx_EventTile_info {
