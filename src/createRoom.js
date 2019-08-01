@@ -169,7 +169,8 @@ function createRoom(opts) {
                 // let description = _t(
                 //     'Server may be unavailable, overloaded, or you hit a bug.'
                 // );
-                let description = 'This user is no longer exist.';
+                let description =
+                    'This user does not exist. Please try another name';
                 if (err.errcode === 'M_UNSUPPORTED_ROOM_VERSION') {
                     // Technically not possible with the UI as of April 2019 because there's no
                     // options for the user to change this. However, it's not a bad thing to report
