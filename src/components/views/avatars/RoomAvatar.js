@@ -13,12 +13,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import React from "react";
+import React from 'react';
 import PropTypes from 'prop-types';
-import {ContentRepo} from "matrix-js-sdk";
-import MatrixClientPeg from "../../../MatrixClientPeg";
+import { ContentRepo } from 'matrix-js-sdk';
+import MatrixClientPeg from '../../../MatrixClientPeg';
 import Modal from '../../../Modal';
-import sdk from "../../../index";
+import sdk from '../../../index';
 import Avatar from '../../../Avatar';
 
 module.exports = React.createClass({
@@ -33,7 +33,7 @@ module.exports = React.createClass({
         width: PropTypes.number,
         height: PropTypes.number,
         resizeMethod: PropTypes.string,
-        viewAvatarOnClick: PropTypes.bool,
+        viewAvatarOnClick: PropTypes.bool
     },
 
     getDefaultProps: function() {
@@ -41,56 +41,59 @@ module.exports = React.createClass({
             width: 36,
             height: 36,
             resizeMethod: 'crop',
-            oobData: {},
+            oobData: {}
         };
     },
 
     getInitialState: function() {
         return {
-            urls: this.getImageUrls(this.props),
+            urls: this.getImageUrls(this.props)
         };
     },
 
     componentWillMount: function() {
-        MatrixClientPeg.get().on("RoomState.events", this.onRoomStateEvents);
+        MatrixClientPeg.get().on('RoomState.events', this.onRoomStateEvents);
     },
 
     componentWillUnmount: function() {
         const cli = MatrixClientPeg.get();
         if (cli) {
-            cli.removeListener("RoomState.events", this.onRoomStateEvents);
+            cli.removeListener('RoomState.events', this.onRoomStateEvents);
         }
     },
 
     componentWillReceiveProps: function(newProps) {
         this.setState({
-            urls: this.getImageUrls(newProps),
+            urls: this.getImageUrls(newProps)
         });
     },
 
     onRoomStateEvents: function(ev) {
-        if (!this.props.room ||
+        if (
+            !this.props.room ||
             ev.getRoomId() !== this.props.room.roomId ||
             ev.getType() !== 'm.room.avatar'
-        ) return;
+        )
+            return;
 
         this.setState({
-            urls: this.getImageUrls(this.props),
+            urls: this.getImageUrls(this.props)
         });
     },
 
     getImageUrls: function(props) {
+        const cli = MatrixClientPeg.get();
         return [
             ContentRepo.getHttpUriForMxc(
-                MatrixClientPeg.get().getHomeserverUrl(),
+                cli.getHomeserverUrl(),
                 props.oobData.avatarUrl,
                 Math.floor(props.width * window.devicePixelRatio),
                 Math.floor(props.height * window.devicePixelRatio),
-                props.resizeMethod,
+                props.resizeMethod
             ), // highest priority
-            this.getRoomAvatarUrl(props),
+            this.getRoomAvatarUrl(props)
         ].filter(function(url) {
-            return (url != null && url != "");
+            return url != null && url != '';
         });
     },
 
@@ -101,37 +104,53 @@ module.exports = React.createClass({
             props.room,
             Math.floor(props.width * window.devicePixelRatio),
             Math.floor(props.height * window.devicePixelRatio),
-            props.resizeMethod,
+            props.resizeMethod
         );
     },
 
     onRoomAvatarClick: function() {
-        const avatarUrl = this.props.room.getAvatarUrl(
-            MatrixClientPeg.get().getHomeserverUrl(),
-            null, null, null, false);
-        const ImageView = sdk.getComponent("elements.ImageView");
+        // const avatarUrl = this.props.room.getAvatarUrl(
+        //     MatrixClientPeg.get().getHomeserverUrl(),
+        //     null,
+        //     null,
+        //     null,
+        //     false
+        // );
+        const avatarUrl = Avatar.avatarUrlForRoom(
+            this.props.room,
+            null,
+            null,
+            null
+        );
+        const ImageView = sdk.getComponent('elements.ImageView');
         const params = {
             src: avatarUrl,
-            name: this.props.room.name,
+            name: this.props.room.name
         };
+        debugger;
 
-        Modal.createDialog(ImageView, params, "mx_Dialog_lightbox");
+        Modal.createDialog(ImageView, params, 'mx_Dialog_lightbox');
     },
 
     render: function() {
-        const BaseAvatar = sdk.getComponent("avatars.BaseAvatar");
+        const BaseAvatar = sdk.getComponent('avatars.BaseAvatar');
 
         /*eslint no-unused-vars: ["error", { "ignoreRestSiblings": true }]*/
-        const {room, oobData, viewAvatarOnClick, ...otherProps} = this.props;
+        const { room, oobData, viewAvatarOnClick, ...otherProps } = this.props;
 
         const roomName = room ? room.name : oobData.name;
 
         return (
-            <BaseAvatar {...otherProps} name={roomName}
+            <BaseAvatar
+                {...otherProps}
+                name={roomName}
                 idName={room ? room.roomId : null}
                 urls={this.state.urls}
-                onClick={this.props.viewAvatarOnClick ? this.onRoomAvatarClick : null}
-                disabled={!this.state.urls[0]} />
+                onClick={
+                    this.props.viewAvatarOnClick ? this.onRoomAvatarClick : null
+                }
+                disabled={!this.state.urls[0]}
+            />
         );
-    },
+    }
 });
