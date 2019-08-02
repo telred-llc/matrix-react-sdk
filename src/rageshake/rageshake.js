@@ -47,30 +47,42 @@ const MAX_LOG_SIZE = 1024 * 1024 * 1; // 1 MB
 // A class which monkey-patches the global console and stores log lines.
 class ConsoleLogger {
     constructor() {
-        this.logs = "";
+        this.logs = '';
     }
 
     monkeyPatch(consoleObj) {
         // Monkey-patch console logging
         const consoleFunctionsToLevels = {
-            log: "I",
-            info: "I",
-            warn: "W",
-            error: "E",
+            log: 'I',
+            info: 'I',
+            warn: 'W',
+            error: 'E'
         };
-        Object.keys(consoleFunctionsToLevels).forEach((fnName) => {
-            const level = consoleFunctionsToLevels[fnName];
-            const originalFn = consoleObj[fnName].bind(consoleObj);
-            consoleObj[fnName] = (...args) => {
-                this.log(level, ...args);
-                originalFn(...args);
-            };
-        });
+        // Object.keys(consoleFunctionsToLevels).forEach((fnName) => {
+        //     const level = consoleFunctionsToLevels[fnName];
+        //     const originalFn = consoleObj[fnName].bind(consoleObj);
+        //     consoleObj[fnName] = (...args) => {
+        //         this.log(level, ...args);
+        //         originalFn(...args);
+        //     };
+        // });
     }
 
     log(level, ...args) {
         // We don't know what locale the user may be running so use ISO strings
         const ts = new Date().toISOString();
+
+        // Convert objects and errors to helpful things
+        args = args.map(arg => {
+            if (arg instanceof Error) {
+                return arg.message + (arg.stack ? `\n${arg.stack}` : '');
+            } else if (typeof arg === 'object') {
+                return JSON.stringify(arg);
+            } else {
+                return arg;
+            }
+        });
+
         // Some browsers support string formatting which we're not doing here
         // so the lines are a little more ugly but easy to implement / quick to
         // run.
@@ -94,7 +106,7 @@ class ConsoleLogger {
             return this.logs;
         }
         const logsToFlush = this.logs;
-        this.logs = "";
+        this.logs = '';
         return logsToFlush;
     }
 }
@@ -104,7 +116,7 @@ class IndexedDBLogStore {
     constructor(indexedDB, logger) {
         this.indexedDB = indexedDB;
         this.logger = logger;
-        this.id = "instance-" + Math.random() + Date.now();
+        this.id = 'instance-' + Math.random() + Date.now();
         this.index = 0;
         this.db = null;
         this.flushPromise = null;
@@ -116,42 +128,41 @@ class IndexedDBLogStore {
      * @return {Promise} Resolves when the store is ready.
      */
     connect() {
-        const req = this.indexedDB.open("logs");
+        const req = this.indexedDB.open('logs');
         return new Promise((resolve, reject) => {
-            req.onsuccess = (event) => {
+            req.onsuccess = event => {
                 this.db = event.target.result;
                 // Periodically flush logs to local storage / indexeddb
                 setInterval(this.flush.bind(this), FLUSH_RATE_MS);
                 resolve();
             };
 
-            req.onerror = (event) => {
-                const err = (
-                    "Failed to open log database: " + event.target.error.name
-                );
+            req.onerror = event => {
+                const err =
+                    'Failed to open log database: ' + event.target.error.name;
                 console.error(err);
                 reject(new Error(err));
             };
 
             // First time: Setup the object store
-            req.onupgradeneeded = (event) => {
+            req.onupgradeneeded = event => {
                 const db = event.target.result;
-                const logObjStore = db.createObjectStore("logs", {
-                    keyPath: ["id", "index"],
+                const logObjStore = db.createObjectStore('logs', {
+                    keyPath: ['id', 'index']
                 });
                 // Keys in the database look like: [ "instance-148938490", 0 ]
                 // Later on we need to query everything based on an instance id.
                 // In order to do this, we need to set up indexes "id".
-                logObjStore.createIndex("id", "id", { unique: false });
+                logObjStore.createIndex('id', 'id', { unique: false });
 
                 logObjStore.add(
                     this._generateLogEntry(
-                        new Date() + " ::: Log database was created.",
-                    ),
+                        new Date() + ' ::: Log database was created.'
+                    )
                 );
 
-                const lastModifiedStore = db.createObjectStore("logslastmod", {
-                    keyPath: "id",
+                const lastModifiedStore = db.createObjectStore('logslastmod', {
+                    keyPath: 'id'
                 });
                 lastModifiedStore.add(this._generateLastModifiedTime());
             };
@@ -198,7 +209,7 @@ class IndexedDBLogStore {
             if (!this.db) {
                 // not connected yet or user rejected access for us to r/w to
                 // the db.
-                reject(new Error("No connected database"));
+                reject(new Error('No connected database'));
                 return;
             }
             const lines = this.logger.flush();
@@ -206,21 +217,22 @@ class IndexedDBLogStore {
                 resolve();
                 return;
             }
-            const txn = this.db.transaction(["logs", "logslastmod"], "readwrite");
-            const objStore = txn.objectStore("logs");
-            txn.oncomplete = (event) => {
+            const txn = this.db.transaction(
+                ['logs', 'logslastmod'],
+                'readwrite'
+            );
+            const objStore = txn.objectStore('logs');
+            txn.oncomplete = event => {
                 resolve();
             };
-            txn.onerror = (event) => {
-                console.error(
-                    "Failed to flush logs : ", event,
-                );
+            txn.onerror = event => {
+                console.error('Failed to flush logs : ', event);
                 reject(
-                    new Error("Failed to write logs: " + event.target.errorCode),
+                    new Error('Failed to write logs: ' + event.target.errorCode)
                 );
             };
             objStore.add(this._generateLogEntry(lines));
-            const lastModStore = txn.objectStore("logslastmod");
+            const lastModStore = txn.objectStore('logslastmod');
             lastModStore.put(this._generateLastModifiedTime());
         });
         return this.flushPromise;
@@ -241,15 +253,21 @@ class IndexedDBLogStore {
 
         // Returns: a string representing the concatenated logs for this ID.
         function fetchLogs(id) {
-            const objectStore = db.transaction("logs", "readonly").objectStore("logs");
+            const objectStore = db
+                .transaction('logs', 'readonly')
+                .objectStore('logs');
 
             return new Promise((resolve, reject) => {
-                const query = objectStore.index("id").openCursor(IDBKeyRange.only(id), 'next');
+                const query = objectStore
+                    .index('id')
+                    .openCursor(IDBKeyRange.only(id), 'next');
                 let lines = '';
-                query.onerror = (event) => {
-                    reject(new Error("Query failed: " + event.target.errorCode));
+                query.onerror = event => {
+                    reject(
+                        new Error('Query failed: ' + event.target.errorCode)
+                    );
                 };
-                query.onsuccess = (event) => {
+                query.onsuccess = event => {
                     const cursor = event.target.result;
                     if (!cursor) {
                         resolve(lines);
@@ -268,31 +286,34 @@ class IndexedDBLogStore {
         // Returns: A sorted array of log IDs. (newest first)
         function fetchLogIds() {
             // To gather all the log IDs, query for all records in logslastmod.
-            const o = db.transaction("logslastmod", "readonly").objectStore(
-                "logslastmod",
-            );
-            return selectQuery(o, undefined, (cursor) => {
+            const o = db
+                .transaction('logslastmod', 'readonly')
+                .objectStore('logslastmod');
+            return selectQuery(o, undefined, cursor => {
                 return {
                     id: cursor.value.id,
-                    ts: cursor.value.ts,
+                    ts: cursor.value.ts
                 };
-            }).then((res) => {
+            }).then(res => {
                 // Sort IDs by timestamp (newest first)
-                return res.sort((a, b) => {
-                    return b.ts - a.ts;
-                }).map((a) => a.id);
+                return res
+                    .sort((a, b) => {
+                        return b.ts - a.ts;
+                    })
+                    .map(a => a.id);
             });
         }
 
         function deleteLogs(id) {
             return new Promise((resolve, reject) => {
                 const txn = db.transaction(
-                    ["logs", "logslastmod"], "readwrite",
+                    ['logs', 'logslastmod'],
+                    'readwrite'
                 );
-                const o = txn.objectStore("logs");
+                const o = txn.objectStore('logs');
                 // only load the key path, not the data which may be huge
-                const query = o.index("id").openKeyCursor(IDBKeyRange.only(id));
-                query.onsuccess = (event) => {
+                const query = o.index('id').openKeyCursor(IDBKeyRange.only(id));
+                query.onsuccess = event => {
                     const cursor = event.target.result;
                     if (!cursor) {
                         return;
@@ -303,16 +324,16 @@ class IndexedDBLogStore {
                 txn.oncomplete = () => {
                     resolve();
                 };
-                txn.onerror = (event) => {
+                txn.onerror = event => {
                     reject(
                         new Error(
-                            "Failed to delete logs for " +
-                            `'${id}' : ${event.target.errorCode}`,
-                        ),
+                            'Failed to delete logs for ' +
+                                `'${id}' : ${event.target.errorCode}`
+                        )
                     );
                 };
                 // delete last modified entries
-                const lastModStore = txn.objectStore("logslastmod");
+                const lastModStore = txn.objectStore('logslastmod');
                 lastModStore.delete(id);
             });
         }
@@ -335,19 +356,22 @@ class IndexedDBLogStore {
 
             logs.push({
                 lines: lines,
-                id: allLogIds[i],
+                id: allLogIds[i]
             });
             size += lines.length;
         }
         if (removeLogIds.length > 0) {
-            console.log("Removing logs: ", removeLogIds);
+            console.log('Removing logs: ', removeLogIds);
             // Don't await this because it's non-fatal if we can't clean up
             // logs.
-            Promise.all(removeLogIds.map((id) => deleteLogs(id))).then(() => {
-                console.log(`Removed ${removeLogIds.length} old logs.`);
-            }, (err) => {
-                console.error(err);
-            });
+            Promise.all(removeLogIds.map(id => deleteLogs(id))).then(
+                () => {
+                    console.log(`Removed ${removeLogIds.length} old logs.`);
+                },
+                err => {
+                    console.error(err);
+                }
+            );
         }
         return logs;
     }
@@ -356,14 +380,14 @@ class IndexedDBLogStore {
         return {
             id: this.id,
             lines: lines,
-            index: this.index++,
+            index: this.index++
         };
     }
 
     _generateLastModifiedTime() {
         return {
             id: this.id,
-            ts: Date.now(),
+            ts: Date.now()
         };
     }
 }
@@ -382,11 +406,11 @@ function selectQuery(store, keyRange, resultMapper) {
     const query = store.openCursor(keyRange);
     return new Promise((resolve, reject) => {
         const results = [];
-        query.onerror = (event) => {
-            reject(new Error("Query failed: " + event.target.errorCode));
+        query.onerror = event => {
+            reject(new Error('Query failed: ' + event.target.errorCode));
         };
         // collect results
-        query.onsuccess = (event) => {
+        query.onsuccess = event => {
             const cursor = event.target.result;
             if (!cursor) {
                 resolve(results);
@@ -398,9 +422,7 @@ function selectQuery(store, keyRange, resultMapper) {
     });
 }
 
-
 module.exports = {
-
     /**
      * Configure rage shaking support for sending bug reports.
      * Modifies globals.
@@ -421,7 +443,10 @@ module.exports = {
         } catch (e) {}
 
         if (indexedDB) {
-            global.mx_rage_store = new IndexedDBLogStore(indexedDB, global.mx_rage_logger);
+            global.mx_rage_store = new IndexedDBLogStore(
+                indexedDB,
+                global.mx_rage_logger
+            );
             global.mx_rage_initPromise = global.mx_rage_store.connect();
             return global.mx_rage_initPromise;
         }
@@ -455,7 +480,7 @@ module.exports = {
     getLogsForReport: async function() {
         if (!global.mx_rage_logger) {
             throw new Error(
-                "No console logger, did you forget to call init()?",
+                'No console logger, did you forget to call init()?'
             );
         }
         // If in incognito mode, store is null, but we still want bug report
@@ -465,10 +490,12 @@ module.exports = {
             await global.mx_rage_store.flush();
             return await global.mx_rage_store.consume();
         } else {
-            return [{
-                lines: global.mx_rage_logger.flush(true),
-                id: "-",
-            }];
+            return [
+                {
+                    lines: global.mx_rage_logger.flush(true),
+                    id: '-'
+                }
+            ];
         }
-    },
+    }
 };

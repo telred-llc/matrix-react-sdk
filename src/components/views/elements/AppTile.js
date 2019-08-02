@@ -35,6 +35,7 @@ import WidgetUtils from '../../../utils/WidgetUtils';
 import dis from '../../../dispatcher';
 import ActiveWidgetStore from '../../../stores/ActiveWidgetStore';
 import classNames from 'classnames';
+import { showIntegrationsManager } from '../../../integrations/integrations';
 
 const ALLOWED_APP_URL_SCHEMES = ['https:', 'http:'];
 const ENABLE_REACT_PERF = false;
@@ -139,7 +140,10 @@ export default class AppTile extends React.Component {
     }
 
     componentWillMount() {
-        this.setScalarToken();
+        // Only fetch IM token on mount if we're showing and have permission to load
+        if (this.props.show && this.state.hasPermissionToLoad) {
+            this.setScalarToken();
+        }
     }
 
     componentDidMount() {
@@ -164,8 +168,6 @@ export default class AppTile extends React.Component {
      * Component initialisation is only complete when this function has resolved
      */
     setScalarToken() {
-        this.setState({initialising: true});
-
         if (!WidgetUtils.isScalarUrl(this.props.url)) {
             console.warn('Non-scalar widget, not setting scalar token!', url);
             this.setState({
@@ -214,11 +216,20 @@ export default class AppTile extends React.Component {
     componentWillReceiveProps(nextProps) {
         if (nextProps.url !== this.props.url) {
             this._getNewState(nextProps);
-            this.setScalarToken();
-        } else if (nextProps.show && !this.props.show && this.props.waitForIframeLoad) {
-            this.setState({
-                loading: true,
-            });
+            // Fetch IM token for new URL if we're showing and have permission to load
+            if (this.props.show && this.state.hasPermissionToLoad) {
+                this.setScalarToken();
+            }
+        } else if (nextProps.show && !this.props.show) {
+            if (this.props.waitForIframeLoad) {
+                this.setState({
+                    loading: true,
+                });
+            }
+            // Fetch IM token now that we're showing if we already have permission to load
+            if (this.state.hasPermissionToLoad) {
+                this.setScalarToken();
+            }
         } else if (nextProps.widgetPageTitle !== this.props.widgetPageTitle) {
             this.setState({
                 widgetPageTitle: nextProps.widgetPageTitle,
@@ -240,12 +251,11 @@ export default class AppTile extends React.Component {
         if (this.props.onEditClick) {
             this.props.onEditClick();
         } else {
-            const IntegrationsManager = sdk.getComponent("views.settings.IntegrationsManager");
-            const src = this._scalarClient.getScalarInterfaceUrlForRoom(
-                this.props.room, 'type_' + this.props.type, this.props.id);
-            Modal.createTrackedDialog('Integrations Manager', '', IntegrationsManager, {
-                src: src,
-            }, "mx_IntegrationsManager");
+            showIntegrationsManager({
+                room: this.props.room,
+                screen: 'type_' + this.props.type,
+                integrationId: this.props.id,
+            });
         }
     }
 
@@ -329,9 +339,12 @@ export default class AppTile extends React.Component {
      * Called when widget iframe has finished loading
      */
     _onLoaded() {
-        if (!ActiveWidgetStore.getWidgetMessaging(this.props.id)) {
-            this._setupWidgetMessaging();
-        }
+        // Destroy the old widget messaging before starting it back up again. Some widgets
+        // have startup routines that run when they are loaded, so we just need to reinitialize
+        // the messaging for them.
+        ActiveWidgetStore.delWidgetMessaging(this.props.id);
+        this._setupWidgetMessaging();
+
         ActiveWidgetStore.setRoomId(this.props.id, this.props.room.roomId);
         this.setState({loading: false});
     }
@@ -339,7 +352,8 @@ export default class AppTile extends React.Component {
     _setupWidgetMessaging() {
         // FIXME: There's probably no reason to do this here: it should probably be done entirely
         // in ActiveWidgetStore.
-        const widgetMessaging = new WidgetMessaging(this.props.id, this.props.url, this.refs.appFrame.contentWindow);
+        const widgetMessaging = new WidgetMessaging(
+            this.props.id, this.props.url, this.props.userWidget, this.refs.appFrame.contentWindow);
         ActiveWidgetStore.setWidgetMessaging(this.props.id, widgetMessaging);
         widgetMessaging.getCapabilities().then((requestedCapabilities) => {
             console.log(`Widget ${this.props.id} requested capabilities: ` + requestedCapabilities);
@@ -405,6 +419,8 @@ export default class AppTile extends React.Component {
         console.warn('Granting permission to load widget - ', this.state.widgetUrl);
         localStorage.setItem(this.state.widgetPermissionId, true);
         this.setState({hasPermissionToLoad: true});
+        // Now that we have permission, fetch the IM token
+        this.setScalarToken();
     }
 
     _revokeWidgetPermission() {
@@ -435,10 +451,14 @@ export default class AppTile extends React.Component {
         }
 
         // Toggle the view state of the apps drawer
-        dis.dispatch({
-            action: 'appsDrawer',
-            show: !this.props.show,
-        });
+        if (this.props.userWidget) {
+            this._onMinimiseClick();
+        } else {
+            dis.dispatch({
+                action: 'appsDrawer',
+                show: !this.props.show,
+            });
+        }
     }
 
     _getSafeUrl() {
@@ -478,9 +498,9 @@ export default class AppTile extends React.Component {
 
     _onPopoutWidgetClick(e) {
         // Using Object.assign workaround as the following opens in a new window instead of a new tab.
-        // window.open(this._getSafeUrl(), '_blank', 'noopener=yes,noreferrer=yes');
+        // window.open(this._getSafeUrl(), '_blank', 'noopener=yes');
         Object.assign(document.createElement('a'),
-            { target: '_blank', href: this._getSafeUrl(), rel: 'noopener noreferrer'}).click();
+            { target: '_blank', href: this._getSafeUrl(), rel: 'noopener'}).click();
     }
 
     _onReloadWidgetClick(e) {
@@ -516,13 +536,24 @@ export default class AppTile extends React.Component {
                     <MessageSpinner msg='Loading...' />
                 </div>
             );
-            if (this.state.initialising) {
+            if (!this.state.hasPermissionToLoad) {
+                const isRoomEncrypted = MatrixClientPeg.get().isRoomEncrypted(this.props.room.roomId);
+                appTileBody = (
+                    <div className={appTileBodyClass}>
+                        <AppPermission
+                            isRoomEncrypted={isRoomEncrypted}
+                            url={this.state.widgetUrl}
+                            onPermissionGranted={this._grantWidgetPermission}
+                        />
+                    </div>
+                );
+            } else if (this.state.initialising) {
                 appTileBody = (
                     <div className={appTileBodyClass + (this.state.loading ? 'mx_AppLoading' : '')}>
                         { loadingElement }
                     </div>
                 );
-            } else if (this.state.hasPermissionToLoad == true) {
+            } else {
                 if (this.isMixedContent()) {
                     appTileBody = (
                         <div className={appTileBodyClass}>
@@ -562,17 +593,6 @@ export default class AppTile extends React.Component {
                         </div>;
                     }
                 }
-            } else {
-                const isRoomEncrypted = MatrixClientPeg.get().isRoomEncrypted(this.props.room.roomId);
-                appTileBody = (
-                    <div className={appTileBodyClass}>
-                        <AppPermission
-                            isRoomEncrypted={isRoomEncrypted}
-                            url={this.state.widgetUrl}
-                            onPermissionGranted={this._grantWidgetPermission}
-                        />
-                    </div>
-                );
             }
         }
 
@@ -614,7 +634,7 @@ export default class AppTile extends React.Component {
                         { /* Maximise widget */ }
                         { showMaximiseButton && <AccessibleButton
                             className="mx_AppTileMenuBar_iconButton mx_AppTileMenuBar_iconButton_maximise"
-                            title={_t('Minimize apps')}
+                            title={_t('Maximize apps')}
                             onClick={this._onMinimiseClick}
                         /> }
                         { /* Title */ }

@@ -26,13 +26,16 @@ const dis = require('../../dispatcher');
 
 import { linkifyAndSanitizeHtml } from '../../HtmlUtils';
 import Promise from 'bluebird';
-
 import { _t } from '../../languageHandler';
-
-import {instanceForInstanceId, protocolNameForInstanceId} from '../../utils/DirectoryUtils';
+import { instanceForInstanceId, protocolNameForInstanceId } from '../../utils/DirectoryUtils';
+import Analytics from '../../Analytics';
 
 const MAX_NAME_LENGTH = 80;
 const MAX_TOPIC_LENGTH = 160;
+
+function track(action) {
+    Analytics.trackEvent('RoomDirectory', action);
+}
 
 module.exports = React.createClass({
     displayName: 'RoomDirectory',
@@ -53,6 +56,7 @@ module.exports = React.createClass({
             publicRooms: [],
             loading: true,
             protocolsLoading: true,
+            error: null,
             instanceId: null,
             includeAll: false,
             roomServer: null,
@@ -95,10 +99,12 @@ module.exports = React.createClass({
                 // thing you see when loading the client!
                 return;
             }
-            const ErrorDialog = sdk.getComponent("dialogs.ErrorDialog");
-            Modal.createTrackedDialog('Failed to get protocol list from homeserver', '', ErrorDialog, {
-                title: _t('Failed to get protocol list from homeserver'),
-                description: _t('The homeserver may be too old to support third party networks'),
+            track('Failed to get protocol list from homeserver');
+            this.setState({
+                error: _t(
+                    'Riot failed to get the protocol list from the homeserver. ' +
+                    'The homeserver may be too old to support third party networks.',
+                ),
             });
         });
 
@@ -139,7 +145,7 @@ module.exports = React.createClass({
         // too. If it's changed, appending to the list will corrupt it.
         const my_next_batch = this.nextBatch;
         const opts = {limit: 20};
-        if (my_server != MatrixClientPeg.getHomeServerName()) {
+        if (my_server != MatrixClientPeg.getHomeserverName()) {
             opts.server = my_server;
         }
         if (this.state.instanceId) {
@@ -187,12 +193,14 @@ module.exports = React.createClass({
                 return;
             }
 
-            this.setState({ loading: false });
             console.error("Failed to get publicRooms: %s", JSON.stringify(err));
-            const ErrorDialog = sdk.getComponent("dialogs.ErrorDialog");
-            Modal.createTrackedDialog('Failed to get public room list', '', ErrorDialog, {
-                title: _t('Failed to get public room list'),
-                description: ((err && err.message) ? err.message : _t('The server may be unavailable or overloaded')),
+            track('Failed to get public room list');
+            this.setState({
+                loading: false,
+                error:
+                    `${_t('Riot failed to get the public room list.')} ` +
+                    `${(err && err.message) ? err.message : _t('The homeserver may be unavailable or overloaded.')}`
+                ,
             });
         });
     },
@@ -312,7 +320,6 @@ module.exports = React.createClass({
         }
     },
 
-    // TODO create_room_here
     onCreateRoomClicked: function() {
         this.props.onFinished();
         dis.dispatch({action: 'view_create_room'});
@@ -326,7 +333,7 @@ module.exports = React.createClass({
             if (alias.indexOf(':') == -1) {
                 alias = alias + ':' + this.state.roomServer;
             }
-            this.showRoomAlias(alias);
+            this.showRoomAlias(alias, true);
         } else {
             // This is a 3rd party protocol. Let's see if we can join it
             const protocolName = protocolNameForInstanceId(this.protocols, this.state.instanceId);
@@ -342,7 +349,7 @@ module.exports = React.createClass({
             }
             MatrixClientPeg.get().getThirdpartyLocation(protocolName, fields).done((resp) => {
                 if (resp.length > 0 && resp[0].alias) {
-                    this.showRoomAlias(resp[0].alias);
+                    this.showRoomAlias(resp[0].alias, true);
                 } else {
                     const ErrorDialog = sdk.getComponent("dialogs.ErrorDialog");
                     Modal.createTrackedDialog('Room not found', '', ErrorDialog, {
@@ -360,13 +367,16 @@ module.exports = React.createClass({
         }
     },
 
-    showRoomAlias: function(alias) {
-        this.showRoom(null, alias);
+    showRoomAlias: function(alias, autoJoin=false) {
+        this.showRoom(null, alias, autoJoin);
     },
 
-    showRoom: function(room, room_alias) {
+    showRoom: function(room, room_alias, autoJoin=false) {
         this.props.onFinished();
-        const payload = {action: 'view_room'};
+        const payload = {
+            action: 'view_room',
+            auto_join: autoJoin,
+        };
         if (room) {
             // Don't let the user view a room they won't be able to either
             // peek or join: fail earlier so they don't have to click back
@@ -512,25 +522,15 @@ module.exports = React.createClass({
     },
 
     render: function() {
-        const SimpleRoomHeader = sdk.getComponent('rooms.SimpleRoomHeader');
         const Loader = sdk.getComponent("elements.Spinner");
         const BaseDialog = sdk.getComponent('views.dialogs.BaseDialog');
         const AccessibleButton = sdk.getComponent('elements.AccessibleButton');
 
-        // TODO: clean this up
-        if (this.state.protocolsLoading) {
-            return (
-                <div className="mx_RoomDirectory">
-                    <Loader />
-                </div>
-            );
-        }
-
         let content;
-        if (this.state.loading) {
-            content = <div className="mx_RoomDirectory">
-                <Loader />
-            </div>;
+        if (this.state.error) {
+            content = this.state.error;
+        } else if (this.state.protocolsLoading || this.state.loading) {
+            content = <Loader />;
         } else {
             const rows = this.getRows();
             // we still show the scrollpanel, at least for now, because
@@ -552,39 +552,53 @@ module.exports = React.createClass({
                 onFillRequest={ this.onFillRequest }
                 stickyBottom={false}
                 startAtBottom={false}
-                onResize={function() {}}
             >
                 { scrollpanel_content }
             </ScrollPanel>;
         }
 
-        const protocolName = protocolNameForInstanceId(this.protocols, this.state.instanceId);
-        let instance_expected_field_type;
-        if (
-            protocolName &&
-            this.protocols &&
-            this.protocols[protocolName] &&
-            this.protocols[protocolName].location_fields.length > 0 &&
-            this.protocols[protocolName].field_types
-        ) {
-            const last_field = this.protocols[protocolName].location_fields.slice(-1)[0];
-            instance_expected_field_type = this.protocols[protocolName].field_types[last_field];
-        }
+        let listHeader;
+        if (!this.state.protocolsLoading) {
+            const NetworkDropdown = sdk.getComponent('directory.NetworkDropdown');
+            const DirectorySearchBox = sdk.getComponent('elements.DirectorySearchBox');
 
-
-        let placeholder = _t('Search for a room');
-        if (!this.state.instanceId) {
-            placeholder = _t('Search for a room like #example') + ':' + this.state.roomServer;
-        } else if (instance_expected_field_type) {
-            placeholder = instance_expected_field_type.placeholder;
-        }
-
-        let showJoinButton = this._stringLooksLikeId(this.state.filterString, instance_expected_field_type);
-        if (protocolName) {
-            const instance = instanceForInstanceId(this.protocols, this.state.instanceId);
-            if (this._getFieldsForThirdPartyLocation(this.state.filterString, this.protocols[protocolName], instance) === null) {
-                showJoinButton = false;
+            const protocolName = protocolNameForInstanceId(this.protocols, this.state.instanceId);
+            let instance_expected_field_type;
+            if (
+                protocolName &&
+                this.protocols &&
+                this.protocols[protocolName] &&
+                this.protocols[protocolName].location_fields.length > 0 &&
+                this.protocols[protocolName].field_types
+            ) {
+                const last_field = this.protocols[protocolName].location_fields.slice(-1)[0];
+                instance_expected_field_type = this.protocols[protocolName].field_types[last_field];
             }
+
+
+            let placeholder = _t('Search for a room');
+            if (!this.state.instanceId) {
+                placeholder = _t('Search for a room like #example') + ':' + this.state.roomServer;
+            } else if (instance_expected_field_type) {
+                placeholder = instance_expected_field_type.placeholder;
+            }
+
+            let showJoinButton = this._stringLooksLikeId(this.state.filterString, instance_expected_field_type);
+            if (protocolName) {
+                const instance = instanceForInstanceId(this.protocols, this.state.instanceId);
+                if (this._getFieldsForThirdPartyLocation(this.state.filterString, this.protocols[protocolName], instance) === null) {
+                    showJoinButton = false;
+                }
+            }
+
+            listHeader = <div className="mx_RoomDirectory_listheader">
+                <DirectorySearchBox
+                    className="mx_RoomDirectory_searchbox"
+                    onChange={this.onFilterChange} onClear={this.onFilterClear} onJoinClick={this.onJoinClick}
+                    placeholder={placeholder} showJoinButton={showJoinButton}
+                />
+                <NetworkDropdown config={this.props.config} protocols={this.protocols} onOptionChange={this.onOptionChange} />
+            </div>;
         }
 
         const createRoomButton = (<AccessibleButton
@@ -592,8 +606,6 @@ module.exports = React.createClass({
             className="mx_RoomDirectory_createRoom"
         >{_t("Create new room")}</AccessibleButton>);
 
-        const NetworkDropdown = sdk.getComponent('directory.NetworkDropdown');
-        const DirectorySearchBox = sdk.getComponent('elements.DirectorySearchBox');
         return (
             <BaseDialog
                 className={'mx_RoomDirectory_dialog'}
@@ -604,14 +616,7 @@ module.exports = React.createClass({
             >
                 <div className="mx_RoomDirectory">
                     <div className="mx_RoomDirectory_list">
-                        <div className="mx_RoomDirectory_listheader">
-                            <DirectorySearchBox
-                                className="mx_RoomDirectory_searchbox"
-                                onChange={this.onFilterChange} onClear={this.onFilterClear} onJoinClick={this.onJoinClick}
-                                placeholder={placeholder} showJoinButton={showJoinButton}
-                            />
-                            <NetworkDropdown config={this.props.config} protocols={this.protocols} onOptionChange={this.onOptionChange} />
-                        </div>
+                        {listHeader}
                         {content}
                     </div>
                 </div>

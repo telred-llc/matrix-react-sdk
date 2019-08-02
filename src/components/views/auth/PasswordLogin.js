@@ -1,6 +1,7 @@
 /*
 Copyright 2015, 2016 OpenMarket Ltd
 Copyright 2017 Vector Creations Ltd
+Copyright 2019 New Vector Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,34 +22,46 @@ import classNames from 'classnames';
 import sdk from '../../../index';
 import { _t } from '../../../languageHandler';
 import SdkConfig from '../../../SdkConfig';
+import { ValidatedServerConfig } from '../../../utils/AutoDiscoveryUtils';
 
 /**
  * A pure UI component which displays a username/password form.
  */
-class PasswordLogin extends React.Component {
+export default class PasswordLogin extends React.Component {
+    static propTypes = {
+        onSubmit: PropTypes.func.isRequired, // fn(username, password)
+        onError: PropTypes.func,
+        onForgotPasswordClick: PropTypes.func, // fn()
+        initialUsername: PropTypes.string,
+        initialPassword: PropTypes.string,
+        onUsernameChanged: PropTypes.func,
+        onPasswordChanged: PropTypes.func,
+        loginIncorrect: PropTypes.bool,
+        disableSubmit: PropTypes.bool,
+        serverConfig: PropTypes.instanceOf(ValidatedServerConfig).isRequired
+    };
+
     static defaultProps = {
         onError: function() {},
         onEditServerDetailsClick: null,
         onUsernameChanged: function() {},
         onUsernameBlur: function() {},
         onPasswordChanged: function() {},
-        initialUsername: "",
-        initialPassword: "",
+        initialUsername: '',
+        initialPassword: '',
         loginIncorrect: false,
-        // This is optional and only set if we used a server name to determine
-        // the HS URL via `.well-known` discovery. The server name is used
-        // instead of the HS URL when talking about where to "sign in to".
-        hsName: null,
-        hsUrl: "",
-        disableSubmit: false,
+        disableSubmit: false
     };
+
+    static LOGIN_FIELD_EMAIL = 'login_field_email';
+    static LOGIN_FIELD_MXID = 'login_field_mxid';
 
     constructor(props) {
         super(props);
         this.state = {
             username: this.props.initialUsername,
             password: this.props.initialPassword,
-            loginType: PasswordLogin.LOGIN_FIELD_EMAIL,
+            loginType: PasswordLogin.LOGIN_FIELD_MXID
         };
 
         this.onForgotPasswordClick = this.onForgotPasswordClick.bind(this);
@@ -60,11 +73,6 @@ class PasswordLogin extends React.Component {
         this.isLoginEmpty = this.isLoginEmpty.bind(this);
     }
 
-    componentWillMount() {
-        this._passwordField = null;
-        this._loginField = null;
-    }
-
     onForgotPasswordClick(ev) {
         ev.preventDefault();
         ev.stopPropagation();
@@ -74,13 +82,24 @@ class PasswordLogin extends React.Component {
     onSubmitForm(ev) {
         ev.preventDefault();
 
-        const phoneCountry = null;
-        const phoneNumber = null;
+        let username = ''; // XXX: Synapse breaks if you send null here:
+        let phoneCountry = null;
+        let phoneNumber = null;
         let error;
 
-        const username = this.state.username;
-        if (!username) {
-            error = _t('The username field must not be blank.');
+        switch (this.state.loginType) {
+            case PasswordLogin.LOGIN_FIELD_EMAIL:
+                username = this.state.username;
+                if (!username) {
+                    error = _t('The email field must not be blank.');
+                }
+                break;
+            case PasswordLogin.LOGIN_FIELD_MXID:
+                username = this.state.username;
+                if (!username) {
+                    error = _t('The username field must not be blank.');
+                }
+                break;
         }
 
         if (error) {
@@ -97,12 +116,12 @@ class PasswordLogin extends React.Component {
             username,
             phoneCountry,
             phoneNumber,
-            this.state.password,
+            this.state.password
         );
     }
 
     onUsernameChanged(ev) {
-        this.setState({username: ev.target.value});
+        this.setState({ username: ev.target.value });
         this.props.onUsernameChanged(ev.target.value);
     }
 
@@ -115,36 +134,36 @@ class PasswordLogin extends React.Component {
         this.props.onError(null); // send a null error to clear any error messages
         this.setState({
             loginType: loginType,
-            username: "", // Reset because email and username use the same state
+            username: '' // Reset because email and username use the same state
         });
     }
 
     onPasswordChanged(ev) {
-        this.setState({password: ev.target.value});
+        this.setState({ password: ev.target.value });
         this.props.onPasswordChanged(ev.target.value);
     }
 
-    renderLoginField() {
+    renderLoginField(loginType) {
         const Field = sdk.getComponent('elements.Field');
 
         const classes = {};
+
         classes.error = this.props.loginIncorrect && !this.state.username;
-        return <Field
-            className={classNames(classes)}
-            id="mx_PasswordLogin_username"
-            ref={(e) => { this._loginField = e; }}
-            name="username" // make it a little easier for browser's remember-password
-            key="username_input"
-            type="text"
-            label={SdkConfig.get().disable_custom_urls ?
-                _t("Username on %(hs)s", {
-                    hs: this.props.hsUrl.replace(/^https?:\/\//, ''),
-                }) : _t("Username or Email")}
-            value={this.state.username}
-            onChange={this.onUsernameChanged}
-            onBlur={this.onUsernameBlur}
-            autoFocus
-        />;
+        return (
+            <Field
+                className={classNames(classes)}
+                id='mx_PasswordLogin_email'
+                name='username' // make it a little easier for browser's remember-password
+                key='email_input'
+                type='text'
+                label={_t('Username')}
+                placeholder='Username'
+                value={this.state.username}
+                onChange={this.onUsernameChanged}
+                onBlur={this.onUsernameBlur}
+                autoFocus
+            />
+        );
     }
 
     isLoginEmpty() {
@@ -161,20 +180,34 @@ class PasswordLogin extends React.Component {
         let forgotPasswordJsx;
 
         if (this.props.onForgotPasswordClick) {
-            forgotPasswordJsx = <span>
-                {_t('Not sure of your password? <a>Set a new one</a>', {}, {
-                    a: sub => <a className="mx_Login_forgot"
-                                 onClick={this.onForgotPasswordClick}
-                                 href="#"
-                    >
-                        {sub}
-                    </a>,
-                })}
-            </span>;
+            forgotPasswordJsx = (
+                <span>
+                    {_t(
+                        'Not sure of your password? <a>Set a new one</a>',
+                        {},
+                        {
+                            a: sub => (
+                                <a
+                                    className='mx_Login_forgot'
+                                    onClick={this.onForgotPasswordClick}
+                                    href='#'
+                                >
+                                    {sub}
+                                </a>
+                            )
+                        }
+                    )}
+                </span>
+            );
         }
 
+        if (this.props.serverConfig.hsNameIsDifferent) {
+            const TextWithTooltip = sdk.getComponent(
+                'elements.TextWithTooltip'
+            );
+        }
         const pwFieldClass = classNames({
-            error: this.props.loginIncorrect && !this.isLoginEmpty(), // only error password if error isn't top field
+            error: this.props.loginIncorrect && !this.isLoginEmpty() // only error password if error isn't top field
         });
 
         const loginField = this.renderLoginField(this.state.loginType);
@@ -185,45 +218,22 @@ class PasswordLogin extends React.Component {
                     {loginField}
                     <Field
                         className={pwFieldClass}
-                        id="mx_PasswordLogin_password"
-                        ref={(e) => { this._passwordField = e; }}
-                        type="password"
-                        name="password"
+                        id='mx_PasswordLogin_password'
+                        type='password'
+                        name='password'
                         label={_t('Password')}
                         value={this.state.password}
                         onChange={this.onPasswordChanged}
                     />
                     {forgotPasswordJsx}
-                    <input className="mx_Login_submit"
-                           type="submit"
-                           value={_t('Sign in')}
-                           disabled={this.props.disableSubmit}
+                    <input
+                        className='mx_Login_submit'
+                        type='submit'
+                        value={_t('Sign in')}
+                        disabled={this.props.disableSubmit}
                     />
                 </form>
             </div>
         );
     }
 }
-
-PasswordLogin.LOGIN_FIELD_EMAIL = "login_field_email";
-PasswordLogin.LOGIN_FIELD_MXID = "login_field_mxid";
-
-PasswordLogin.propTypes = {
-    onSubmit: PropTypes.func.isRequired, // fn(username, password)
-    onError: PropTypes.func,
-    onForgotPasswordClick: PropTypes.func, // fn()
-    initialUsername: PropTypes.string,
-    initialPhoneCountry: PropTypes.string,
-    initialPhoneNumber: PropTypes.string,
-    initialPassword: PropTypes.string,
-    onUsernameChanged: PropTypes.func,
-    onPhoneCountryChanged: PropTypes.func,
-    onPhoneNumberChanged: PropTypes.func,
-    onPasswordChanged: PropTypes.func,
-    loginIncorrect: PropTypes.bool,
-    hsName: PropTypes.string,
-    hsUrl: PropTypes.string,
-    disableSubmit: PropTypes.bool,
-};
-
-module.exports = PasswordLogin;

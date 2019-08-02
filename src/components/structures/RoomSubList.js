@@ -1,7 +1,7 @@
 /*
 Copyright 2015, 2016 OpenMarket Ltd
 Copyright 2017 Vector Creations Ltd
-Copyright 2018 New Vector Ltd
+Copyright 2018, 2019 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import { Group } from 'matrix-js-sdk';
 import PropTypes from 'prop-types';
 import RoomTile from "../views/rooms/RoomTile";
 import LazyRenderList from "../views/elements/LazyRenderList";
+import {_t} from "../../languageHandler";
 
 // turn this on for drop & drag console debugging galore
 const debug = false;
@@ -42,6 +43,7 @@ const RoomSubList = React.createClass({
         list: PropTypes.arrayOf(PropTypes.object).isRequired,
         label: PropTypes.string.isRequired,
         tagName: PropTypes.string,
+        addRoomLabel: PropTypes.string,
 
         order: PropTypes.string.isRequired,
 
@@ -146,8 +148,8 @@ const RoomSubList = React.createClass({
             key={room.roomId}
             collapsed={this.props.collapsed || false}
             unread={Unread.doesRoomHaveUnreadMessages(room)}
-            highlight={room.getUnreadNotificationCount('highlight') > 0 || this.props.isInvite}
-            notificationCount={room.getUnreadNotificationCount()}
+            highlight={this.props.isInvite || RoomNotifs.getUnreadNotificationCount(room, 'highlight') > 0}
+            notificationCount={RoomNotifs.getUnreadNotificationCount(room)}
             isInvite={this.props.isInvite}
             refreshSubList={this._updateSubListCount}
             incomingCall={null}
@@ -192,6 +194,7 @@ const RoomSubList = React.createClass({
 
     _getHeaderJsx: function(isCollapsed) {
         const AccessibleButton = sdk.getComponent('elements.AccessibleButton');
+        const AccessibleTooltipButton = sdk.getComponent('elements.AccessibleTooltipButton');
         const subListNotifications = !this.props.isInvite ?
             RoomNotifs.aggregateNotificationCount(this.props.list) :
             {count: 0, highlight: true};
@@ -232,7 +235,11 @@ const RoomSubList = React.createClass({
         let addRoomButton;
         if (this.props.onAddRoom) {
             addRoomButton = (
-                <AccessibleButton onClick={ this.props.onAddRoom } className="mx_RoomSubList_addRoom" />
+                <AccessibleTooltipButton
+                    onClick={ this.props.onAddRoom }
+                    className="mx_RoomSubList_addRoom"
+                    title={this.props.addRoomLabel || _t("Add room")}
+                />
             );
         }
 
@@ -244,7 +251,7 @@ const RoomSubList = React.createClass({
                 'mx_RoomSubList_chevronRight': isCollapsed,
                 'mx_RoomSubList_chevronDown': !isCollapsed,
             });
-            chevron = (<div className={chevronClasses}></div>);
+            chevron = (<div className={chevronClasses} />);
         }
 
         const tabindex = this.props.isFiltered ? "0" : "-1";

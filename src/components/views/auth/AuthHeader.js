@@ -27,9 +27,9 @@ module.exports = React.createClass({
         const AuthHeaderLogo = sdk.getComponent('auth.AuthHeaderLogo');
 
         return (
-            <div className="mx_AuthHeader">
+            <div className='mx_AuthHeader'>
                 <AuthHeaderLogo />
             </div>
         );
-    },
+    }
 });

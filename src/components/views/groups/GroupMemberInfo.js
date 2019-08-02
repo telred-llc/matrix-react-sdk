@@ -30,19 +30,19 @@ module.exports = React.createClass({
     displayName: 'GroupMemberInfo',
 
     contextTypes: {
-        matrixClient: PropTypes.instanceOf(MatrixClient),
+        matrixClient: PropTypes.instanceOf(MatrixClient)
     },
 
     propTypes: {
         groupId: PropTypes.string,
         groupMember: GroupMemberType,
-        isInvited: PropTypes.bool,
+        isInvited: PropTypes.bool
     },
 
     getInitialState: function() {
         return {
             removingUser: false,
-            isUserPrivilegedInGroup: null,
+            isUserPrivilegedInGroup: null
         };
     },
 
@@ -74,78 +74,103 @@ module.exports = React.createClass({
     onGroupStoreUpdated: function() {
         if (this._unmounted) return;
         this.setState({
-            isUserInvited: GroupStore.getGroupInvitedMembers(this.props.groupId).some(
-                (m) => m.userId === this.props.groupMember.userId,
-            ),
-            isUserPrivilegedInGroup: GroupStore.isUserPrivileged(this.props.groupId),
+            isUserInvited: GroupStore.getGroupInvitedMembers(
+                this.props.groupId
+            ).some(m => m.userId === this.props.groupMember.userId),
+            isUserPrivilegedInGroup: GroupStore.isUserPrivileged(
+                this.props.groupId
+            )
         });
     },
 
     _onKick: function() {
-        const ConfirmUserActionDialog = sdk.getComponent("dialogs.ConfirmUserActionDialog");
+        const ConfirmUserActionDialog = sdk.getComponent(
+            'dialogs.ConfirmUserActionDialog'
+        );
         Modal.createDialog(ConfirmUserActionDialog, {
             matrixClient: this.context.matrixClient,
             groupMember: this.props.groupMember,
-            action: this.state.isUserInvited ? _t('Disinvite') : _t('Remove from community'),
-            title: this.state.isUserInvited ? _t('Disinvite this user from community?')
-                                            : _t('Remove this user from community?'),
+            action: this.state.isUserInvited
+                ? _t('Disinvite')
+                : _t('Remove from community'),
+            title: this.state.isUserInvited
+                ? _t('Disinvite this user from community?')
+                : _t('Remove this user from community?'),
             danger: true,
-            onFinished: (proceed) => {
+            onFinished: proceed => {
                 if (!proceed) return;
 
-                this.setState({removingUser: true});
-                this.context.matrixClient.removeUserFromGroup(
-                    this.props.groupId, this.props.groupMember.userId,
-                ).then(() => {
-                    // return to the user list
-                    dis.dispatch({
-                        action: "view_user",
-                        member: null,
+                this.setState({ removingUser: true });
+                this.context.matrixClient
+                    .removeUserFromGroup(
+                        this.props.groupId,
+                        this.props.groupMember.userId
+                    )
+                    .then(() => {
+                        // return to the user list
+                        dis.dispatch({
+                            action: 'view_user',
+                            member: null
+                        });
+                    })
+                    .catch(e => {
+                        const ErrorDialog = sdk.getComponent(
+                            'dialogs.ErrorDialog'
+                        );
+                        Modal.createTrackedDialog(
+                            'Failed to remove user from group',
+                            '',
+                            ErrorDialog,
+                            {
+                                title: _t('Error'),
+                                description: this.state.isUserInvited
+                                    ? _t('Failed to withdraw invitation')
+                                    : _t('Failed to remove user from community')
+                            }
+                        );
+                    })
+                    .finally(() => {
+                        this.setState({ removingUser: false });
                     });
-                }).catch((e) => {
-                    const ErrorDialog = sdk.getComponent("dialogs.ErrorDialog");
-                    Modal.createTrackedDialog('Failed to remove user from group', '', ErrorDialog, {
-                        title: _t('Error'),
-                        description: this.state.isUserInvited ?
-                            _t('Failed to withdraw invitation') :
-                            _t('Failed to remove user from community'),
-                    });
-                }).finally(() => {
-                    this.setState({removingUser: false});
-                });
-            },
+            }
         });
     },
 
     _onCancel: function(e) {
         // Go back to the user list
         dis.dispatch({
-            action: "view_user",
-            member: null,
+            action: 'view_user',
+            member: null
         });
     },
 
     onRoomTileClick(roomId) {
         dis.dispatch({
             action: 'view_room',
-            room_id: roomId,
+            room_id: roomId
         });
     },
 
     render: function() {
         if (this.state.removingUser) {
-            const Spinner = sdk.getComponent("elements.Spinner");
-            return <div className="mx_MemberInfo">
-                <Spinner />
-            </div>;
+            const Spinner = sdk.getComponent('elements.Spinner');
+            return (
+                <div className='mx_MemberInfo'>
+                    <Spinner />
+                </div>
+            );
         }
 
         let adminTools;
         if (this.state.isUserPrivilegedInGroup) {
             const kickButton = (
-                <AccessibleButton className="mx_MemberInfo_field"
-                        onClick={this._onKick}>
-                    { this.state.isUserInvited ? _t('Disinvite') : _t('Remove from community') }
+                <AccessibleButton
+                    className='mx_MemberInfo_field'
+                    onClick={this._onKick}
+                >
+                    {this.state.isUserInvited
+                        ? _t('Disinvite')
+                        : _t('Remove from community')}
                 </AccessibleButton>
             );
 
@@ -156,43 +181,57 @@ module.exports = React.createClass({
             </AccessibleButton>;*/
 
             if (kickButton) {
-                adminTools =
-                    <div className="mx_MemberInfo_adminTools">
-                        <h3>{ _t("Admin Tools") }</h3>
-                        <div className="mx_MemberInfo_buttons">
-                            { kickButton }
+                adminTools = (
+                    <div className='mx_MemberInfo_adminTools'>
+                        <h3>{_t('Admin Tools')}</h3>
+                        <div className='mx_MemberInfo_buttons'>
+                            {kickButton}
                         </div>
-                    </div>;
+                    </div>
+                );
             }
         }
-
 
         const avatarUrl = this.props.groupMember.avatarUrl;
         let avatarElement;
         if (avatarUrl) {
-            const httpUrl = this.context.matrixClient.mxcUrlToHttp(avatarUrl, 800, 800);
-            avatarElement = (<div className="mx_MemberInfo_avatar">
-                            <img src={httpUrl} />
-                        </div>);
+            const httpUrl = this.context.matrixClient.mxcUrlToHttp(
+                avatarUrl,
+                800,
+                800
+            );
+            avatarElement = (
+                <div className='mx_MemberInfo_avatar'>
+                    <img src={httpUrl} />
+                </div>
+            );
         }
 
-        const groupMemberName = (
-            this.props.groupMember.displayname || this.props.groupMember.userId
-        );
+        const groupMemberName =
+            this.props.groupMember.displayname || this.props.groupMember.userId;
 
-        const EmojiText = sdk.getComponent('elements.EmojiText');
-        const GeminiScrollbarWrapper = sdk.getComponent('elements.GeminiScrollbarWrapper');
+        const GeminiScrollbarWrapper = sdk.getComponent(
+            'elements.GeminiScrollbarWrapper'
+        );
         return (
-            <div className="mx_MemberInfo">
+            <div className='mx_MemberInfo'>
                 <GeminiScrollbarWrapper autoshow={true}>
-                    <AccessibleButton className="mx_MemberInfo_cancel" onClick={this._onCancel}>
-                        <img src={require("../../../../res/img/cancel.svg")} width="18" height="18" className="mx_filterFlipColor" />
+                    <AccessibleButton
+                        className='mx_MemberInfo_cancel'
+                        onClick={this._onCancel}
+                    >
+                        <img
+                            src={require('../../../../res/img/cancel.svg')}
+                            width='18'
+                            height='18'
+                            className='mx_filterFlipColor'
+                        />
                     </AccessibleButton>
-                    { avatarElement }
-                    <EmojiText element="h2">{ groupMemberName }</EmojiText>
-                    { adminTools }
+                    {avatarElement}
+                    <h2>{groupMemberName}</h2>
+                    {adminTools}
                 </GeminiScrollbarWrapper>
             </div>
         );
-    },
+    }
 });

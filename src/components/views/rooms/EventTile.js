@@ -1,6 +1,7 @@
 /*
 Copyright 2015, 2016 OpenMarket Ltd
 Copyright 2017 New Vector Ltd
+Copyright 2019 The Matrix.org Foundation C.I.C.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,7 +18,6 @@ limitations under the License.
 
 'use strict';
 
-
 import ReplyThread from "../elements/ReplyThread";
 
 const React = require('react');
@@ -30,7 +30,6 @@ const sdk = require('../../../index');
 const TextForEvent = require('../../../TextForEvent');
 import withMatrixClient from '../../../wrappers/withMatrixClient';
 
-const ContextualMenu = require('../../structures/ContextualMenu');
 import dis from '../../../dispatcher';
 import SettingsStore from "../../../settings/SettingsStore";
 import {EventStatus} from 'matrix-js-sdk';
@@ -129,7 +128,7 @@ module.exports = withMatrixClient(React.createClass({
         isSelectedEvent: PropTypes.bool,
 
         /* callback called when dynamic content in events are loaded */
-        onWidgetLoad: PropTypes.func,
+        onHeightChanged: PropTypes.func,
 
         /* a list of read-receipts we should show. Each object has a 'roomMember' and 'ts'. */
         readReceipts: PropTypes.arrayOf(React.PropTypes.object),
@@ -161,19 +160,25 @@ module.exports = withMatrixClient(React.createClass({
 
         // show twelve hour timestamps
         isTwelveHour: PropTypes.bool,
+
+        // helper function to access relations for this event
+        getRelationsForEvent: PropTypes.func,
+
+        // whether to show reactions for this event
+        showReactions: PropTypes.bool,
     },
 
     getDefaultProps: function() {
         return {
-            // no-op function because onWidgetLoad is optional yet some sub-components assume its existence
-            onWidgetLoad: function() {},
+            // no-op function because onHeightChanged is optional yet some sub-components assume its existence
+            onHeightChanged: function() {},
         };
     },
 
     getInitialState: function() {
         return {
-            // Whether the context menu is being displayed.
-            menu: false,
+            // Whether the action bar is focused.
+            actionBarFocused: false,
             // Whether all read receipts are being displayed. If not, only display
             // a truncation of them.
             allReadAvatars: false,
@@ -181,7 +186,8 @@ module.exports = withMatrixClient(React.createClass({
             verified: null,
             // Whether onRequestKeysClick has been called since mounting.
             previouslyRequestedKeys: false,
-            continuation: this.props.continuation,
+            // The Relations model from the JS SDK for reactions to `mxEvent`
+            reactions: this.getReactions(),
         };
     },
 
@@ -193,9 +199,12 @@ module.exports = withMatrixClient(React.createClass({
 
     componentDidMount: function() {
         this._suppressReadReceiptAnimation = false;
-        this.props.matrixClient.on("deviceVerificationChanged",
-                                 this.onDeviceVerificationChanged);
+        const client = this.props.matrixClient;
+        client.on("deviceVerificationChanged", this.onDeviceVerificationChanged);
         this.props.mxEvent.on("Event.decrypted", this._onDecrypted);
+        if (this.props.showReactions) {
+            this.props.mxEvent.on("Event.relationsCreated", this._onReactionsCreated);
+        }
     },
 
     componentWillReceiveProps: function(nextProps) {
@@ -218,13 +227,16 @@ module.exports = withMatrixClient(React.createClass({
         const client = this.props.matrixClient;
         client.removeListener("deviceVerificationChanged", this.onDeviceVerificationChanged);
         this.props.mxEvent.removeListener("Event.decrypted", this._onDecrypted);
+        if (this.props.showReactions) {
+            this.props.mxEvent.removeListener("Event.relationsCreated", this._onReactionsCreated);
+        }
     },
 
     /** called when the event is decrypted after we show it.
      */
     _onDecrypted: function() {
         // we need to re-verify the sending device.
-        // (we call onWidgetLoad in _verifyEvent to handle the case where decryption
+        // (we call onHeightChanged in _verifyEvent to handle the case where decryption
         // has caused a change in size of the event tile)
         this._verifyEvent(this.props.mxEvent);
         this.forceUpdate();
@@ -246,8 +258,11 @@ module.exports = withMatrixClient(React.createClass({
             verified: verified,
         }, () => {
             // Decryption may have caused a change in size
-            this.props.onWidgetLoad();
+            this.props.onHeightChanged();
         });
+    },
+    _isMyMessage: function() {
+        return this.props.mxEvent.sender.userId === this.props.matrixClient.credentials.userId;
     },
 
     _propsEqual: function(objA, objB) {
@@ -308,36 +323,6 @@ module.exports = withMatrixClient(React.createClass({
         }
 
         return actions.tweaks.highlight;
-    },
-
-    onEditClicked: function(e) {
-        const MessageContextMenu = sdk.getComponent('context_menus.MessageContextMenu');
-        const buttonRect = e.target.getBoundingClientRect();
-
-        // The window X and Y offsets are to adjust position when zoomed in to page
-        const x = buttonRect.right + window.pageXOffset;
-        const y = (buttonRect.top + (buttonRect.height / 2) + window.pageYOffset) - 19;
-        const self = this;
-
-        const {tile, replyThread} = this.refs;
-
-        let e2eInfoCallback = null;
-        if (this.props.mxEvent.isEncrypted()) e2eInfoCallback = () => this.onCryptoClicked();
-
-        ContextualMenu.createMenu(MessageContextMenu, {
-            chevronOffset: 10,
-            mxEvent: this.props.mxEvent,
-            left: x,
-            top: y,
-            permalinkCreator: this.props.permalinkCreator,
-            eventTileOps: tile && tile.getEventTileOps ? tile.getEventTileOps() : undefined,
-            collapseReplyThread: replyThread && replyThread.canCollapse() ? replyThread.collapse : undefined,
-            e2eInfoCallback: e2eInfoCallback,
-            onFinished: function() {
-                self.setState({menu: false});
-            },
-        });
-        this.setState({menu: true});
     },
 
     toggleAllReadAvatars: function() {
@@ -422,7 +407,7 @@ module.exports = withMatrixClient(React.createClass({
         });
     },
 
-    onCryptoClicked: function(e) {
+    onCryptoClick: function(e) {
         const event = this.props.mxEvent;
 
         Modal.createTrackedDialogAsync('Encrypted Event Dialog', '',
@@ -458,7 +443,7 @@ module.exports = withMatrixClient(React.createClass({
 
     _renderE2EPadlock: function() {
         const ev = this.props.mxEvent;
-        const props = {onClick: this.onCryptoClicked};
+        const props = {onClick: this.onCryptoClick};
 
         // event could not be decrypted
         if (ev.getContent().msgtype === 'm.bad.encrypted') {
@@ -491,6 +476,41 @@ module.exports = withMatrixClient(React.createClass({
         return null;
     },
 
+    onActionBarFocusChange(focused) {
+        this.setState({
+            actionBarFocused: focused,
+        });
+    },
+
+    getTile() {
+        return this.refs.tile;
+    },
+
+    getReplyThread() {
+        return this.refs.replyThread;
+    },
+
+    getReactions() {
+        if (
+            !this.props.showReactions ||
+            !this.props.getRelationsForEvent
+        ) {
+            return null;
+        }
+        const eventId = this.props.mxEvent.getId();
+        return this.props.getRelationsForEvent(eventId, "m.annotation", "m.reaction");
+    },
+
+    _onReactionsCreated(relationType, eventType) {
+        if (relationType !== "m.annotation" || eventType !== "m.reaction") {
+            return;
+        }
+        this.props.mxEvent.removeListener("Event.relationsCreated", this._onReactionsCreated);
+        this.setState({
+            reactions: this.getReactions(),
+        });
+    },
+
     render: function() {
         const MessageTimestamp = sdk.getComponent('messages.MessageTimestamp');
         const SenderProfile = sdk.getComponent('messages.SenderProfile');
@@ -503,11 +523,21 @@ module.exports = withMatrixClient(React.createClass({
         const eventType = this.props.mxEvent.getType();
 
         // Info messages are basically information about commands processed on a room
-        const isInfoMessage = (
+        let isInfoMessage = (
             eventType !== 'm.room.message' && eventType !== 'm.sticker' && eventType != 'm.room.create'
         );
 
-        const tileHandler = getHandlerTile(this.props.mxEvent);
+        let tileHandler = getHandlerTile(this.props.mxEvent);
+        // If we're showing hidden events in the timeline, we should use the
+        // source tile when there's no regular tile for an event and also for
+        // replace relations (which otherwise would display as a confusing
+        // duplicate of the thing they are replacing).
+        const useSource = !tileHandler || this.props.mxEvent.isRelation("m.replace");
+        if (useSource && SettingsStore.getValue("showHiddenEventsInTimeline")) {
+            tileHandler = "messages.ViewSourceEvent";
+            // Reuse info message avatar and sender profile styling
+            isInfoMessage = true;
+        }
         // This shouldn't happen: the caller should check we support this type
         // before trying to instantiate us
         if (!tileHandler) {
@@ -524,30 +554,33 @@ module.exports = withMatrixClient(React.createClass({
         const isSending = (['sending', 'queued', 'encrypting'].indexOf(this.props.eventSendStatus) !== -1);
         const isRedacted = isMessageEvent(this.props.mxEvent) && this.props.isRedacted;
         const isEncryptionFailure = this.props.mxEvent.isDecryptionFailure();
-        const isRedundant = isRedundantEventMessage(this.props.mxEvent);
 
-        if (isRedundant || isEncryptionFailure | isRedacted) {
+        const isRedundant = isRedundantEventMessage(this.props.mxEvent);
+         if (isRedundant || isEncryptionFailure || isRedacted) {
             return (<div></div>);
         }
 
+        const isEditing = !!this.props.editState;
         const classes = classNames({
             mx_EventTile: true,
+            mx_EventTile_isEditing: isEditing,
             mx_EventTile_info: isInfoMessage,
             mx_EventTile_12hr: this.props.isTwelveHour,
             mx_EventTile_encrypting: this.props.eventSendStatus === 'encrypting',
-            mx_EventTile_sending: isSending,
+            mx_EventTile_sending: !isEditing && isSending,
             mx_EventTile_notSent: this.props.eventSendStatus === 'not_sent',
             mx_EventTile_highlight: this.props.tileShape === 'notif' ? false : this.shouldHighlight(),
             mx_EventTile_selected: this.props.isSelectedEvent,
-            // mx_EventTile_continuation: this.props.tileShape ? '' : this.props.continuation,
+            mx_EventTile_continuation: this.props.tileShape ? '' : this.props.continuation,
             mx_EventTile_last: this.props.last,
             mx_EventTile_contextual: this.props.contextual,
-            menu: this.state.menu,
+            mx_EventTile_actionBarFocused: this.state.actionBarFocused,
             mx_EventTile_verified: this.state.verified === true,
             mx_EventTile_unverified: this.state.verified === false,
             mx_EventTile_bad: isEncryptionFailure,
             mx_EventTile_emote: msgtype === 'm.emote',
             mx_EventTile_redacted: isRedacted,
+            mx_EventTile_myMsg: this._isMyMessage()
         });
 
         let permalink = "#";
@@ -573,13 +606,11 @@ module.exports = withMatrixClient(React.createClass({
             // joins/parts/etc
             avatarSize = 14;
             needsSenderProfile = false;
-        }
-        //else if (this.props.continuation && this.props.tileShape !== "file_grid") {
-        //     // no avatar or sender profile for continuation messages
-        //     avatarSize = 0;
-        //     needsSenderProfile = false;
-        // }
-        else {
+        } else if (this.props.continuation && this.props.tileShape !== "file_grid") {
+            // no avatar or sender profile for continuation messages
+            avatarSize = 0;
+            needsSenderProfile = false;
+        } else {
             avatarSize = 30;
             needsSenderProfile = true;
         }
@@ -610,9 +641,15 @@ module.exports = withMatrixClient(React.createClass({
             }
         }
 
-        const editButton = (
-            <span className="mx_EventTile_editButton" title={_t("Options")} onClick={this.onEditClicked} />
-        );
+        const MessageActionBar = sdk.getComponent('messages.MessageActionBar');
+        const actionBar = !isEditing ? <MessageActionBar
+            mxEvent={this.props.mxEvent}
+            reactions={this.state.reactions}
+            permalinkCreator={this.props.permalinkCreator}
+            getTile={this.getTile}
+            getReplyThread={this.getReplyThread}
+            onFocusChange={this.onActionBarFocusChange}
+        /> : undefined;
 
         const timestamp = this.props.mxEvent.getTs() ?
             <MessageTimestamp showTwelveHour={this.props.isTwelveHour} ts={this.props.mxEvent.getTs()} /> : null;
@@ -642,25 +679,33 @@ module.exports = withMatrixClient(React.createClass({
                 {'requestLink': (sub) => <a onClick={this.onRequestKeysClick}>{ sub }</a>},
             );
 
-        const ToolTipButton = sdk.getComponent('elements.ToolTipButton');
+        const TooltipButton = sdk.getComponent('elements.TooltipButton');
         const keyRequestInfo = isEncryptionFailure ?
             <div className="mx_EventTile_keyRequestInfo">
                 <span className="mx_EventTile_keyRequestInfo_text">
                     { keyRequestInfoContent }
                 </span>
-                <ToolTipButton helpText={keyRequestHelpText} />
+                <TooltipButton helpText={keyRequestHelpText} />
             </div> : null;
+
+        let reactionsRow;
+        if (!isRedacted) {
+            const ReactionsRow = sdk.getComponent('messages.ReactionsRow');
+            reactionsRow = <ReactionsRow
+                mxEvent={this.props.mxEvent}
+                reactions={this.state.reactions}
+            />;
+        }
 
         switch (this.props.tileShape) {
             case 'notif': {
-                const EmojiText = sdk.getComponent('elements.EmojiText');
                 const room = this.props.matrixClient.getRoom(this.props.mxEvent.getRoomId());
                 return (
                     <div className={classes}>
                         <div className="mx_EventTile_roomName">
-                            <EmojiText element="a" href={permalink} onClick={this.onPermalinkClicked}>
+                            <a href={permalink} onClick={this.onPermalinkClicked}>
                                 { room ? room.name : '' }
-                            </EmojiText>
+                            </a>
                         </div>
                         <div className="mx_EventTile_senderDetails">
                             { avatar }
@@ -675,7 +720,7 @@ module.exports = withMatrixClient(React.createClass({
                                            highlights={this.props.highlights}
                                            highlightLink={this.props.highlightLink}
                                            showUrlPreview={this.props.showUrlPreview}
-                                           onWidgetLoad={this.props.onWidgetLoad} />
+                                           onHeightChanged={this.props.onHeightChanged} />
                         </div>
                     </div>
                 );
@@ -690,7 +735,7 @@ module.exports = withMatrixClient(React.createClass({
                                            highlightLink={this.props.highlightLink}
                                            showUrlPreview={this.props.showUrlPreview}
                                            tileShape={this.props.tileShape}
-                                           onWidgetLoad={this.props.onWidgetLoad} />
+                                           onHeightChanged={this.props.onHeightChanged} />
                         </div>
                         <a
                             className="mx_EventTile_senderDetailsLink"
@@ -712,7 +757,7 @@ module.exports = withMatrixClient(React.createClass({
                 if (this.props.tileShape === 'reply_preview') {
                     thread = ReplyThread.makeThread(
                         this.props.mxEvent,
-                        this.props.onWidgetLoad,
+                        this.props.onHeightChanged,
                         this.props.permalinkCreator,
                         'replyThread',
                     );
@@ -725,13 +770,13 @@ module.exports = withMatrixClient(React.createClass({
                             <a href={permalink} onClick={this.onPermalinkClicked}>
                                 { timestamp }
                             </a>
-                            {/*{ this._renderE2EPadlock() }*/}
+                            {/* this._renderE2EPadlock() */}
                             { thread }
                             <EventTileType ref="tile"
                                            mxEvent={this.props.mxEvent}
                                            highlights={this.props.highlights}
                                            highlightLink={this.props.highlightLink}
-                                           onWidgetLoad={this.props.onWidgetLoad}
+                                           onHeightChanged={this.props.onHeightChanged}
                                            showUrlPreview={false} />
                         </div>
                     </div>
@@ -740,11 +785,10 @@ module.exports = withMatrixClient(React.createClass({
             default: {
                 const thread = ReplyThread.makeThread(
                     this.props.mxEvent,
-                    this.props.onWidgetLoad,
+                    this.props.onHeightChanged,
                     this.props.permalinkCreator,
                     'replyThread',
                 );
-
                 return (
                     <div className={classes}>
                         <div className="mx_EventTile_msgOption">
@@ -755,19 +799,22 @@ module.exports = withMatrixClient(React.createClass({
                             <a href={permalink} onClick={this.onPermalinkClicked}>
                                 { timestamp }
                             </a>
-                            {/*{ this._renderE2EPadlock() }*/}
+                            {/* this._renderE2EPadlock() */}
                             { thread }
                             <EventTileType ref="tile"
                                            mxEvent={this.props.mxEvent}
+                                           replacingEventId={this.props.replacingEventId}
+                                           editState={this.props.editState}
                                            highlights={this.props.highlights}
                                            highlightLink={this.props.highlightLink}
                                            showUrlPreview={this.props.showUrlPreview}
-                                           onWidgetLoad={this.props.onWidgetLoad} />
+                                           onHeightChanged={this.props.onHeightChanged} />
                             { keyRequestInfo }
-                            { editButton }
+                            { reactionsRow }
+                            { actionBar }
                         </div>
                         {
-                            // The avatar goes after the event tile as it's absolutly positioned to be over the
+                            // The avatar goes after the event tile as it's absolutely positioned to be over the
                             // event tile line, so needs to be later in the DOM so it appears on top (this avoids
                             // the need for further z-indexing chaos)
                         }
@@ -793,6 +840,9 @@ function isRedundantEventMessage(ev) {
 module.exports.haveTileForEvent = function(e) {
     // Only messages have a tile (black-rectangle) if redacted
     if (e.isRedacted() && !isMessageEvent(e)) return false;
+
+    // No tile for replacement events since they update the original tile
+    if (e.isRelation("m.replace")) return false;
 
     const handler = getHandlerTile(e);
     if (handler === undefined) return false;

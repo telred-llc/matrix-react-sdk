@@ -44,6 +44,7 @@ import SdkConfig from '../../../SdkConfig';
 import MultiInviter from "../../../utils/MultiInviter";
 import SettingsStore from "../../../settings/SettingsStore";
 import E2EIcon from "./E2EIcon";
+import AutoHideScrollbar from "../../structures/AutoHideScrollbar";
 
 module.exports = withMatrixClient(React.createClass({
     displayName: 'MemberInfo',
@@ -530,10 +531,11 @@ module.exports = withMatrixClient(React.createClass({
     },
 
     onNewDMClick: function() {
-        this.setState({ updating: this.state.updating + 1 });
-        createRoom({dmUserId: this.props.member.userId}).finally(() => {
-            this.setState({ updating: this.state.updating - 1 });
-        }).done();
+        // this.setState({ updating: this.state.updating + 1 });
+        // createRoom({dmUserId: this.props.member.userId}).finally(() => {
+        //     this.setState({ updating: this.state.updating - 1 });
+        // }).done();
+        dis.dispatch({ action: 'view_create_chat' });
     },
 
     onLeaveClick: function() {
@@ -588,6 +590,7 @@ module.exports = withMatrixClient(React.createClass({
 
         can.kick = me.powerLevel >= powerLevels.kick;
         can.ban = me.powerLevel >= powerLevels.ban;
+        can.invite = me.powerLevel >= powerLevels.invite;
         can.mute = me.powerLevel >= editPowerLevel;
         can.modifyLevel = me.powerLevel >= editPowerLevel && (isMe || me.powerLevel > them.powerLevel);
         can.modifyLevelMax = me.powerLevel;
@@ -706,12 +709,12 @@ module.exports = withMatrixClient(React.createClass({
                     });
                 };
 
-                // const onInsertPillButton = function() {
-                //     dis.dispatch({
-                //         action: 'insert_mention',
-                //         user_id: member.userId,
-                //     });
-                // };
+                const onInsertPillButton = function() {
+                    dis.dispatch({
+                        action: 'insert_mention',
+                        user_id: member.userId,
+                    });
+                };
 
                 readReceiptButton = (
                     <AccessibleButton onClick={onReadReceiptButton} className="mx_MemberInfo_field">
@@ -719,14 +722,14 @@ module.exports = withMatrixClient(React.createClass({
                     </AccessibleButton>
                 );
 
-                // insertPillButton = (
-                //     <AccessibleButton onClick={onInsertPillButton} className={"mx_MemberInfo_field"}>
-                //         { _t('Mention') }
-                //     </AccessibleButton>
-                // );
+                insertPillButton = (
+                    <AccessibleButton onClick={onInsertPillButton} className={"mx_MemberInfo_field"}>
+                        { _t('Mention') }
+                    </AccessibleButton>
+                );
             }
 
-            if (!member || !member.membership || member.membership === 'leave') {
+            if (this.state.can.invite && (!member || !member.membership || member.membership === 'leave')) {
                 const roomId = member && member.roomId ? member.roomId : RoomViewStore.getRoomId();
                 const onInviteUserButton = async () => {
                     try {
@@ -734,16 +737,15 @@ module.exports = withMatrixClient(React.createClass({
                         // we're only inviting one user.
                         const inviter = new MultiInviter(roomId);
                         await inviter.invite([member.userId]).then(() => {
-                            if (inviter.getCompletionState(userId) !== "invited") {
-                                // throw new Error(inviter.getErrorText(userId));
-                            }
+                            if (inviter.getCompletionState(member.userId) !== "invited")
+                                throw new Error(inviter.getErrorText(member.userId));
                         });
                     } catch (err) {
-                        // const ErrorDialog = sdk.getComponent('dialogs.ErrorDialog');
-                        // Modal.createTrackedDialog('Failed to invite', '', ErrorDialog, {
-                        //     title: _t('Failed to invite'),
-                        //     description: ((err && err.message) ? err.message : _t("Operation failed")),
-                        // });
+                        const ErrorDialog = sdk.getComponent('dialogs.ErrorDialog');
+                        Modal.createTrackedDialog('Failed to invite', '', ErrorDialog, {
+                            title: _t('Failed to invite'),
+                            description: ((err && err.message) ? err.message : _t("Operation failed")),
+                        });
                     }
                 };
 
@@ -775,14 +777,76 @@ module.exports = withMatrixClient(React.createClass({
         );
     },
 
-    render: function() {
+    _isDirectMessageRoom: function(roomId) {
+        const dmRooms = DMRoomMap.shared().getUserIdForRoomId(roomId);
+        return Boolean(dmRooms);
+    },
 
+    render: function() {
+        let startChat;
         let kickButton;
         let banButton;
         let muteButton;
         let giveModButton;
         let spinner;
-        let adminTools;
+
+        if (this.props.member.userId !== this.props.matrixClient.credentials.userId) {
+            const dmRoomMap = new DMRoomMap(this.props.matrixClient);
+            // dmRooms will not include dmRooms that we have been invited into but did not join.
+            // Because DMRoomMap runs off account_data[m.direct] which is only set on join of dm room.
+            // XXX: we potentially want DMs we have been invited to, to also show up here :L
+            // especially as logic below concerns specially if we haven't joined but have been invited
+            const dmRooms = dmRoomMap.getDMRoomsForUserId(this.props.member.userId);
+
+            const RoomTile = sdk.getComponent("rooms.RoomTile");
+
+            const tiles = [];
+            for (const roomId of dmRooms) {
+                const room = this.props.matrixClient.getRoom(roomId);
+                if (room) {
+                    const myMembership = room.getMyMembership();
+                    // not a DM room if we have are not joined
+                    if (myMembership !== 'join') continue;
+
+                    const them = this.props.member;
+                    // not a DM room if they are not joined
+                    if (!them.membership || them.membership !== 'join') continue;
+
+                    const highlight = room.getUnreadNotificationCount('highlight') > 0;
+
+                    tiles.push(
+                        <RoomTile key={room.roomId} room={room}
+                            transparent={true}
+                            collapsed={false}
+                            selected={false}
+                            unread={Unread.doesRoomHaveUnreadMessages(room)}
+                            highlight={highlight}
+                            isInvite={false}
+                            onClick={this.onRoomTileClick}
+                        />,
+                    );
+                }
+            }
+
+            const labelClasses = classNames({
+                mx_MemberInfo_createRoom_label: true,
+                mx_RoomTile_name: true,
+            });
+            const startNewChat = <AccessibleButton
+                className="mx_MemberInfo_createRoom"
+                onClick={this.onNewDMClick}
+            >
+                <div className="mx_RoomTile_avatar">
+                    <img src={require("../../../../res/img/create-big.svg")} width="26" height="26" />
+                </div>
+                <div className={labelClasses}><i>{ _t("Start a chat") }</i></div>
+            </AccessibleButton>;
+            startChat = this._isDirectMessageRoom(this.props.member.roomId) ? null : <div>
+                <h3>{ _t("Direct chats") }</h3>
+                { tiles }
+                { startNewChat }
+            </div>;
+        }
 
         if (this.state.updating) {
             const Loader = sdk.getComponent("elements.Spinner");
@@ -825,6 +889,21 @@ module.exports = withMatrixClient(React.createClass({
             giveModButton = <AccessibleButton className="mx_MemberInfo_field" onClick={this.onModToggle}>
                 { giveOpLabel }
             </AccessibleButton>;
+        }
+
+        let adminTools;
+        if (kickButton || banButton || muteButton || giveModButton) {
+            adminTools =
+                <div>
+                    <h3>{ _t("Admin Tools") }</h3>
+
+                    <div className="mx_MemberInfo_buttons">
+                        { muteButton }
+                        { kickButton }
+                        { banButton }
+                        { giveModButton }
+                    </div>
+                </div>;
         }
 
         const memberName = this.props.member.name;
@@ -875,14 +954,12 @@ module.exports = withMatrixClient(React.createClass({
             const PowerSelector = sdk.getComponent('elements.PowerSelector');
             roomMemberDetails = <div>
                 <div className="mx_MemberInfo_profileField">
-                    { _t("Level:") } <b>
-                        <PowerSelector controlled={true}
-                            value={parseInt(this.props.member.powerLevel)}
-                            maxValue={this.state.can.modifyLevelMax}
-                            disabled={!this.state.can.modifyLevel}
-                            usersDefault={powerLevelUsersDefault}
-                            onChange={this.onPowerChange} />
-                    </b>
+                    <PowerSelector
+                        value={parseInt(this.props.member.powerLevel)}
+                        maxValue={this.state.can.modifyLevelMax}
+                        disabled={!this.state.can.modifyLevel}
+                        usersDefault={powerLevelUsersDefault}
+                        onChange={this.onPowerChange} />
                 </div>
                 <div className="mx_MemberInfo_profileField">
                     {presenceLabel}
@@ -906,7 +983,6 @@ module.exports = withMatrixClient(React.createClass({
         }
 
         const GeminiScrollbarWrapper = sdk.getComponent("elements.GeminiScrollbarWrapper");
-        const EmojiText = sdk.getComponent('elements.EmojiText');
 
         let backButton;
         if (this.props.member.roomId) {
@@ -916,85 +992,12 @@ module.exports = withMatrixClient(React.createClass({
             />);
         }
 
-        if (this.props.member.userId !== this.props.matrixClient.credentials.userId) {
-            const dmRoomMap = new DMRoomMap(this.props.matrixClient);
-            // dmRooms will not include dmRooms that we have been invited into but did not join.
-            // Because DMRoomMap runs off account_data[m.direct] which is only set on join of dm room.
-            // XXX: we potentially want DMs we have been invited to, to also show up here :L
-            // especially as logic below concerns specially if we haven't joined but have been invited
-            const dmRooms = dmRoomMap.getDMRoomsForUserId(this.props.member.userId);
-
-            const RoomTile = sdk.getComponent("rooms.RoomTile");
-
-            const tiles = [];
-            for (const roomId of dmRooms) {
-                const room = this.props.matrixClient.getRoom(roomId);
-                if (room) {
-                    const myMembership = room.getMyMembership();
-                    // not a DM room if we have are not joined
-                    if (myMembership !== 'join') continue;
-
-                    const them = this.props.member;
-                    // not a DM room if they are not joined
-                    if (!them.membership || them.membership !== 'join') continue;
-
-                    const highlight = room.getUnreadNotificationCount('highlight') > 0;
-
-                    tiles.push(
-                        <RoomTile key={room.roomId} room={room}
-                                  transparent={true}
-                                  collapsed={false}
-                                  selected={false}
-                                  unread={Unread.doesRoomHaveUnreadMessages(room)}
-                                  highlight={highlight}
-                                  isInvite={false}
-                                  onClick={this.onRoomTileClick}
-                        />,
-                    );
-                }
-            }
-
-            // const labelClasses = classNames({
-            //     mx_MemberInfo_createRoom_label: true,
-            //     mx_RoomTile_name: true,
-            // });
-            // const startNewChat = <AccessibleButton
-            //     className="mx_MemberInfo_createRoom"
-            //     onClick={this.onNewDMClick}
-            // >
-            //     <div className="mx_RoomTile_avatar">
-            //         <img src={require("../../../../res/img/create-big.svg")} width="26" height="26" />
-            //     </div>
-            //     <div className={labelClasses}><i>{ _t("Start a chat") }</i></div>
-            // </AccessibleButton>;
-            //
-            // startChat = <div>
-            //     <h3>{ _t("Direct chats") }</h3>
-            //     { tiles }
-            //     { startNewChat }
-            // </div>;
-
-            if (kickButton || banButton || muteButton || giveModButton) {
-                adminTools =
-                    <div>
-                        <h3>{ _t("Admin Tools") }</h3>
-
-                        <div className="mx_MemberInfo_buttons">
-                            { muteButton }
-                            { kickButton }
-                            { banButton }
-                            { giveModButton }
-                        </div>
-                    </div>;
-            }
-        }
-
         return (
             <div className="mx_MemberInfo">
                     <div className="mx_MemberInfo_name">
                         { backButton }
                         { e2eIconElement }
-                        <EmojiText element="h2">{ memberName }</EmojiText>
+                        <h2>{ memberName }</h2>
                     </div>
                     { avatarElement }
                     <div className="mx_MemberInfo_container">
@@ -1003,15 +1006,19 @@ module.exports = withMatrixClient(React.createClass({
                             { roomMemberDetails }
                         </div>
                     </div>
-                    <GeminiScrollbarWrapper autoshow={true} className="mx_MemberInfo_scrollContainer">
+                    <AutoHideScrollbar className="mx_MemberInfo_scrollContainer">
                         <div className="mx_MemberInfo_container">
                             { this._renderUserOptions() }
 
                             { adminTools }
 
+                            {/* startChat */}
+
+                            { /* this._renderDevices() */}
+
                             { spinner }
                         </div>
-                    </GeminiScrollbarWrapper>
+                    </AutoHideScrollbar>
             </div>
         );
     },

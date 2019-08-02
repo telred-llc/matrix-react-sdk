@@ -57,7 +57,7 @@ export default React.createClass({
             copied: false,
             downloaded: false,
             zxcvbnResult: null,
-            setPassPhrase: false,
+            setPassPhrase: false
         };
     },
 
@@ -83,39 +83,39 @@ export default React.createClass({
         if (successful) {
             this.setState({
                 copied: true,
-                phase: PHASE_KEEPITSAFE,
+                phase: PHASE_KEEPITSAFE
             });
         }
     },
 
     _onDownloadClick: function() {
         const blob = new Blob([this._keyBackupInfo.recovery_key], {
-            type: 'text/plain;charset=us-ascii',
+            type: 'text/plain;charset=us-ascii'
         });
         FileSaver.saveAs(blob, 'recovery-key.txt');
 
         this.setState({
             downloaded: true,
-            phase: PHASE_KEEPITSAFE,
+            phase: PHASE_KEEPITSAFE
         });
     },
 
     _createBackup: async function() {
         this.setState({
             phase: PHASE_BACKINGUP,
-            error: null,
+            error: null
         });
         let info;
         try {
             info = await MatrixClientPeg.get().createKeyBackupVersion(
-                this._keyBackupInfo,
+                this._keyBackupInfo
             );
             await MatrixClientPeg.get().scheduleAllGroupSessionsForBackup();
             this.setState({
-                phase: PHASE_DONE,
+                phase: PHASE_DONE
             });
         } catch (e) {
-            console.log("Error creating key backup", e);
+            console.log('Error creating key backup', e);
             // TODO: If creating a version succeeds, but backup fails, should we
             // delete the version, disable backup, or do nothing?  If we just
             // disable without deleting, we'll enable on next app reload since
@@ -124,7 +124,7 @@ export default React.createClass({
                 MatrixClientPeg.get().deleteKeyBackupVersion(info.version);
             }
             this.setState({
-                error: e,
+                error: e
             });
         }
     },
@@ -138,11 +138,11 @@ export default React.createClass({
     },
 
     _onOptOutClick: function() {
-        this.setState({phase: PHASE_OPTOUT_CONFIRM});
+        this.setState({ phase: PHASE_OPTOUT_CONFIRM });
     },
 
     _onSetUpClick: function() {
-        this.setState({phase: PHASE_PASSPHRASE});
+        this.setState({ phase: PHASE_PASSPHRASE });
     },
 
     _onSkipPassPhraseClick: async function() {
@@ -150,12 +150,12 @@ export default React.createClass({
         this.setState({
             copied: false,
             downloaded: false,
-            phase: PHASE_SHOWKEY,
+            phase: PHASE_SHOWKEY
         });
     },
 
     _onPassPhraseNextClick: function() {
-        this.setState({phase: PHASE_PASSPHRASE_CONFIRM});
+        this.setState({ phase: PHASE_PASSPHRASE_CONFIRM });
     },
 
     _onPassPhraseKeyPress: async function(e) {
@@ -166,10 +166,13 @@ export default React.createClass({
             if (this._setZxcvbnResultTimeout !== null) {
                 clearTimeout(this._setZxcvbnResultTimeout);
                 this._setZxcvbnResultTimeout = null;
-                await new Promise((resolve) => {
-                    this.setState({
-                        zxcvbnResult: scorePassword(this.state.passPhrase),
-                    }, resolve);
+                await new Promise(resolve => {
+                    this.setState(
+                        {
+                            zxcvbnResult: scorePassword(this.state.passPhrase)
+                        },
+                        resolve
+                    );
                 });
             }
             if (this._passPhraseIsValid()) {
@@ -179,17 +182,22 @@ export default React.createClass({
     },
 
     _onPassPhraseConfirmNextClick: async function() {
-        this._keyBackupInfo = await MatrixClientPeg.get().prepareKeyBackupVersion(this.state.passPhrase);
+        this._keyBackupInfo = await MatrixClientPeg.get().prepareKeyBackupVersion(
+            this.state.passPhrase
+        );
         this.setState({
             setPassPhrase: true,
             copied: false,
             downloaded: false,
-            phase: PHASE_SHOWKEY,
+            phase: PHASE_SHOWKEY
         });
     },
 
     _onPassPhraseConfirmKeyPress: function(e) {
-        if (e.key === 'Enter' && this.state.passPhrase === this.state.passPhraseConfirm) {
+        if (
+            e.key === 'Enter' &&
+            this.state.passPhrase === this.state.passPhraseConfirm
+        ) {
             this._onPassPhraseConfirmNextClick();
         }
     },
@@ -199,19 +207,19 @@ export default React.createClass({
             passPhrase: '',
             passPhraseConfirm: '',
             phase: PHASE_PASSPHRASE,
-            zxcvbnResult: null,
+            zxcvbnResult: null
         });
     },
 
     _onKeepItSafeBackClick: function() {
         this.setState({
-            phase: PHASE_SHOWKEY,
+            phase: PHASE_SHOWKEY
         });
     },
 
     _onPassPhraseChange: function(e) {
         this.setState({
-            passPhrase: e.target.value,
+            passPhrase: e.target.value
         });
 
         if (this._setZxcvbnResultTimeout !== null) {
@@ -223,19 +231,22 @@ export default React.createClass({
                 // precompute this and keep it in state: zxcvbn is fast but
                 // we use it in a couple of different places so no point recomputing
                 // it unnecessarily.
-                zxcvbnResult: scorePassword(this.state.passPhrase),
+                zxcvbnResult: scorePassword(this.state.passPhrase)
             });
         }, PASSPHRASE_FEEDBACK_DELAY);
     },
 
     _onPassPhraseConfirmChange: function(e) {
         this.setState({
-            passPhraseConfirm: e.target.value,
+            passPhraseConfirm: e.target.value
         });
     },
 
     _passPhraseIsValid: function() {
-        return this.state.zxcvbnResult && this.state.zxcvbnResult.score >= PASSWORD_MIN_SCORE;
+        return (
+            this.state.zxcvbnResult &&
+            this.state.zxcvbnResult.score >= PASSWORD_MIN_SCORE
+        );
     },
 
     _renderPhasePassPhrase: function() {
@@ -245,74 +256,112 @@ export default React.createClass({
         let helpText;
         if (this.state.zxcvbnResult) {
             if (this.state.zxcvbnResult.score >= PASSWORD_MIN_SCORE) {
-                helpText = _t("Great! This passphrase looks strong enough.");
+                helpText = _t('Great! This passphrase looks strong enough.');
             } else {
                 const suggestions = [];
-                for (let i = 0; i < this.state.zxcvbnResult.feedback.suggestions.length; ++i) {
-                    suggestions.push(<div key={i}>{this.state.zxcvbnResult.feedback.suggestions[i]}</div>);
+                for (
+                    let i = 0;
+                    i < this.state.zxcvbnResult.feedback.suggestions.length;
+                    ++i
+                ) {
+                    suggestions.push(
+                        <div key={i}>
+                            {this.state.zxcvbnResult.feedback.suggestions[i]}
+                        </div>
+                    );
                 }
-                const suggestionBlock = <div>{suggestions.length > 0 ? suggestions : _t("Keep going...")}</div>;
+                const suggestionBlock = (
+                    <div>
+                        {suggestions.length > 0
+                            ? suggestions
+                            : _t('Keep going...')}
+                    </div>
+                );
 
-                helpText = <div>
-                    {this.state.zxcvbnResult.feedback.warning}
-                    {suggestionBlock}
-                </div>;
+                helpText = (
+                    <div>
+                        {this.state.zxcvbnResult.feedback.warning}
+                        {suggestionBlock}
+                    </div>
+                );
             }
-            strengthMeter = <div>
-                <progress max={PASSWORD_MIN_SCORE} value={this.state.zxcvbnResult.score} />
-            </div>;
+            strengthMeter = (
+                <div>
+                    <progress
+                        max={PASSWORD_MIN_SCORE}
+                        value={this.state.zxcvbnResult.score}
+                    />
+                </div>
+            );
         }
 
-        return <div>
-            <p>{_t(
-                "<b>Warning</b>: you should only set up key backup from a trusted computer.", {},
-                { b: sub => <b>{sub}</b> },
-            )}</p>
-            <p>{_t(
-                "We'll store an encrypted copy of your keys on our server. " +
-                "Protect your backup with a passphrase to keep it secure.",
-            )}</p>
-            <p>{_t("For maximum security, this should be different from your account password.")}</p>
+        return (
+            <div>
+                <p>
+                    {_t(
+                        '<b>Warning</b>: you should only set up key backup from a trusted computer.',
+                        {},
+                        { b: sub => <b>{sub}</b> }
+                    )}
+                </p>
+                <p>
+                    {_t(
+                        "We'll store an encrypted copy of your keys on our server. " +
+                            'Protect your backup with a passphrase to keep it secure.'
+                    )}
+                </p>
+                <p>
+                    {_t(
+                        'For maximum security, this should be different from your account password.'
+                    )}
+                </p>
 
-            <div className="mx_CreateKeyBackupDialog_primaryContainer">
-                <div className="mx_CreateKeyBackupDialog_passPhraseContainer">
-                    <input type="password"
-                        onChange={this._onPassPhraseChange}
-                        onKeyPress={this._onPassPhraseKeyPress}
-                        value={this.state.passPhrase}
-                        className="mx_CreateKeyBackupDialog_passPhraseInput"
-                        placeholder={_t("Enter a passphrase...")}
-                        autoFocus={true}
-                    />
-                    <div className="mx_CreateKeyBackupDialog_passPhraseHelp">
-                        {strengthMeter}
-                        {helpText}
+                <div className='mx_CreateKeyBackupDialog_primaryContainer'>
+                    <div className='mx_CreateKeyBackupDialog_passPhraseContainer'>
+                        <input
+                            type='password'
+                            onChange={this._onPassPhraseChange}
+                            onKeyPress={this._onPassPhraseKeyPress}
+                            value={this.state.passPhrase}
+                            className='mx_CreateKeyBackupDialog_passPhraseInput'
+                            placeholder={_t('Enter a passphrase...')}
+                            autoFocus={true}
+                        />
+                        <div className='mx_CreateKeyBackupDialog_passPhraseHelp'>
+                            {strengthMeter}
+                            {helpText}
+                        </div>
                     </div>
                 </div>
+
+                <DialogButtons
+                    primaryButton={_t('Next')}
+                    onPrimaryButtonClick={this._onPassPhraseNextClick}
+                    hasCancel={false}
+                    disabled={!this._passPhraseIsValid()}
+                />
+
+                <details>
+                    <summary>{_t('Advanced')}</summary>
+                    <p>
+                        <button onClick={this._onSkipPassPhraseClick}>
+                            {_t('Set up with a Recovery Key')}
+                        </button>
+                    </p>
+                </details>
             </div>
-
-            <DialogButtons primaryButton={_t('Next')}
-                onPrimaryButtonClick={this._onPassPhraseNextClick}
-                hasCancel={false}
-                disabled={!this._passPhraseIsValid()}
-            />
-
-            <details>
-                <summary>{_t("Advanced")}</summary>
-                <p><button onClick={this._onSkipPassPhraseClick} >
-                    {_t("Set up with a Recovery Key")}
-                </button></p>
-            </details>
-        </div>;
+        );
     },
 
     _renderPhasePassPhraseConfirm: function() {
         const AccessibleButton = sdk.getComponent('elements.AccessibleButton');
 
         let matchText;
-        if (this.state.passPhraseConfirm === this.state.passPhrase) {
-            matchText = _t("That matches!");
-        } else if (!this.state.passPhrase.startsWith(this.state.passPhraseConfirm)) {
+        if (this.state.passPhrase === this.state.passPhraseConfirm) {
+            matchText = _t('That matches!');
+        } else if (
+            !this.state.passPhrase.startsWith(this.state.passPhraseConfirm)
+        ) {
             // only tell them they're wrong if they've actually gone wrong.
             // Security concious readers will note that if you left riot-web unattended
             // on this screen, this would make it easy for a malicious person to guess
@@ -323,149 +372,214 @@ export default React.createClass({
             matchText = _t("That doesn't match.");
         }
 
-        let passPhraseMatch = null;
-        if (matchText) {
-            passPhraseMatch = <div className="mx_CreateKeyBackupDialog_passPhraseMatch">
-                <div>{matchText}</div>
+        const passPhraseMatch = (
+            <div className='mx_CreateKeyBackupDialog_passPhraseMatch'>
+                {!matchText ? null : <div>{matchText}</div>}
                 <div>
-                    <AccessibleButton element="span" className="mx_linkButton" onClick={this._onSetAgainClick}>
-                        {_t("Go back to set it again.")}
+                    <AccessibleButton
+                        element='span'
+                        className='mx_linkButton'
+                        onClick={this._onSetAgainClick}
+                    >
+                        {_t('Go back to set it again.')}
                     </AccessibleButton>
                 </div>
-            </div>;
-        }
-        const DialogButtons = sdk.getComponent('views.elements.DialogButtons');
-        return <div>
-            <p>{_t(
-                "Please enter your passphrase a second time to confirm.",
-            )}</p>
-            <div className="mx_CreateKeyBackupDialog_primaryContainer">
-                <div className="mx_CreateKeyBackupDialog_passPhraseContainer">
-                    <div>
-                        <input type="password"
-                            onChange={this._onPassPhraseConfirmChange}
-                            onKeyPress={this._onPassPhraseConfirmKeyPress}
-                            value={this.state.passPhraseConfirm}
-                            className="mx_CreateKeyBackupDialog_passPhraseInput"
-                            placeholder={_t("Repeat your passphrase...")}
-                            autoFocus={true}
-                        />
-                    </div>
-                    {passPhraseMatch}
-                </div>
             </div>
-            <DialogButtons primaryButton={_t('Next')}
-                onPrimaryButtonClick={this._onPassPhraseConfirmNextClick}
-                hasCancel={false}
-                disabled={this.state.passPhrase !== this.state.passPhraseConfirm}
-            />
-        </div>;
+        );
+        const DialogButtons = sdk.getComponent('views.elements.DialogButtons');
+        return (
+            <div>
+                <p>
+                    {_t(
+                        'Please enter your passphrase a second time to confirm.'
+                    )}
+                </p>
+                <div className='mx_CreateKeyBackupDialog_primaryContainer'>
+                    <div className='mx_CreateKeyBackupDialog_passPhraseContainer'>
+                        <div>
+                            <input
+                                type='password'
+                                onChange={this._onPassPhraseConfirmChange}
+                                onKeyPress={this._onPassPhraseConfirmKeyPress}
+                                value={this.state.passPhraseConfirm}
+                                className='mx_CreateKeyBackupDialog_passPhraseInput'
+                                placeholder={_t('Repeat your passphrase...')}
+                                autoFocus={true}
+                            />
+                        </div>
+                        {passPhraseMatch}
+                    </div>
+                </div>
+                <DialogButtons
+                    primaryButton={_t('Next')}
+                    onPrimaryButtonClick={this._onPassPhraseConfirmNextClick}
+                    hasCancel={false}
+                    disabled={
+                        this.state.passPhrase !== this.state.passPhraseConfirm
+                    }
+                />
+            </div>
+        );
     },
 
     _renderPhaseShowKey: function() {
         let bodyText;
         if (this.state.setPassPhrase) {
             bodyText = _t(
-                "As a safety net, you can use it to restore your encrypted message " +
-                "history if you forget your Recovery Passphrase.",
+                'As a safety net, you can use it to restore your encrypted message ' +
+                    'history if you forget your Recovery Passphrase.'
             );
         } else {
-            bodyText = _t("As a safety net, you can use it to restore your encrypted message history.");
+            bodyText = _t(
+                'As a safety net, you can use it to restore your encrypted message history.'
+            );
         }
 
-        return <div>
-            <p>{_t(
-                "Your recovery key is a safety net - you can use it to restore " +
-                "access to your encrypted messages if you forget your passphrase.",
-            )}</p>
-            <p>{_t(
-                "Keep your recovery key somewhere very secure, like a password manager (or a safe)",
-            )}</p>
-            <p>{bodyText}</p>
-            <div className="mx_CreateKeyBackupDialog_primaryContainer">
-                <div className="mx_CreateKeyBackupDialog_recoveryKeyHeader">
-                    {_t("Your Recovery Key")}
-                </div>
-                <div className="mx_CreateKeyBackupDialog_recoveryKeyContainer">
-                    <div className="mx_CreateKeyBackupDialog_recoveryKey">
-                        <code ref={this._collectRecoveryKeyNode}>{this._keyBackupInfo.recovery_key}</code>
+        return (
+            <div>
+                <p>
+                    {_t(
+                        'Your recovery key is a safety net - you can use it to restore ' +
+                            'access to your encrypted messages if you forget your passphrase.'
+                    )}
+                </p>
+                <p>
+                    {_t(
+                        'Keep your recovery key somewhere very secure, like a password manager (or a safe)'
+                    )}
+                </p>
+                <p>{bodyText}</p>
+                <div className='mx_CreateKeyBackupDialog_primaryContainer'>
+                    <div className='mx_CreateKeyBackupDialog_recoveryKeyHeader'>
+                        {_t('Your Recovery Key')}
                     </div>
-                    <div className="mx_CreateKeyBackupDialog_recoveryKeyButtons">
-                        <button className="mx_Dialog_primary" onClick={this._onCopyClick}>
-                            {_t("Copy to clipboard")}
-                        </button>
-                        <button className="mx_Dialog_primary" onClick={this._onDownloadClick}>
-                            {_t("Download")}
-                        </button>
+                    <div className='mx_CreateKeyBackupDialog_recoveryKeyContainer'>
+                        <div className='mx_CreateKeyBackupDialog_recoveryKey'>
+                            <code ref={this._collectRecoveryKeyNode}>
+                                {this._keyBackupInfo.recovery_key}
+                            </code>
+                        </div>
+                        <div className='mx_CreateKeyBackupDialog_recoveryKeyButtons'>
+                            <button
+                                className='mx_Dialog_primary'
+                                onClick={this._onCopyClick}
+                            >
+                                {_t('Copy to clipboard')}
+                            </button>
+                            <button
+                                className='mx_Dialog_primary'
+                                onClick={this._onDownloadClick}
+                            >
+                                {_t('Download')}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>;
+        );
     },
 
     _renderPhaseKeepItSafe: function() {
         let introText;
         if (this.state.copied) {
             introText = _t(
-                "Your Recovery Key has been <b>copied to your clipboard</b>, paste it to:",
-                {}, {b: s => <b>{s}</b>},
+                'Your Recovery Key has been <b>copied to your clipboard</b>, paste it to:',
+                {},
+                { b: s => <b>{s}</b> }
             );
         } else if (this.state.downloaded) {
             introText = _t(
-                "Your Recovery Key is in your <b>Downloads</b> folder.",
-                {}, {b: s => <b>{s}</b>},
+                'Your Recovery Key is in your <b>Downloads</b> folder.',
+                {},
+                { b: s => <b>{s}</b> }
             );
         }
         const DialogButtons = sdk.getComponent('views.elements.DialogButtons');
-        return <div>
-            {introText}
-            <ul>
-                <li>{_t("<b>Print it</b> and store it somewhere safe", {}, {b: s => <b>{s}</b>})}</li>
-                <li>{_t("<b>Save it</b> on a USB key or backup drive", {}, {b: s => <b>{s}</b>})}</li>
-                <li>{_t("<b>Copy it</b> to your personal cloud storage", {}, {b: s => <b>{s}</b>})}</li>
-            </ul>
-            <DialogButtons primaryButton={_t("OK")}
-                onPrimaryButtonClick={this._createBackup}
-                hasCancel={false}>
-                <button onClick={this._onKeepItSafeBackClick}>{_t("Back")}</button>
-            </DialogButtons>
-        </div>;
+        return (
+            <div>
+                {introText}
+                <ul>
+                    <li>
+                        {_t(
+                            '<b>Print it</b> and store it somewhere safe',
+                            {},
+                            { b: s => <b>{s}</b> }
+                        )}
+                    </li>
+                    <li>
+                        {_t(
+                            '<b>Save it</b> on a USB key or backup drive',
+                            {},
+                            { b: s => <b>{s}</b> }
+                        )}
+                    </li>
+                    <li>
+                        {_t(
+                            '<b>Copy it</b> to your personal cloud storage',
+                            {},
+                            { b: s => <b>{s}</b> }
+                        )}
+                    </li>
+                </ul>
+                <DialogButtons
+                    primaryButton={_t('OK')}
+                    onPrimaryButtonClick={this._createBackup}
+                    hasCancel={false}
+                >
+                    <button onClick={this._onKeepItSafeBackClick}>
+                        {_t('Back')}
+                    </button>
+                </DialogButtons>
+            </div>
+        );
     },
 
     _renderBusyPhase: function(text) {
         const Spinner = sdk.getComponent('views.elements.Spinner');
-        return <div>
-            <Spinner />
-        </div>;
+        return (
+            <div>
+                <Spinner />
+            </div>
+        );
     },
 
     _renderPhaseDone: function() {
         const DialogButtons = sdk.getComponent('views.elements.DialogButtons');
-        return <div>
-            <p>{_t(
-                "Your keys are being backed up (the first backup could take a few minutes).",
-            )}</p>
-            <DialogButtons primaryButton={_t('Okay')}
-                onPrimaryButtonClick={this._onDone}
-                hasCancel={false}
-            />
-        </div>;
+        return (
+            <div>
+                <p>
+                    {_t(
+                        'Your keys are being backed up (the first backup could take a few minutes).'
+                    )}
+                </p>
+                <DialogButtons
+                    primaryButton={_t('Okay')}
+                    onPrimaryButtonClick={this._onDone}
+                    hasCancel={false}
+                />
+            </div>
+        );
     },
 
     _renderPhaseOptOutConfirm: function() {
         const DialogButtons = sdk.getComponent('views.elements.DialogButtons');
-        return <div>
-            {_t(
-                "Without setting up Secure Message Recovery, you won't be able to restore your " +
-                "encrypted message history if you log out or use another device.",
-            )}
-            <DialogButtons primaryButton={_t('Set up Secure Message Recovery')}
-                onPrimaryButtonClick={this._onSetUpClick}
-                hasCancel={false}
-            >
-                <button onClick={this._onCancel}>I understand, continue without</button>
-            </DialogButtons>
-        </div>;
+        return (
+            <div>
+                {_t(
+                    "Without setting up Secure Message Recovery, you won't be able to restore your " +
+                        'encrypted message history if you log out or use another device.'
+                )}
+                <DialogButtons
+                    primaryButton={_t('Set up Secure Message Recovery')}
+                    onPrimaryButtonClick={this._onSetUpClick}
+                    hasCancel={false}
+                >
+                    <button onClick={this._onCancel}>
+                        I understand, continue without
+                    </button>
+                </DialogButtons>
+            </div>
+        );
     },
 
     _titleForPhase: function(phase) {
@@ -485,7 +599,7 @@ export default React.createClass({
             case PHASE_DONE:
                 return _t('Success!');
             default:
-                return _t("Create Key Backup");
+                return _t('Create Key Backup');
         }
     },
 
@@ -494,17 +608,22 @@ export default React.createClass({
 
         let content;
         if (this.state.error) {
-            const DialogButtons = sdk.getComponent('views.elements.DialogButtons');
-            content = <div>
-                <p>{_t("Unable to create key backup")}</p>
-                <div className="mx_Dialog_buttons">
-                    <DialogButtons primaryButton={_t('Retry')}
-                        onPrimaryButtonClick={this._createBackup}
-                        hasCancel={true}
-                        onCancel={this._onCancel}
-                    />
+            const DialogButtons = sdk.getComponent(
+                'views.elements.DialogButtons'
+            );
+            content = (
+                <div>
+                    <p>{_t('Unable to create key backup')}</p>
+                    <div className='mx_Dialog_buttons'>
+                        <DialogButtons
+                            primaryButton={_t('Retry')}
+                            onPrimaryButtonClick={this._createBackup}
+                            hasCancel={true}
+                            onCancel={this._onCancel}
+                        />
+                    </div>
                 </div>
-            </div>;
+            );
         } else {
             switch (this.state.phase) {
                 case PHASE_PASSPHRASE:
@@ -532,15 +651,16 @@ export default React.createClass({
         }
 
         return (
-            <BaseDialog className='mx_CreateKeyBackupDialog'
+            <BaseDialog
+                className='mx_CreateKeyBackupDialog'
                 onFinished={this.props.onFinished}
                 title={this._titleForPhase(this.state.phase)}
-                hasCancel={[PHASE_PASSPHRASE, PHASE_DONE].includes(this.state.phase)}
+                hasCancel={[PHASE_PASSPHRASE, PHASE_DONE].includes(
+                    this.state.phase
+                )}
             >
-            <div>
-                {content}
-            </div>
+                <div>{content}</div>
             </BaseDialog>
         );
-    },
+    }
 });

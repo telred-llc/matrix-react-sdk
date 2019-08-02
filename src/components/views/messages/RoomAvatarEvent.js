@@ -28,59 +28,79 @@ module.exports = React.createClass({
 
     propTypes: {
         /* the MatrixEvent to show */
-        mxEvent: PropTypes.object.isRequired,
+        mxEvent: PropTypes.object.isRequired
     },
 
     onAvatarClick: function(name) {
-        const httpUrl = MatrixClientPeg.get().mxcUrlToHttp(this.props.mxEvent.getContent().url);
-        const ImageView = sdk.getComponent("elements.ImageView");
+        const httpUrl = MatrixClientPeg.get().mxcUrlToHttp(
+            this.props.mxEvent.getContent().url
+        );
+        const ImageView = sdk.getComponent('elements.ImageView');
         const params = {
             src: httpUrl,
-            name: name,
+            name: name
         };
-        Modal.createDialog(ImageView, params, "mx_Dialog_lightbox");
+        Modal.createDialog(ImageView, params, 'mx_Dialog_lightbox');
     },
 
     render: function() {
         const ev = this.props.mxEvent;
-        const senderDisplayName = ev.sender && ev.sender.name ? ev.sender.name : ev.getSender();
-        const BaseAvatar = sdk.getComponent("avatars.BaseAvatar");
+        const senderDisplayName =
+            ev.sender && ev.sender.name ? ev.sender.name : ev.getSender();
+        const BaseAvatar = sdk.getComponent('avatars.BaseAvatar');
 
-        const room = MatrixClientPeg.get().getRoom(this.props.mxEvent.getRoomId());
-        const name = _t('%(senderDisplayName)s changed the avatar for %(roomName)s', {
+        const room = MatrixClientPeg.get().getRoom(
+            this.props.mxEvent.getRoomId()
+        );
+        const name = _t(
+            '%(senderDisplayName)s changed the avatar for %(roomName)s',
+            {
                 senderDisplayName: senderDisplayName,
-                roomName: room ? room.name : '',
-        });
+                roomName: room ? room.name : ''
+            }
+        );
 
         if (!ev.getContent().url || ev.getContent().url.trim().length === 0) {
             return (
-                <div className="mx_TextualEvent">
-                    { _t('%(senderDisplayName)s removed the room avatar.', {senderDisplayName: senderDisplayName}) }
+                <div className='mx_TextualEvent'>
+                    {_t('%(senderDisplayName)s removed the room avatar.', {
+                        senderDisplayName: senderDisplayName
+                    })}
                 </div>
             );
         }
 
         const url = ContentRepo.getHttpUriForMxc(
-                    MatrixClientPeg.get().getHomeserverUrl(),
-                    ev.getContent().url,
-                    Math.ceil(14 * window.devicePixelRatio),
-                    Math.ceil(14 * window.devicePixelRatio),
-                    'crop',
-                );
+            MatrixClientPeg.get().getHomeserverUrl(),
+            ev.getContent().url,
+            Math.ceil(14 * window.devicePixelRatio),
+            Math.ceil(14 * window.devicePixelRatio),
+            'crop'
+        );
 
         return (
-            <div className="mx_RoomAvatarEvent">
-                { _t('%(senderDisplayName)s changed the room avatar to <img/>',
+            <div className='mx_RoomAvatarEvent'>
+                {_t(
+                    '%(senderDisplayName)s changed the room avatar to <img/>',
                     { senderDisplayName: senderDisplayName },
                     {
-                        'img': () =>
-                            <AccessibleButton key="avatar" className="mx_RoomAvatarEvent_avatar"
-                                onClick={this.onAvatarClick.bind(this, name)}>
-                                <BaseAvatar width={14} height={14} url={url} name={name} />
-                            </AccessibleButton>,
-                    })
-                }
+                        img: () => (
+                            <AccessibleButton
+                                key='avatar'
+                                className='mx_RoomAvatarEvent_avatar'
+                                onClick={this.onAvatarClick.bind(this, name)}
+                            >
+                                <BaseAvatar
+                                    width={14}
+                                    height={14}
+                                    url={url}
+                                    name={name}
+                                />
+                            </AccessibleButton>
+                        )
+                    }
+                )}
             </div>
         );
-    },
+    }
 });

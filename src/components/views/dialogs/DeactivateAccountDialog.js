@@ -21,9 +21,8 @@ import sdk from '../../../index';
 import Analytics from '../../../Analytics';
 import MatrixClientPeg from '../../../MatrixClientPeg';
 import * as Lifecycle from '../../../Lifecycle';
-import Velocity from 'velocity-vector';
+import Velocity from 'velocity-animate';
 import { _t } from '../../../languageHandler';
-import Modal from "../../../Modal";
 
 export default class DeactivateAccountDialog extends React.Component {
     constructor(props, context) {
@@ -37,7 +36,7 @@ export default class DeactivateAccountDialog extends React.Component {
         this._onEraseFieldChange = this._onEraseFieldChange.bind(this);
 
         this.state = {
-            confirmButtonEnabled: false,
+            password: "",
             busy: false,
             shouldErase: false,
             errStr: null,
@@ -46,7 +45,7 @@ export default class DeactivateAccountDialog extends React.Component {
 
     _onPasswordFieldChange(ev) {
         this.setState({
-            confirmButtonEnabled: Boolean(ev.target.value),
+            password: ev.target.value,
         });
     }
 
@@ -56,7 +55,7 @@ export default class DeactivateAccountDialog extends React.Component {
         });
     }
 
-     async _onOk() {
+    async _onOk() {
         this.setState({busy: true});
 
         try {
@@ -64,14 +63,20 @@ export default class DeactivateAccountDialog extends React.Component {
             // for this endpoint. In reality it could be any UI auth.
             const auth = {
                 type: 'm.login.password',
+                // TODO: Remove `user` once servers support proper UIA
+                // See https://github.com/vector-im/riot-web/issues/10312
                 user: MatrixClientPeg.get().credentials.userId,
-                password: this._passwordField.value,
+                identifier: {
+                    type: "m.id.user",
+                    user: MatrixClientPeg.get().credentials.userId,
+                },
+                password: this.state.password,
             };
             await MatrixClientPeg.get().deactivateAccount(auth, this.state.shouldErase);
         } catch (err) {
             let errStr = _t('Unknown error');
             // https://matrix.org/jira/browse/SYN-744
-            if (err.httpStatus == 401 || err.httpStatus == 403) {
+            if (err.httpStatus === 401 || err.httpStatus === 403) {
                 errStr = _t('Incorrect password');
                 Velocity(this._passwordField, "callout.shake", 300);
             }
@@ -82,15 +87,13 @@ export default class DeactivateAccountDialog extends React.Component {
             return;
         }
 
-        this.props.onFinished(false);
         Analytics.trackEvent('Account', 'Deactivate Account');
         Lifecycle.onLoggedOut();
+        this.props.onFinished(true);
     }
 
     _onCancel() {
         this.props.onFinished(false);
-        const UserSettingsDialog = sdk.getComponent("dialogs.UserSettingsDialog");
-        Modal.createTrackedDialog('User settings', '', UserSettingsDialog, {}, 'mx_SettingsDialog');
     }
 
     render() {
@@ -107,7 +110,7 @@ export default class DeactivateAccountDialog extends React.Component {
         }
 
         const okLabel = this.state.busy ? <Loader /> : _t('Deactivate Account');
-        const okEnabled = this.state.confirmButtonEnabled && !this.state.busy;
+        const okEnabled = this.state.password && !this.state.busy;
 
         let cancelButton = null;
         if (!this.state.busy) {
@@ -115,6 +118,8 @@ export default class DeactivateAccountDialog extends React.Component {
                 { _t("Cancel") }
             </button>;
         }
+
+        const Field = sdk.getComponent('elements.Field');
 
         return (
             <BaseDialog className="mx_DeactivateAccountDialog"
@@ -170,10 +175,12 @@ export default class DeactivateAccountDialog extends React.Component {
                         </p>
 
                         <p>{ _t("To continue, please enter your password:") }</p>
-                        <input
+                        <Field
+                            id="mx_DeactivateAccountDialog_password"
                             type="password"
-                            placeholder={_t("password")}
+                            label={_t('Password')}
                             onChange={this._onPasswordFieldChange}
+                            value={this.state.password}
                             ref={(e) => {this._passwordField = e;}}
                             className={passwordBoxClass}
                         />

@@ -33,17 +33,19 @@ const Modal = require("../../../../../Modal");
 const dis = require("../../../../../dispatcher");
 
 export default class GeneralUserSettingsTab extends React.Component {
+    static propTypes = {
+        closeSettingsFn: PropTypes.func.isRequired,
+    };
+
     constructor() {
         super();
-        this._onDeactivateClicked = this._onDeactivateClicked.bind(this);
+
         this.state = {
             language: languageHandler.getCurrentLanguage(),
             theme: SettingsStore.getValueAt(SettingLevel.ACCOUNT, "theme"),
         };
     }
-    static propTypes = {
-        onFinished: PropTypes.func.isRequired,
-    };
+
     _onLanguageChange = (newLanguage) => {
         if (this.state.language === newLanguage) return;
 
@@ -90,9 +92,11 @@ export default class GeneralUserSettingsTab extends React.Component {
     };
 
     _onDeactivateClicked = () => {
-        this.props.onFinished(false);
-        Modal.createTrackedDialog('Deactivate Account', '', DeactivateAccountDialog, {});
-
+        Modal.createTrackedDialog('Deactivate Account', '', DeactivateAccountDialog, {
+            onFinished: (success) => {
+                if (success) this.props.closeSettingsFn();
+            },
+        });
     };
 
     _renderProfileSection() {

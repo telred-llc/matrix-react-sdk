@@ -1,6 +1,7 @@
 /*
 Copyright 2015, 2016 OpenMarket Ltd
 Copyright 2017, 2018 New Vector Ltd
+Copyright 2019 The Matrix.org Foundation C.I.C.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -40,20 +41,18 @@ import Analytics from '../../../Analytics';
 
 import dis from '../../../dispatcher';
 
-import * as RichText from '../../../RichText';
 import * as HtmlUtils from '../../../HtmlUtils';
 import Autocomplete from './Autocomplete';
 import {Completion} from "../../../autocomplete/Autocompleter";
 import Markdown from '../../../Markdown';
-import ComposerHistoryManager from '../../../ComposerHistoryManager';
 import MessageComposerStore from '../../../stores/MessageComposerStore';
+import ContentMessages from '../../../ContentMessages';
 
 import {MATRIXTO_URL_PATTERN} from '../../../linkify-matrix';
 
-import {
-    asciiRegexp, unicodeRegexp, shortnameToUnicode,
-    asciiList, mapUnicodeToShort, toShort,
-} from 'emojione';
+import EMOJIBASE from 'emojibase-data/en/compact.json';
+import EMOTICON_REGEX from 'emojibase-regex/emoticon';
+
 import SettingsStore, {SettingLevel} from "../../../settings/SettingsStore";
 import {makeUserPermalink} from "../../../matrix-to";
 import ReplyPreview from "./ReplyPreview";
@@ -61,12 +60,11 @@ import RoomViewStore from '../../../stores/RoomViewStore';
 import ReplyThread from "../elements/ReplyThread";
 import {ContentHelpers} from 'matrix-js-sdk';
 import AccessibleButton from '../elements/AccessibleButton';
+import {findEditableEvent} from '../../../utils/EventUtils';
+import ComposerHistoryManager from "../../../ComposerHistoryManager";
+import TypingStore from "../../../stores/TypingStore";
 
-const EMOJI_UNICODE_TO_SHORTNAME = mapUnicodeToShort();
-const REGEX_EMOJI_WHITESPACE = new RegExp('(?:^|\\s)(' + asciiRegexp + ')\\s$');
-const EMOJI_REGEX = new RegExp(unicodeRegexp, 'g');
-
-const TYPING_USER_TIMEOUT = 10000; const TYPING_SERVER_TIMEOUT = 30000;
+const REGEX_EMOTICON_WHITESPACE = new RegExp('(?:^|\\s)(' + EMOTICON_REGEX.source + ')\\s$');
 
 // the Slate node type to default to for unstyled text
 const DEFAULT_NODE = 'paragraph';
@@ -135,14 +133,8 @@ function rangeEquals(a: Range, b: Range): boolean {
  */
 export default class MessageComposerInput extends React.Component {
     static propTypes = {
-        // a callback which is called when the height of the composer is
-        // changed due to a change in content.
-        onResize: PropTypes.func,
-
         // js-sdk Room object
         room: PropTypes.object.isRequired,
-
-        onFilesPasted: PropTypes.func,
 
         onInputStateChanged: PropTypes.func,
     };
@@ -278,9 +270,8 @@ export default class MessageComposerInput extends React.Component {
                                 case 'emoji':
                                     // XXX: apparently you can't return plain strings from serializer rules
                                     // until https://github.com/ianstormtaylor/slate/pull/1854 is merged.
-                                    // So instead we temporarily wrap emoji from RTE in an arbitrary tag
-                                    // (<b/>).  <span/> would be nicer, but in practice it causes CSS issues.
-                                    return <b>{ obj.data.get('emojiUnicode') }</b>;
+                                    // So instead we temporarily wrap emoji from RTE in a span.
+                                    return <span>{ obj.data.get('emojiUnicode') }</span>;
                             }
                             return this.renderNode({
                                 node: obj,
@@ -380,7 +371,6 @@ export default class MessageComposerInput extends React.Component {
                 const html = HtmlUtils.bodyToHtml(payload.event.getContent(), null, {
                     forComposerQuote: true,
                     returnString: true,
-                    emojiOne: false,
                 });
                 const fragment = this.html.deserialize(html);
                 // FIXME: do we want to put in a permalink to the original quote here?
@@ -434,73 +424,6 @@ export default class MessageComposerInput extends React.Component {
         }
     };
 
-    onTypingActivity() {
-        this.isTyping = true;
-        if (!this.userTypingTimer) {
-            this.sendTyping(true);
-        }
-        this.startUserTypingTimer();
-        this.startServerTypingTimer();
-    }
-
-    onFinishedTyping() {
-        this.isTyping = false;
-        this.sendTyping(false);
-        this.stopUserTypingTimer();
-        this.stopServerTypingTimer();
-    }
-
-    startUserTypingTimer() {
-        this.stopUserTypingTimer();
-        const self = this;
-        this.userTypingTimer = setTimeout(function() {
-            self.isTyping = false;
-            self.sendTyping(self.isTyping);
-            self.userTypingTimer = null;
-        }, TYPING_USER_TIMEOUT);
-    }
-
-    stopUserTypingTimer() {
-        if (this.userTypingTimer) {
-            clearTimeout(this.userTypingTimer);
-            this.userTypingTimer = null;
-        }
-    }
-
-    startServerTypingTimer() {
-        if (!this.serverTypingTimer) {
-            const self = this;
-            this.serverTypingTimer = setTimeout(function() {
-                if (self.isTyping) {
-                    self.sendTyping(self.isTyping);
-                    self.startServerTypingTimer();
-                }
-            }, TYPING_SERVER_TIMEOUT / 2);
-        }
-    }
-
-    stopServerTypingTimer() {
-        if (this.serverTypingTimer) {
-            clearTimeout(this.serverTypingTimer);
-            this.serverTypingTimer = null;
-        }
-    }
-
-    sendTyping(isTyping) {
-        if (!SettingsStore.getValue('sendTypingNotifications')) return;
-        MatrixClientPeg.get().sendTyping(
-            this.props.room.roomId,
-            this.isTyping, TYPING_SERVER_TIMEOUT,
-        ).done();
-    }
-
-    refreshTyping() {
-        if (this.typingTimeout) {
-            clearTimeout(this.typingTimeout);
-            this.typingTimeout = null;
-        }
-    }
-
     onChange = (change: Change, originalEditorState?: Value) => {
         let editorState = change.value;
 
@@ -531,9 +454,9 @@ export default class MessageComposerInput extends React.Component {
         }
 
         if (Plain.serialize(editorState) !== '') {
-            this.onTypingActivity();
+            TypingStore.sharedInstance().setSelfTyping(this.props.room.roomId, true);
         } else {
-            this.onFinishedTyping();
+            TypingStore.sharedInstance().setSelfTyping(this.props.room.roomId, false);
         }
 
         if (editorState.startText !== null) {
@@ -543,75 +466,28 @@ export default class MessageComposerInput extends React.Component {
             // Automatic replacement of plaintext emoji to Unicode emoji
             if (SettingsStore.getValue('MessageComposerInput.autoReplaceEmoji')) {
                 // The first matched group includes just the matched plaintext emoji
-                const emojiMatch = REGEX_EMOJI_WHITESPACE.exec(text.slice(0, currentStartOffset));
-                if (emojiMatch) {
-                    // plaintext -> hex unicode
-                    const emojiUc = asciiList[emojiMatch[1]];
-                    // hex unicode -> shortname -> actual unicode
-                    const unicodeEmoji = shortnameToUnicode(EMOJI_UNICODE_TO_SHORTNAME[emojiUc]);
+                const emoticonMatch = REGEX_EMOTICON_WHITESPACE.exec(text.slice(0, currentStartOffset));
+                if (emoticonMatch) {
+                    const query = emoticonMatch[1].toLowerCase().replace("-", "");
+                    const data = EMOJIBASE.find(e => e.emoticon ? e.emoticon.toLowerCase() === query : false);
 
-                    const range = Range.create({
-                        anchor: {
-                            key: editorState.startText.key,
-                            offset: currentStartOffset - emojiMatch[1].length - 1,
-                        },
-                        focus: {
-                            key: editorState.startText.key,
-                            offset: currentStartOffset - 1,
-                        },
-                    });
-                    change = change.insertTextAtRange(range, unicodeEmoji);
-                    editorState = change.value;
-                }
-            }
-        }
-
-        // emojioneify any emoji
-        let foundEmoji;
-        do {
-            foundEmoji = false;
-
-            for (const node of editorState.document.getTexts()) {
-                if (node.text !== '' && HtmlUtils.containsEmoji(node.text)) {
-                    let match;
-                    EMOJI_REGEX.lastIndex = 0;
-                    while ((match = EMOJI_REGEX.exec(node.text)) !== null) {
+                    // only perform replacement if we found a match, otherwise we would be not letting user type
+                    if (data) {
                         const range = Range.create({
                             anchor: {
-                                key: node.key,
-                                offset: match.index,
+                                key: editorState.startText.key,
+                                offset: currentStartOffset - emoticonMatch[1].length - 1,
                             },
                             focus: {
-                                key: node.key,
-                                offset: match.index + match[0].length,
+                                key: editorState.startText.key,
+                                offset: currentStartOffset - 1,
                             },
                         });
-                        const inline = Inline.create({
-                            type: 'emoji',
-                            data: { emojiUnicode: match[0] },
-                        });
-                        change = change.insertInlineAtRange(range, inline);
+                        change = change.insertTextAtRange(range, data.unicode);
                         editorState = change.value;
-
-                        // if we replaced an emoji, start again looking for more
-                        // emoji in the new editor state since doing the replacement
-                        // will change the node structure & offsets so we can't compute
-                        // insertion ranges from node.key / match.index anymore.
-                        foundEmoji = true;
-                        break;
                     }
                 }
             }
-        } while (foundEmoji);
-
-        // work around weird bug where inserting emoji via the macOS
-        // emoji picker can leave the selection stuck in the emoji's
-        // child text.  This seems to happen due to selection getting
-        // moved in the normalisation phase after calculating these changes
-        if (editorState.selection.anchor.key &&
-            editorState.document.getParent(editorState.selection.anchor.key).type === 'emoji') {
-            change = change.moveToStartOfNextText();
-            editorState = change.value;
         }
 
         if (this.props.onInputStateChanged && editorState.blocks.size > 0) {
@@ -732,6 +608,23 @@ export default class MessageComposerInput extends React.Component {
 
     onKeyDown = (ev: KeyboardEvent, change: Change, editor: Editor) => {
         this.suppressAutoComplete = false;
+        this.direction = '';
+
+        // Navigate autocomplete list with arrow keys
+        if (this.autocomplete.countCompletions() > 0) {
+            if (!(ev.ctrlKey || ev.shiftKey || ev.altKey || ev.metaKey)) {
+                switch (ev.keyCode) {
+                    case KeyCode.UP:
+                        this.autocomplete.moveSelection(-1);
+                        ev.preventDefault();
+                        return true;
+                    case KeyCode.DOWN:
+                        this.autocomplete.moveSelection(+1);
+                        ev.preventDefault();
+                        return true;
+                }
+            }
+        }
 
         // skip void nodes - see
         // https://github.com/ianstormtaylor/slate/issues/762#issuecomment-304855095
@@ -739,8 +632,6 @@ export default class MessageComposerInput extends React.Component {
             this.direction = 'Previous';
         } else if (ev.keyCode === KeyCode.RIGHT) {
             this.direction = 'Next';
-        } else {
-            this.direction = '';
         }
 
         switch (ev.keyCode) {
@@ -1013,7 +904,13 @@ export default class MessageComposerInput extends React.Component {
 
         switch (transfer.type) {
             case 'files':
-                return this.props.onFilesPasted(transfer.files);
+                // This actually not so much for 'files' as such (at time of writing
+                // neither chrome nor firefox let you paste a plain file copied
+                // from Finder) but more images copied from a different website
+                // / word processor etc.
+                return ContentMessages.sharedInstance().sendContentListToRoom(
+                    transfer.files, this.props.room.roomId, this.client,
+                );
             case 'html': {
                 if (this.state.isRichTextEnabled) {
                     // FIXME: https://github.com/ianstormtaylor/slate/issues/1497 means
@@ -1040,8 +937,15 @@ export default class MessageComposerInput extends React.Component {
     };
 
     handleReturn = (ev, change) => {
-        if (ev.shiftKey) {
+        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        if (ev.shiftKey || (isMac && ev.altKey)) {
             return change.insertText('\n');
+        }
+
+        if (this.autocomplete.hasSelection()) {
+            this.autocomplete.hide();
+            ev.preventDefault();
+            return true;
         }
 
         const editorState = this.state.editorState;
@@ -1163,10 +1067,7 @@ export default class MessageComposerInput extends React.Component {
         let sendHtmlFn = ContentHelpers.makeHtmlMessage;
         let sendTextFn = ContentHelpers.makeTextMessage;
 
-        this.historyManager.save(
-            editorState,
-            this.state.isRichTextEnabled ? 'rich' : 'markdown',
-        );
+        this.historyManager.save(editorState, this.state.isRichTextEnabled ? 'rich' : 'markdown');
 
         if (commandText && commandText.startsWith('/me')) {
             if (replyingToEv) {
@@ -1216,6 +1117,9 @@ export default class MessageComposerInput extends React.Component {
                 action: 'message_sent',
             });
         }).catch((e) => {
+            if (e.name === 'UnknownDeviceError') {
+                console.log('resend');
+            }
             onSendMessageFailed(e, this.props.room);
         });
 
@@ -1227,37 +1131,43 @@ export default class MessageComposerInput extends React.Component {
     };
 
     onVerticalArrow = (e, up) => {
-        if (e.ctrlKey || e.shiftKey || e.altKey || e.metaKey) {
-            return;
+        if (e.ctrlKey || e.shiftKey || e.metaKey) return;
+
+        // selection must be collapsed
+        const selection = this.state.editorState.selection;
+        if (!selection.isCollapsed) return;
+        // and we must be at the edge of the document (up=start, down=end)
+        const document = this.state.editorState.document;
+        if (up) {
+            if (!selection.anchor.isAtStartOfNode(document)) return;
+        } else {
+            if (!selection.anchor.isAtEndOfNode(document)) return;
         }
 
-        // Select history only if we are not currently auto-completing
-        if (this.autocomplete.state.completionList.length === 0) {
-            const selection = this.state.editorState.selection;
+        const shouldSelectHistory = e.altKey;
+        const shouldEditLastMessage = !e.altKey && up && !RoomViewStore.getQuotingEvent();
 
-            // selection must be collapsed
-            if (!selection.isCollapsed) return;
-            const document = this.state.editorState.document;
-
-            // and we must be at the edge of the document (up=start, down=end)
-            if (up) {
-                if (!selection.anchor.isAtStartOfNode(document)) return;
-            } else {
-                if (!selection.anchor.isAtEndOfNode(document)) return;
-            }
-
+        if (shouldSelectHistory) {
+            // Try select composer history
             const selected = this.selectHistory(up);
             if (selected) {
                 // We're selecting history, so prevent the key event from doing anything else
                 e.preventDefault();
             }
-        } else {
-            this.moveAutocompleteSelection(up);
-            e.preventDefault();
+        } else if (shouldEditLastMessage) {
+            const editEvent = findEditableEvent(this.props.room, false);
+            if (editEvent) {
+                // We're selecting history, so prevent the key event from doing anything else
+                e.preventDefault();
+                dis.dispatch({
+                    action: 'edit_event',
+                    event: editEvent,
+                });
+            }
         }
     };
 
-    selectHistory = async (up) => {
+    selectHistory = (up) => {
         const delta = up ? -1 : 1;
 
         // True if we are not currently selecting history, but composing a message
@@ -1293,7 +1203,7 @@ export default class MessageComposerInput extends React.Component {
         // Move selection to the end of the selected history
         const change = editorState.change().moveToEndOfNode(editorState.document);
 
-        // We don't call this.onChange(change) now, as fixups on stuff like emoji
+        // We don't call this.onChange(change) now, as fixups on stuff like pills
         // should already have been done and persisted in the history.
         editorState = change.value;
 
@@ -1310,21 +1220,17 @@ export default class MessageComposerInput extends React.Component {
             someCompletions: null,
         });
         e.preventDefault();
-        if (this.autocomplete.state.completionList.length === 0) {
+        if (this.autocomplete.countCompletions() === 0) {
             // Force completions to show for the text currently entered
             const completionCount = await this.autocomplete.forceComplete();
             this.setState({
                 someCompletions: completionCount > 0,
             });
             // Select the first item by moving "down"
-            await this.moveAutocompleteSelection(false);
+            await this.autocomplete.moveSelection(+1);
         } else {
-            await this.moveAutocompleteSelection(e.shiftKey);
+            await this.autocomplete.moveSelection(e.shiftKey ? -1 : +1);
         }
-    };
-
-    moveAutocompleteSelection = (up) => {
-        up ? this.autocomplete.onUpArrow() : this.autocomplete.onDownArrow();
     };
 
     onEscape = async (e) => {
@@ -1473,17 +1379,7 @@ export default class MessageComposerInput extends React.Component {
             }
             case 'emoji': {
                 const { data } = node;
-                const emojiUnicode = data.get('emojiUnicode');
-                const uri = RichText.unicodeToEmojiUri(emojiUnicode);
-                const shortname = toShort(emojiUnicode);
-                const className = classNames('mx_emojione', {
-                    mx_emojione_selected: isSelected,
-                });
-                const style = {};
-                if (props.selected) style.border = '1px solid blue';
-                return <img className={ className } src={ uri }
-                    title={ shortname } alt={ emojiUnicode } style={style}
-                />;
+                return data.get('emojiUnicode');
             }
         }
     };
@@ -1592,7 +1488,7 @@ export default class MessageComposerInput extends React.Component {
         return (
             <div className="mx_MessageComposer_input_wrapper" onClick={this.focusComposer}>
                 <div className="mx_MessageComposer_autocomplete_wrapper">
-                    <ReplyPreview />
+                    <ReplyPreview permalinkCreator={this.props.permalinkCreator} />
                     <Autocomplete
                         ref={(e) => this.autocomplete = e}
                         room={this.props.room}

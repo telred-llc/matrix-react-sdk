@@ -1,30 +1,26 @@
 .ck-dialog__content {
-    margin: 9px;
-    height: 578px;
-    overflow: auto;
+  margin: 9px;
 }
 
 .list-item {
-    display: flex;
-    align-items: center;
-    position: relative;
-    border-bottom: 1px solid $input-border-color;
-    height: 70px;
+  display: flex;
+  align-items: center;
+  position: relative;
 }
 .list-item__button {
-    position: absolute;
-    border-radius: 5px;
-    right: 0px;
-    border: none !important;
+  position: absolute;
+  border-radius: 5px;
+  right: 0px;
+  border: none !important;
 }
 .list-item__button--enable {
-    background: $accent-color !important;
-    color: $primary-bg-color !important;
+  background: $accent-color !important;
+  color: $primary-bg-color !important;
 }
 .list-item__button--disable {
-    background: $notice-primary-color !important;
-    color: $primary-bg-color !important;
+  background: $notice-primary-color !important;
+  color: $primary-bg-color !important;
 }
 .list-item__text {
-    margin-left: 30px;
+  margin-left: 30px;
 }

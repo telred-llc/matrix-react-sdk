@@ -32,7 +32,6 @@ import {CancelButton} from './SimpleRoomHeader';
 import SettingsStore from "../../../settings/SettingsStore";
 import RoomHeaderButtons from '../right_panel/RoomHeaderButtons';
 import E2EIcon from './E2EIcon';
-import * as cryptodevices from '../../../cryptodevices';
 
 module.exports = React.createClass({
     displayName: 'RoomHeader',
@@ -146,15 +145,8 @@ module.exports = React.createClass({
         return !(currentPinEvent.getContent().pinned && currentPinEvent.getContent().pinned.length <= 0);
     },
 
-    _onShowDevicesClick: function() {
-        if (this.props.e2eStatus === "warning") {
-            cryptodevices.showUnknownDeviceDialogForMessages(MatrixClientPeg.get(), this.props.room);
-        }
-    },
-
     render: function() {
         const RoomAvatar = sdk.getComponent("avatars.RoomAvatar");
-        const EmojiText = sdk.getComponent('elements.EmojiText');
 
         let searchStatus = null;
         let cancelButton = null;
@@ -162,7 +154,7 @@ module.exports = React.createClass({
         let pinnedEventsButton = null;
 
         const e2eIcon = this.props.e2eStatus ?
-            <E2EIcon status={this.props.e2eStatus} onClick={this._onShowDevicesClick} /> :
+            <E2EIcon status={this.props.e2eStatus} /> :
             undefined;
 
         if (this.props.onCancelClick) {
@@ -198,10 +190,10 @@ module.exports = React.createClass({
             roomName = this.props.room.name;
         }
 
-        const emojiTextClasses = classNames('mx_RoomHeader_nametext', { mx_RoomHeader_settingsHint: settingsHint });
+        const textClasses = classNames('mx_RoomHeader_nametext', { mx_RoomHeader_settingsHint: settingsHint });
         const name =
             <div className="mx_RoomHeader_name" onClick={this.props.onSettingsClick}>
-                <EmojiText dir="auto" element="div" className={emojiTextClasses} title={roomName}>{ roomName }</EmojiText>
+                <div dir="auto" className={textClasses} title={roomName}>{ roomName }</div>
                 { searchStatus }
             </div>;
 
@@ -225,7 +217,7 @@ module.exports = React.createClass({
                 viewAvatarOnClick={true} />);
         }
 
-        if (this.props.onSettingsClick && this.props.inRoom) {
+        if (this.props.onSettingsClick) {
             settingsButton =
                 <AccessibleButton className="mx_RoomHeader_button mx_RoomHeader_settingsButton"
                     onClick={this.props.onSettingsClick}
@@ -286,7 +278,6 @@ module.exports = React.createClass({
                 >
                 </AccessibleButton>;
         }
-
 
         let manageIntegsButton;
         if (this.props.room && this.props.room.roomId && this.props.inRoom) {

@@ -22,25 +22,34 @@ import PropTypes from 'prop-types';
 import { DragDropContext } from 'react-beautiful-dnd';
 
 import { KeyCode, isOnlyCtrlOrCmdKeyEvent } from '../../Keyboard';
-import Notifier from '../../Notifier';
 import PageTypes from '../../PageTypes';
 import CallMediaHandler from '../../CallMediaHandler';
+import { fixupColorFonts } from '../../utils/FontManager';
 import sdk from '../../index';
 import dis from '../../dispatcher';
 import sessionStore from '../../stores/SessionStore';
 import MatrixClientPeg from '../../MatrixClientPeg';
-import SettingsStore from "../../settings/SettingsStore";
-import RoomListStore from "../../stores/RoomListStore";
+import SettingsStore from '../../settings/SettingsStore';
+import RoomListStore from '../../stores/RoomListStore';
 import { getHomePageUrl } from '../../utils/pages';
 
 import TagOrderActions from '../../actions/TagOrderActions';
 import RoomListActions from '../../actions/RoomListActions';
 import ResizeHandle from '../views/elements/ResizeHandle';
-import {Resizer, CollapseDistributor} from '../../resizer';
+import { Resizer, CollapseDistributor } from '../../resizer';
 // We need to fetch each pinned message individually (if we don't already have it)
 // so each pinned message may trigger a request. Limit the number per room for sanity.
 // NB. this is just for server notices rather than pinned messages in general.
 const MAX_PINNED_NOTICES_PER_ROOM = 2;
+
+function canElementReceiveInput(el) {
+    return (
+        el.tagName === 'INPUT' ||
+        el.tagName === 'TEXTAREA' ||
+        el.tagName === 'SELECT' ||
+        !!el.getAttribute('contenteditable')
+    );
+}
 
 /**
  * This is what our MatrixChat shows when we are logged in. The precise view is
@@ -65,14 +74,14 @@ const LoggedInView = React.createClass({
         collapsedRhs: PropTypes.bool,
 
         // Used by the RoomView to handle joining rooms
-        viaServers: PropTypes.arrayOf(PropTypes.string),
+        viaServers: PropTypes.arrayOf(PropTypes.string)
 
         // and lots and lots of other stuff.
     },
 
     childContextTypes: {
         matrixClient: PropTypes.instanceOf(Matrix.MatrixClient),
-        authCache: PropTypes.object,
+        authCache: PropTypes.object
     },
 
     getChildContext: function() {
@@ -80,8 +89,8 @@ const LoggedInView = React.createClass({
             matrixClient: this._matrixClient,
             authCache: {
                 auth: {},
-                lastUpdate: 0,
-            },
+                lastUpdate: 0
+            }
         };
     },
 
@@ -90,7 +99,7 @@ const LoggedInView = React.createClass({
             // use compact timeline view
             useCompactLayout: SettingsStore.getValue('useCompactLayout'),
             // any currently active server notice events
-            serverNoticeEvents: [],
+            serverNoticeEvents: []
         };
     },
 
@@ -106,26 +115,44 @@ const LoggedInView = React.createClass({
 
         CallMediaHandler.loadDevices();
 
-        document.addEventListener('keydown', this._onKeyDown);
+        document.addEventListener('keydown', this._onNativeKeyDown, false);
 
         this._sessionStore = sessionStore;
         this._sessionStoreToken = this._sessionStore.addListener(
-            this._setStateFromSessionStore,
+            this._setStateFromSessionStore
         );
         this._setStateFromSessionStore();
 
         this._updateServerNoticeEvents();
 
-        this._matrixClient.on("accountData", this.onAccountData);
-        this._matrixClient.on("sync", this.onSync);
-        this._matrixClient.on("RoomState.events", this.onRoomStateEvents);
+        this._matrixClient.on('accountData', this.onAccountData);
+        this._matrixClient.on('sync', this.onSync);
+        this._matrixClient.on('RoomState.events', this.onRoomStateEvents);
+
+        fixupColorFonts();
+    },
+
+    componentDidUpdate(prevProps) {
+        // attempt to guess when a banner was opened or closed
+        if (
+            prevProps.showCookieBar !== this.props.showCookieBar ||
+            prevProps.hasNewVersion !== this.props.hasNewVersion ||
+            prevProps.userHasGeneratedPassword !==
+                this.props.userHasGeneratedPassword ||
+            prevProps.showNotifierToolbar !== this.props.showNotifierToolbar
+        ) {
+            this.props.resizeNotifier.notifyBannersChanged();
+        }
     },
 
     componentWillUnmount: function() {
-        document.removeEventListener('keydown', this._onKeyDown);
-        this._matrixClient.removeListener("accountData", this.onAccountData);
-        this._matrixClient.removeListener("sync", this.onSync);
-        this._matrixClient.removeListener("RoomState.events", this.onRoomStateEvents);
+        document.removeEventListener('keydown', this._onNativeKeyDown, false);
+        this._matrixClient.removeListener('accountData', this.onAccountData);
+        this._matrixClient.removeListener('sync', this.onSync);
+        this._matrixClient.removeListener(
+            'RoomState.events',
+            this.onRoomStateEvents
+        );
         if (this._sessionStoreToken) {
             this._sessionStoreToken.remove();
         }
@@ -151,40 +178,44 @@ const LoggedInView = React.createClass({
 
     _setStateFromSessionStore() {
         this.setState({
-            userHasGeneratedPassword: Boolean(this._sessionStore.getCachedPassword()),
+            userHasGeneratedPassword: Boolean(
+                this._sessionStore.getCachedPassword()
+            )
         });
     },
 
     _createResizer() {
         const classNames = {
-            handle: "mx_ResizeHandle",
-            vertical: "mx_ResizeHandle_vertical",
-            reverse: "mx_ResizeHandle_reverse",
+            handle: 'mx_ResizeHandle',
+            vertical: 'mx_ResizeHandle_vertical',
+            reverse: 'mx_ResizeHandle_reverse'
         };
         const collapseConfig = {
             toggleSize: 260 - 50,
-            onCollapsed: (collapsed) => {
+            onCollapsed: collapsed => {
                 if (collapsed) {
-                    dis.dispatch({action: "hide_left_panel"}, true);
-                    window.localStorage.setItem("mx_lhs_size", '0');
+                    dis.dispatch({ action: 'hide_left_panel' }, true);
+                    window.localStorage.setItem('mx_lhs_size', '0');
                 } else {
-                    dis.dispatch({action: "show_left_panel"}, true);
+                    dis.dispatch({ action: 'show_left_panel' }, true);
                 }
             },
-            onResized: (size) => {
-                window.localStorage.setItem("mx_lhs_size", '' + size);
-            },
+            onResized: size => {
+                window.localStorage.setItem('mx_lhs_size', '' + size);
+                this.props.resizeNotifier.notifyLeftHandleResized();
+            }
         };
         const resizer = new Resizer(
             this.resizeContainer,
             CollapseDistributor,
-            collapseConfig);
+            collapseConfig
+        );
         resizer.setClassNames(classNames);
         return resizer;
     },
 
     _loadResizerPreferences() {
-        let lhsSize = window.localStorage.getItem("mx_lhs_size");
+        let lhsSize = window.localStorage.getItem('mx_lhs_size');
         if (lhsSize !== null) {
             lhsSize = parseInt(lhsSize, 10);
         } else {
@@ -194,32 +225,31 @@ const LoggedInView = React.createClass({
     },
 
     onAccountData: function(event) {
-        if (event.getType() === "im.vector.web.settings") {
+        if (event.getType() === 'im.vector.web.settings') {
             this.setState({
-                useCompactLayout: event.getContent().useCompactLayout,
+                useCompactLayout: event.getContent().useCompactLayout
             });
         }
-        if (event.getType() === "m.ignored_user_list") {
-            dis.dispatch({action: "ignore_state_changed"});
+        if (event.getType() === 'm.ignored_user_list') {
+            dis.dispatch({ action: 'ignore_state_changed' });
         }
     },
 
     onSync: function(syncState, oldSyncState, data) {
-        const oldErrCode = (
+        const oldErrCode =
             this.state.syncErrorData &&
             this.state.syncErrorData.error &&
-            this.state.syncErrorData.error.errcode
-        );
+            this.state.syncErrorData.error.errcode;
         const newErrCode = data && data.error && data.error.errcode;
         if (syncState === oldSyncState && oldErrCode === newErrCode) return;
 
         if (syncState === 'ERROR') {
             this.setState({
-                syncErrorData: data,
+                syncErrorData: data
             });
         } else {
             this.setState({
-                syncErrorData: null,
+                syncErrorData: null
             });
         }
 
@@ -230,7 +260,10 @@ const LoggedInView = React.createClass({
 
     onRoomStateEvents: function(ev, state) {
         const roomLists = RoomListStore.getRoomLists();
-        if (roomLists['m.server_notice'] && roomLists['m.server_notice'].some(r => r.roomId === ev.getRoomId())) {
+        if (
+            roomLists['m.server_notice'] &&
+            roomLists['m.server_notice'].some(r => r.roomId === ev.getRoomId())
+        ) {
             this._updateServerNoticeEvents();
         }
     },
@@ -241,25 +274,88 @@ const LoggedInView = React.createClass({
 
         const pinnedEvents = [];
         for (const room of roomLists['m.server_notice']) {
-            const pinStateEvent = room.currentState.getStateEvents("m.room.pinned_events", "");
+            const pinStateEvent = room.currentState.getStateEvents(
+                'm.room.pinned_events',
+                ''
+            );
 
             if (!pinStateEvent || !pinStateEvent.getContent().pinned) continue;
 
-            const pinnedEventIds = pinStateEvent.getContent().pinned.slice(0, MAX_PINNED_NOTICES_PER_ROOM);
+            const pinnedEventIds = pinStateEvent
+                .getContent()
+                .pinned.slice(0, MAX_PINNED_NOTICES_PER_ROOM);
             for (const eventId of pinnedEventIds) {
-                const timeline = await this._matrixClient.getEventTimeline(room.getUnfilteredTimelineSet(), eventId, 0);
-                const ev = timeline.getEvents().find(ev => ev.getId() === eventId);
+                const timeline = await this._matrixClient.getEventTimeline(
+                    room.getUnfilteredTimelineSet(),
+                    eventId,
+                    0
+                );
+                const ev = timeline
+                    .getEvents()
+                    .find(ev => ev.getId() === eventId);
                 if (ev) pinnedEvents.push(ev);
             }
         }
         this.setState({
-            serverNoticeEvents: pinnedEvents,
+            serverNoticeEvents: pinnedEvents
         });
     },
 
+    _onPaste: function(ev) {
+        let canReceiveInput = false;
+        let element = ev.target;
+        // test for all parents because the target can be a child of a contenteditable element
+        while (!canReceiveInput && element) {
+            canReceiveInput = canElementReceiveInput(element);
+            element = element.parentElement;
+        }
+        if (!canReceiveInput) {
+            // refocusing during a paste event will make the
+            // paste end up in the newly focused element,
+            // so dispatch synchronously before paste happens
+            dis.dispatch({ action: 'focus_composer' }, true);
+        }
+    },
+
+    /*
+    SOME HACKERY BELOW:
+    React optimizes event handlers, by always attaching only 1 handler to the document for a given type.
+    It then internally determines the order in which React event handlers should be called,
+    emulating the capture and bubbling phases the DOM also has.
+
+    But, as the native handler for React is always attached on the document,
+    it will always run last for bubbling (first for capturing) handlers,
+    and thus React basically has its own event phases, and will always run
+    after (before for capturing) any native other event handlers (as they tend to be attached last).
+
+    So ideally one wouldn't mix React and native event handlers to have bubbling working as expected,
+    but we do need a native event handler here on the document,
+    to get keydown events when there is no focused element (target=body).
+
+    We also do need bubbling here to give child components a chance to call `stopPropagation()`,
+    for keydown events it can handle itself, and shouldn't be redirected to the composer.
+
+    So we listen with React on this component to get any events on focused elements, and get bubbling working as expected.
+    We also listen with a native listener on the document to get keydown events when no element is focused.
+    Bubbling is irrelevant here as the target is the body element.
+    */
+    _onReactKeyDown: function(ev) {
+        // events caught while bubbling up on the root element
+        // of this component, so something must be focused.
+        this._onKeyDown(ev);
+    },
+
+    _onNativeKeyDown: function(ev) {
+        // only pass this if there is no focused element.
+        // if there is, _onKeyDown will be called by the
+        // react keydown handler that respects the react bubbling order.
+        if (ev.target === document.body) {
+            this._onKeyDown(ev);
+        }
+    },
 
     _onKeyDown: function(ev) {
-            /*
+        /*
             // Remove this for now as ctrl+alt = alt-gr so this breaks keyboards which rely on alt-gr for numbers
             // Will need to find a better meta key if anyone actually cares about using this.
             if (ev.altKey && ev.ctrlKey && ev.keyCode > 48 && ev.keyCode < 58) {
@@ -275,21 +371,13 @@ const LoggedInView = React.createClass({
 
         let handled = false;
         const ctrlCmdOnly = isOnlyCtrlOrCmdKeyEvent(ev);
+        const hasModifier =
+            ev.altKey || ev.ctrlKey || ev.metaKey || ev.shiftKey;
 
         switch (ev.keyCode) {
-            case KeyCode.UP:
-            case KeyCode.DOWN:
-                if (ev.altKey && !ev.shiftKey && !ev.ctrlKey && !ev.metaKey) {
-                    const action = ev.keyCode == KeyCode.UP ?
-                        'view_prev_room' : 'view_next_room';
-                    dis.dispatch({action: action});
-                    handled = true;
-                }
-                break;
-
             case KeyCode.PAGE_UP:
             case KeyCode.PAGE_DOWN:
-                if (!ev.ctrlKey && !ev.shiftKey && !ev.altKey && !ev.metaKey) {
+                if (!hasModifier) {
                     this._onScrollKeyPressed(ev);
                     handled = true;
                 }
@@ -305,7 +393,20 @@ const LoggedInView = React.createClass({
             case KeyCode.KEY_K:
                 if (ctrlCmdOnly) {
                     dis.dispatch({
-                        action: 'focus_room_filter',
+                        action: 'focus_room_filter'
+                    });
+                    handled = true;
+                }
+                break;
+            case KeyCode.KEY_BACKTICK:
+                // Ideally this would be CTRL+P for "Profile", but that's
+                // taken by the print dialog. CTRL+I for "Information"
+                // was previously chosen but conflicted with italics in
+                // composer, so CTRL+` it is
+
+                if (ctrlCmdOnly) {
+                    dis.dispatch({
+                        action: 'toggle_top_left_menu'
                     });
                     handled = true;
                 }
@@ -315,6 +416,18 @@ const LoggedInView = React.createClass({
         if (handled) {
             ev.stopPropagation();
             ev.preventDefault();
+        } else if (!hasModifier) {
+            const isClickShortcut =
+                ev.target !== document.body &&
+                (ev.key === 'Space' || ev.key === 'Enter');
+
+            if (!isClickShortcut && !canElementReceiveInput(ev.target)) {
+                // synchronous dispatch so we focus before key generates input
+                dis.dispatch({ action: 'focus_composer' }, true);
+                ev.stopPropagation();
+                // we should *not* preventDefault() here as
+                // that would prevent typing in the now-focussed composer
+            }
         }
     },
 
@@ -343,11 +456,14 @@ const LoggedInView = React.createClass({
             // Dispatch synchronously so that the TagPanel receives an
             // optimistic update from TagOrderStore before the previous
             // state is shown.
-            dis.dispatch(TagOrderActions.moveTag(
-                this._matrixClient,
-                draggableId,
-                result.destination.index,
-            ), true);
+            dis.dispatch(
+                TagOrderActions.moveTag(
+                    this._matrixClient,
+                    draggableId,
+                    result.destination.index
+                ),
+                true
+            );
         } else if (dest.startsWith('room-sub-list-droppable_')) {
             this._onRoomTileEndDrag(result);
         }
@@ -364,12 +480,17 @@ const LoggedInView = React.createClass({
         const oldIndex = result.source.index;
         const newIndex = result.destination.index;
 
-        dis.dispatch(RoomListActions.tagRoom(
-            this._matrixClient,
-            this._matrixClient.getRoom(roomId),
-            prevTag, newTag,
-            oldIndex, newIndex,
-        ), true);
+        dis.dispatch(
+            RoomListActions.tagRoom(
+                this._matrixClient,
+                this._matrixClient.getRoom(roomId),
+                prevTag,
+                newTag,
+                oldIndex,
+                newIndex
+            ),
+            true
+        );
     },
 
     _onMouseDown: function(ev) {
@@ -386,8 +507,8 @@ const LoggedInView = React.createClass({
                 this.setState({
                     mouseDown: {
                         x: ev.pageX,
-                        y: ev.pageY,
-                    },
+                        y: ev.pageY
+                    }
                 });
             }
         }
@@ -398,7 +519,7 @@ const LoggedInView = React.createClass({
 
         const deltaX = ev.pageX - this.state.mouseDown.x;
         const deltaY = ev.pageY - this.state.mouseDown.y;
-        const distance = Math.sqrt((deltaX * deltaX) + (deltaY + deltaY));
+        const distance = Math.sqrt(deltaX * deltaX + (deltaY + deltaY));
         const maxRadius = 5; // People shouldn't be straying too far, hopefully
 
         // Note: we track how far the user moved their mouse to help
@@ -411,7 +532,7 @@ const LoggedInView = React.createClass({
 
         // Always clear the mouseDown state to ensure we don't accidentally
         // use stale values due to the mouseDown checks.
-        this.setState({mouseDown: null});
+        this.setState({ mouseDown: null });
     },
 
     _setResizeContainerRef(div) {
@@ -436,7 +557,8 @@ const LoggedInView = React.createClass({
 
         switch (this.props.page_type) {
             case PageTypes.RoomView:
-                pageElement = <RoomView
+                pageElement = (
+                    <RoomView
                         ref='roomView'
                         autoJoin={this.props.autoJoin}
                         onRegistered={this.props.onRegistered}
@@ -448,7 +570,9 @@ const LoggedInView = React.createClass({
                         disabled={this.props.middleDisabled}
                         collapsedRhs={this.props.collapsedRhs}
                         ConferenceHandler={this.props.ConferenceHandler}
-                    />;
+                        resizeNotifier={this.props.resizeNotifier}
+                    />
+                );
                 break;
 
             case PageTypes.MyGroups:
@@ -462,10 +586,13 @@ const LoggedInView = React.createClass({
             case PageTypes.HomePage:
                 {
                     const pageUrl = getHomePageUrl(this.props.config);
-                    pageElement = <EmbeddedPage className="mx_HomePage"
-                        url={pageUrl}
-                        scrollbar={true}
-                    />;
+                    pageElement = (
+                        <EmbeddedPage
+                            className='mx_HomePage'
+                            url={pageUrl}
+                            scrollbar={true}
+                        />
+                    );
                 }
                 break;
 
@@ -473,49 +600,65 @@ const LoggedInView = React.createClass({
                 pageElement = <UserView userId={this.props.currentUserId} />;
                 break;
             case PageTypes.GroupView:
-                pageElement = <GroupView
-                    groupId={this.props.currentGroupId}
-                    isNew={this.props.currentGroupIsNew}
-                    collapsedRhs={this.props.collapsedRhs}
-                />;
+                pageElement = (
+                    <GroupView
+                        groupId={this.props.currentGroupId}
+                        isNew={this.props.currentGroupIsNew}
+                        collapsedRhs={this.props.collapsedRhs}
+                    />
+                );
                 break;
         }
 
-        const usageLimitEvent = this.state.serverNoticeEvents.find((e) => {
+        const usageLimitEvent = this.state.serverNoticeEvents.find(e => {
             return (
-                e && e.getType() === 'm.room.message' &&
-                e.getContent()['server_notice_type'] === 'm.server_notice.usage_limit_reached'
+                e &&
+                e.getType() === 'm.room.message' &&
+                e.getContent()['server_notice_type'] ===
+                    'm.server_notice.usage_limit_reached'
             );
         });
 
         let topBar;
-        const isGuest = this.props.matrixClient.isGuest();
-        if (this.state.syncErrorData && this.state.syncErrorData.error.errcode === 'M_RESOURCE_LIMIT_EXCEEDED') {
-            topBar = <ServerLimitBar kind='hard'
-                adminContact={this.state.syncErrorData.error.data.admin_contact}
-                limitType={this.state.syncErrorData.error.data.limit_type}
-            />;
+        if (
+            this.state.syncErrorData &&
+            this.state.syncErrorData.error.errcode ===
+                'M_RESOURCE_LIMIT_EXCEEDED'
+        ) {
+            topBar = (
+                <ServerLimitBar
+                    kind='hard'
+                    adminContact={
+                        this.state.syncErrorData.error.data.admin_contact
+                    }
+                    limitType={this.state.syncErrorData.error.data.limit_type}
+                />
+            );
         } else if (usageLimitEvent) {
-            topBar = <ServerLimitBar kind='soft'
-                adminContact={usageLimitEvent.getContent().admin_contact}
-                limitType={usageLimitEvent.getContent().limit_type}
-            />;
+            topBar = (
+                <ServerLimitBar
+                    kind='soft'
+                    adminContact={usageLimitEvent.getContent().admin_contact}
+                    limitType={usageLimitEvent.getContent().limit_type}
+                />
+            );
         } else if (this.props.showCookieBar && this.props.config.piwik) {
             const policyUrl = this.props.config.piwik.policyUrl || null;
             // topBar = <CookieBar policyUrl={policyUrl} />;
-            topBar = <span></span>;
+            topBar = <span />;
         } else if (this.props.hasNewVersion) {
-            topBar = <NewVersionBar version={this.props.version} newVersion={this.props.newVersion}
-                                    releaseNotes={this.props.newVersionReleaseNotes}
-            />;
+            topBar = (
+                <NewVersionBar
+                    version={this.props.version}
+                    newVersion={this.props.newVersion}
+                    releaseNotes={this.props.newVersionReleaseNotes}
+                />
+            );
         } else if (this.props.checkingForUpdate) {
             topBar = <UpdateCheckBar {...this.props.checkingForUpdate} />;
         } else if (this.state.userHasGeneratedPassword) {
             topBar = <PasswordNagBar />;
-        } else if (
-            !isGuest && Notifier.supportsDesktopNotifications() &&
-            !Notifier.isEnabled() && !Notifier.isToolbarHidden()
-        ) {
+        } else if (this.props.showNotifierToolbar) {
             topBar = <MatrixToolbar />;
         }
 
@@ -528,22 +671,32 @@ const LoggedInView = React.createClass({
         }
 
         return (
-            <div className='mx_MatrixChat_wrapper' aria-hidden={this.props.hideToSRUsers} onMouseDown={this._onMouseDown} onMouseUp={this._onMouseUp}>
-                { topBar }
+            <div
+                onPaste={this._onPaste}
+                onKeyDown={this._onReactKeyDown}
+                className='mx_MatrixChat_wrapper'
+                aria-hidden={this.props.hideToSRUsers}
+                onMouseDown={this._onMouseDown}
+                onMouseUp={this._onMouseUp}
+            >
+                {topBar}
                 <DragDropContext onDragEnd={this._onDragEnd}>
-                    <div ref={this._setResizeContainerRef} className={bodyClasses}>
+                    <div
+                        ref={this._setResizeContainerRef}
+                        className={bodyClasses}
+                    >
                         <LeftPanel
-                            toolbarShown={!!topBar}
+                            resizeNotifier={this.props.resizeNotifier}
                             collapsed={this.props.collapseLhs || false}
                             disabled={this.props.leftDisabled}
                         />
                         <ResizeHandle />
-                        { pageElement }
+                        {pageElement}
                     </div>
                 </DragDropContext>
             </div>
         );
-    },
+    }
 });
 
 export default LoggedInView;

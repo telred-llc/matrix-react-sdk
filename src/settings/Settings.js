@@ -15,18 +15,33 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import {_td} from '../languageHandler';
+import { _td } from '../languageHandler';
 import {
     AudioNotificationsEnabledController,
     NotificationBodyEnabledController,
-    NotificationsEnabledController,
-} from "./controllers/NotificationControllers";
-import CustomStatusController from "./controllers/CustomStatusController";
+    NotificationsEnabledController
+} from './controllers/NotificationControllers';
+import CustomStatusController from './controllers/CustomStatusController';
 import ThemeController from './controllers/ThemeController';
+import LowBandwidthController from './controllers/LowBandwidthController';
 
 // These are just a bunch of helper arrays to avoid copy/pasting a bunch of times
-const LEVELS_ROOM_SETTINGS = ['device', 'room-device', 'room-account', 'account', 'config'];
-const LEVELS_ROOM_SETTINGS_WITH_ROOM = ['device', 'room-device', 'room-account', 'account', 'config', 'room'];
+const LEVELS_ROOM_SETTINGS = [
+    'device',
+    'room-device',
+    'room-account',
+    'account',
+    'config'
+];
+const LEVELS_ROOM_OR_ACCOUNT = ['room-account', 'account'];
+const LEVELS_ROOM_SETTINGS_WITH_ROOM = [
+    'device',
+    'room-device',
+    'room-account',
+    'account',
+    'config',
+    'room'
+];
 const LEVELS_ACCOUNT_SETTINGS = ['device', 'account', 'config'];
 const LEVELS_FEATURE = ['device', 'config'];
 const LEVELS_DEVICE_ONLY_SETTINGS = ['device'];
@@ -87,262 +102,309 @@ export const SETTINGS = {
     //     // not use this for new settings.
     //     invertedSettingName: "my-negative-setting",
     // },
-    "feature_pinning": {
+    feature_pinning: {
         isFeature: true,
-        displayName: _td("Message Pinning"),
+        displayName: _td('Message Pinning'),
+        supportedLevels: LEVELS_FEATURE,
+        default: false
+    },
+    feature_custom_status: {
+        isFeature: true,
+        displayName: _td('Custom user status messages'),
         supportedLevels: LEVELS_FEATURE,
         default: false,
+        controller: new CustomStatusController()
     },
-    "feature_custom_status": {
+    feature_custom_tags: {
         isFeature: true,
-        displayName: _td("Custom user status messages"),
+        displayName: _td(
+            'Group & filter rooms by custom tags (refresh to apply changes)'
+        ),
         supportedLevels: LEVELS_FEATURE,
-        default: false,
-        controller: new CustomStatusController(),
+        default: false
     },
-    "feature_room_breadcrumbs": {
+    feature_state_counters: {
         isFeature: true,
-        displayName: _td("Show recent room avatars above the room list (refresh to apply changes)"),
+        displayName: _td('Render simple counters in room header'),
         supportedLevels: LEVELS_FEATURE,
-        default: false,
+        default: false
     },
-    "feature_custom_tags": {
-        isFeature: true,
-        displayName: _td("Group & filter rooms by custom tags (refresh to apply changes)"),
-        supportedLevels: LEVELS_FEATURE,
-        default: false,
-    },
-    "feature_state_counters": {
-        isFeature: true,
-        displayName: _td("Render simple counters in room header"),
-        supportedLevels: LEVELS_FEATURE,
-        default: false,
-    },
-    "MessageComposerInput.suggestEmoji": {
+    'MessageComposerInput.suggestEmoji': {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,
         displayName: _td('Enable Emoji suggestions while typing'),
         default: true,
-        invertedSettingName: 'MessageComposerInput.dontSuggestEmoji',
+        invertedSettingName: 'MessageComposerInput.dontSuggestEmoji'
     },
-    "useCompactLayout": {
+    useCompactLayout: {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,
         displayName: _td('Use compact timeline layout'),
-        default: false,
+        default: false
     },
-    "showRedactions": {
+    showRedactions: {
         supportedLevels: LEVELS_ROOM_SETTINGS_WITH_ROOM,
         displayName: _td('Show a placeholder for removed messages'),
         default: true,
-        invertedSettingName: 'hideRedactions',
+        invertedSettingName: 'hideRedactions'
     },
-    "showJoinLeaves": {
+    showJoinLeaves: {
         supportedLevels: LEVELS_ROOM_SETTINGS_WITH_ROOM,
-        displayName: _td('Show join/leave messages (invites/kicks/bans unaffected)'),
+        displayName: _td(
+            'Show join/leave messages (invites/kicks/bans unaffected)'
+        ),
         default: true,
-        invertedSettingName: 'hideJoinLeaves',
+        invertedSettingName: 'hideJoinLeaves'
     },
-    "showAvatarChanges": {
+    showAvatarChanges: {
         supportedLevels: LEVELS_ROOM_SETTINGS_WITH_ROOM,
         displayName: _td('Show avatar changes'),
         default: true,
-        invertedSettingName: 'hideAvatarChanges',
+        invertedSettingName: 'hideAvatarChanges'
     },
-    "showDisplaynameChanges": {
+    showDisplaynameChanges: {
         supportedLevels: LEVELS_ROOM_SETTINGS_WITH_ROOM,
         displayName: _td('Show display name changes'),
         default: true,
-        invertedSettingName: 'hideDisplaynameChanges',
+        invertedSettingName: 'hideDisplaynameChanges'
     },
-    "showReadReceipts": {
+    showReadReceipts: {
         supportedLevels: LEVELS_ROOM_SETTINGS,
         displayName: _td('Show read receipts sent by other users'),
         default: true,
-        invertedSettingName: 'hideReadReceipts',
+        invertedSettingName: 'hideReadReceipts'
     },
-    "showTwelveHourTimestamps": {
+    showTwelveHourTimestamps: {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,
         displayName: _td('Show timestamps in 12 hour format (e.g. 2:30pm)'),
-        default: false,
+        default: false
     },
-    "alwaysShowTimestamps": {
+    alwaysShowTimestamps: {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,
         displayName: _td('Always show message timestamps'),
-        default: false,
+        default: false
     },
-    "autoplayGifsAndVideos": {
+    autoplayGifsAndVideos: {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,
         displayName: _td('Autoplay GIFs and videos'),
-        default: false,
+        default: false
     },
-    "alwaysShowEncryptionIcons": {
+    alwaysShowEncryptionIcons: {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,
         displayName: _td('Always show encryption icons'),
-        default: true,
+        default: true
     },
-    "showRoomRecoveryReminder": {
+    showRoomRecoveryReminder: {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,
-        displayName: _td('Show a reminder to enable Secure Message Recovery in encrypted rooms'),
-        default: true,
+        displayName: _td(
+            'Show a reminder to enable Secure Message Recovery in encrypted rooms'
+        ),
+        default: true
     },
-    "enableSyntaxHighlightLanguageDetection": {
+    enableSyntaxHighlightLanguageDetection: {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,
-        displayName: _td('Enable automatic language detection for syntax highlighting'),
-        default: false,
+        displayName: _td(
+            'Enable automatic language detection for syntax highlighting'
+        ),
+        default: false
     },
-    "Pill.shouldShowPillAvatar": {
+    'Pill.shouldShowPillAvatar': {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,
         displayName: _td('Show avatars in user and room mentions'),
         default: true,
-        invertedSettingName: 'Pill.shouldHidePillAvatar',
+        invertedSettingName: 'Pill.shouldHidePillAvatar'
     },
-    "TextualBody.enableBigEmoji": {
+    'TextualBody.enableBigEmoji': {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,
         displayName: _td('Enable big emoji in chat'),
         default: true,
-        invertedSettingName: 'TextualBody.disableBigEmoji',
+        invertedSettingName: 'TextualBody.disableBigEmoji'
     },
-    "MessageComposerInput.isRichTextEnabled": {
+    'MessageComposerInput.isRichTextEnabled': {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,
-        default: false,
+        default: false
     },
-    "MessageComposer.showFormatting": {
+    'MessageComposer.showFormatting': {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,
-        default: false,
+        default: false
     },
-    "sendTypingNotifications": {
+    sendTypingNotifications: {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,
-        displayName: _td("Send typing notifications"),
+        displayName: _td('Send typing notifications'),
         default: true,
-        invertedSettingName: 'dontSendTypingNotifications',
+        invertedSettingName: 'dontSendTypingNotifications'
     },
-    "MessageComposerInput.autoReplaceEmoji": {
+    'MessageComposerInput.autoReplaceEmoji': {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,
         displayName: _td('Automatically replace plain text Emoji'),
-        default: false,
+        default: false
     },
-    "VideoView.flipVideoHorizontally": {
+    'VideoView.flipVideoHorizontally': {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,
         displayName: _td('Mirror local video feed'),
-        default: false,
+        default: false
     },
-    "TagPanel.enableTagPanel": {
+    'TagPanel.enableTagPanel': {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,
         displayName: _td('Enable Community Filter Panel'),
         default: true,
-        invertedSettingName: 'TagPanel.disableTagPanel',
+        invertedSettingName: 'TagPanel.disableTagPanel'
     },
-    "theme": {
+    theme: {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,
-        default: "light",
-        controller: new ThemeController(),
+        default: 'light',
+        controller: new ThemeController()
     },
-    "webRtcAllowPeerToPeer": {
+    webRtcAllowPeerToPeer: {
         supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS_WITH_CONFIG,
         displayName: _td('Allow Peer-to-Peer for 1:1 calls'),
         default: true,
-        invertedSettingName: 'webRtcForceTURN',
+        invertedSettingName: 'webRtcForceTURN'
     },
-    "webrtc_audiooutput": {
+    webrtc_audiooutput: {
         supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS,
-        default: null,
+        default: null
     },
-    "webrtc_audioinput": {
+    webrtc_audioinput: {
         supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS,
-        default: null,
+        default: null
     },
-    "webrtc_videoinput": {
+    webrtc_videoinput: {
         supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS,
-        default: null,
+        default: null
     },
-    "language": {
+    language: {
         supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS_WITH_CONFIG,
-        default: "en",
+        default: 'en'
     },
-    "analyticsOptIn": {
+    breadcrumb_rooms: {
+        supportedLevels: ['account'],
+        default: []
+    },
+    analyticsOptIn: {
         supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS_WITH_CONFIG,
         displayName: _td('Send analytics data'),
-        default: false,
+        default: false
     },
-    "showCookieBar": {
+    showCookieBar: {
         supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS_WITH_CONFIG,
-        default: true,
+        default: true
     },
-    "autocompleteDelay": {
+    autocompleteDelay: {
         supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS_WITH_CONFIG,
-        default: 200,
+        default: 200
     },
-    "blacklistUnverifiedDevices": {
+    blacklistUnverifiedDevices: {
         // We specifically want to have room-device > device so that users may set a device default
         // with a per-room override.
         supportedLevels: ['room-device', 'device'],
         supportedLevelsAreOrdered: true,
         displayName: {
-            "default": _td('Never send encrypted messages to unverified devices from this device'),
-            "room-device": _td('Never send encrypted messages to unverified devices in this room from this device'),
+            default: _td(
+                'Never send encrypted messages to unverified devices from this device'
+            ),
+            'room-device': _td(
+                'Never send encrypted messages to unverified devices in this room from this device'
+            )
         },
-        default: false,
+        default: false
     },
-    "urlPreviewsEnabled": {
+    urlPreviewsEnabled: {
         supportedLevels: LEVELS_ROOM_SETTINGS_WITH_ROOM,
         displayName: {
-            "default": _td('Enable inline URL previews by default'),
-            "room-account": _td("Enable URL previews for this room (only affects you)"),
-            "room": _td("Enable URL previews by default for participants in this room"),
+            default: _td('Enable inline URL previews by default'),
+            'room-account': _td(
+                'Enable URL previews for this room (only affects you)'
+            ),
+            room: _td(
+                'Enable URL previews by default for participants in this room'
+            )
         },
-        default: true,
+        default: true
     },
-    "urlPreviewsEnabled_e2ee": {
+    urlPreviewsEnabled_e2ee: {
         supportedLevels: ['room-device', 'room-account'],
         displayName: {
-            "room-account": _td("Enable URL previews for this room (only affects you)"),
+            'room-account': _td(
+                'Enable URL previews for this room (only affects you)'
+            )
         },
-        default: false,
+        default: false
     },
-    "roomColor": {
+    roomColor: {
         supportedLevels: LEVELS_ROOM_SETTINGS_WITH_ROOM,
-        displayName: _td("Room Colour"),
+        displayName: _td('Room Colour'),
         default: {
             primary_color: null, // Hex string, eg: #000000
-            secondary_color: null, // Hex string, eg: #000000
-        },
+            secondary_color: null // Hex string, eg: #000000
+        }
     },
-    "notificationsEnabled": {
+    notificationsEnabled: {
         supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS,
         default: false,
-        controller: new NotificationsEnabledController(),
+        controller: new NotificationsEnabledController()
     },
-    "notificationBodyEnabled": {
+    notificationSound: {
+        supportedLevels: LEVELS_ROOM_OR_ACCOUNT,
+        default: false
+    },
+    notificationBodyEnabled: {
         supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS,
         default: true,
-        controller: new NotificationBodyEnabledController(),
+        controller: new NotificationBodyEnabledController()
     },
-    "audioNotificationsEnabled": {
+    audioNotificationsEnabled: {
         supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS,
         default: true,
-        controller: new AudioNotificationsEnabledController(),
+        controller: new AudioNotificationsEnabledController()
     },
-    "enableWidgetScreenshots": {
+    enableWidgetScreenshots: {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,
         displayName: _td('Enable widget screenshots on supported widgets'),
-        default: false,
+        default: false
     },
-    "PinnedEvents.isOpen": {
+    'PinnedEvents.isOpen': {
         supportedLevels: ['room-device'],
-        default: false,
+        default: false
     },
-    "promptBeforeInviteUnknownUsers": {
+    promptBeforeInviteUnknownUsers: {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,
-        displayName: _td('Prompt before sending invites to potentially invalid matrix IDs'),
-        default: true,
+        displayName: _td(
+            'Prompt before sending invites to potentially invalid matrix IDs'
+        ),
+        default: true
     },
-    "showDeveloperTools": {
+    showDeveloperTools: {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,
         displayName: _td('Show developer tools'),
-        default: false,
+        default: false
     },
-    "RoomList.orderByImportance": {
+    widgetOpenIDPermissions: {
+        supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS,
+        default: {
+            allow: [],
+            deny: []
+        }
+    },
+    'RoomList.orderByImportance': {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,
-        displayName: _td('Order rooms in the room list by most important first instead of most recent'),
-        default: true,
+        displayName: _td(
+            'Order rooms in the room list by most important first instead of most recent'
+        ),
+        default: true
     },
+    breadcrumbs: {
+        supportedLevels: LEVELS_ACCOUNT_SETTINGS,
+        displayName: _td('Show recently visited rooms above the room list'),
+        default: true
+    },
+    showHiddenEventsInTimeline: {
+        displayName: _td('Show hidden events in timeline'),
+        supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS,
+        default: false
+    },
+    lowBandwidth: {
+        supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS_WITH_CONFIG,
+        displayName: _td('Low bandwidth mode'),
+        default: false,
+        controller: new LowBandwidthController()
+    }
 };

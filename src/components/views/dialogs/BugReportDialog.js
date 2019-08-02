@@ -50,6 +50,13 @@ export default class BugReportDialog extends React.Component {
     }
 
     _onSubmit(ev) {
+        if ((!this.state.text || !this.state.text.trim()) && (!this.state.issueUrl || !this.state.issueUrl.trim())) {
+            this.setState({
+                err: _t("Please tell us what went wrong or, better, create a GitHub issue that describes the problem."),
+            });
+            return;
+        }
+
         const userText =
             (this.state.text.length > 0 ? this.state.text + '\n\n': '') + 'Issue: ' +
             (this.state.issueUrl.length > 0 ? this.state.issueUrl : 'No issue link given');
@@ -93,7 +100,7 @@ export default class BugReportDialog extends React.Component {
         this.setState({ issueUrl: ev.target.value });
     }
 
-   _onSendLogsChange(ev) {
+    _onSendLogsChange(ev) {
         this.setState({ sendLogs: ev.target.checked });
     }
 
@@ -108,6 +115,7 @@ export default class BugReportDialog extends React.Component {
         const Loader = sdk.getComponent("elements.Spinner");
         const BaseDialog = sdk.getComponent('views.dialogs.BaseDialog');
         const DialogButtons = sdk.getComponent('views.elements.DialogButtons');
+        const Field = sdk.getComponent('elements.Field');
 
         let error = null;
         if (this.state.err) {
@@ -154,36 +162,29 @@ export default class BugReportDialog extends React.Component {
                             },
                         ) }
                     </b></p>
-                    <div className="mx_BugReportDialog_field_container">
-                        <label
-                            htmlFor="mx_BugReportDialog_issueUrl"
-                            className="mx_BugReportDialog_field_label"
-                        >
-                            { _t("What GitHub issue are these logs for?") }
-                        </label>
-                        <input
-                            id="mx_BugReportDialog_issueUrl"
-                            type="text"
-                            className="mx_BugReportDialog_field_input"
-                            onChange={this._onIssueUrlChange}
-                            value={this.state.issueUrl}
-                            placeholder="https://github.com/vector-im/riot-web/issues/..."
-                        />
-                    </div>
-                    <div className="mx_BugReportDialog_field_container">
-                        <label
-                            htmlFor="mx_BugReportDialog_notes_label"
-                            className="mx_BugReportDialog_field_label"
-                        >
-                            { _t("Notes:") }
-                        </label>
-                        <textarea
-                            className="mx_BugReportDialog_field_input"
-                            rows={5}
-                            onChange={this._onTextChange}
-                            value={this.state.text}
-                        />
-                    </div>
+                    <Field
+                        id="mx_BugReportDialog_issueUrl"
+                        type="text"
+                        className="mx_BugReportDialog_field_input"
+                        label={_t("GitHub issue")}
+                        onChange={this._onIssueUrlChange}
+                        value={this.state.issueUrl}
+                        placeholder="https://github.com/vector-im/riot-web/issues/..."
+                    />
+                    <Field
+                        className="mx_BugReportDialog_field_input"
+                        element="textarea"
+                        label={_t("Notes")}
+                        rows={5}
+                        onChange={this._onTextChange}
+                        value={this.state.text}
+                        placeholder={_t(
+                            "If there is additional context that would help in " +
+                            "analysing the issue, such as what you were doing at " +
+                            "the time, room IDs, user IDs, etc., " +
+                            "please include those things here.",
+                        )}
+                    />
                     {progress}
                     {error}
                 </div>

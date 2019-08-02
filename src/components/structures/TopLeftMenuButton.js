@@ -1,5 +1,6 @@
 /*
 Copyright 2018 New Vector Ltd
+Copyright 2019 The Matrix.org Foundation C.I.C.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,19 +18,20 @@ limitations under the License.
 import React from 'react';
 import PropTypes from 'prop-types';
 import * as ContextualMenu from './ContextualMenu';
-import {TopLeftMenu} from '../views/context_menus/TopLeftMenu';
+import { TopLeftMenu } from '../views/context_menus/TopLeftMenu';
 import AccessibleButton from '../views/elements/AccessibleButton';
 import BaseAvatar from '../views/avatars/BaseAvatar';
 import MatrixClientPeg from '../../MatrixClientPeg';
 import Avatar from '../../Avatar';
 import { _t } from '../../languageHandler';
-import RoomListStore from "../../stores/RoomListStore";
+import dis from '../../dispatcher';
+import { focusCapturedRef } from '../../utils/Accessibility';
 
 const AVATAR_SIZE = 28;
 
 export default class TopLeftMenuButton extends React.Component {
     static propTypes = {
-        collapsed: PropTypes.bool.isRequired,
+        collapsed: PropTypes.bool.isRequired
     };
 
     static displayName = 'TopLeftMenuButton';
@@ -38,7 +40,8 @@ export default class TopLeftMenuButton extends React.Component {
         super();
         this.state = {
             menuDisplayed: false,
-            profileInfo: null,
+            menuFunctions: null, // should be { close: fn }
+            profileInfo: null
         };
 
         this.onToggleMenu = this.onToggleMenu.bind(this);
@@ -49,35 +52,54 @@ export default class TopLeftMenuButton extends React.Component {
         const userId = cli.getUserId();
         const profileInfo = await cli.getProfileInfo(userId);
         const avatarUrl = Avatar.avatarUrlForUser(
-            {avatarUrl: profileInfo.avatar_url},
-            AVATAR_SIZE, AVATAR_SIZE, "crop");
+            { avatarUrl: profileInfo.avatar_url },
+            AVATAR_SIZE,
+            AVATAR_SIZE,
+            'crop'
+        );
 
         return {
             userId,
             name: profileInfo.displayname,
-            avatarUrl,
+            avatarUrl
         };
     }
 
-    async refreshProfileInfo() {
-        const profileInfo = await this._getProfileInfo();
-        this.setState({profileInfo});
-    }
-
     async componentDidMount() {
+        this._dispatcherRef = dis.register(this.onAction);
+
         try {
-            this._roomListStoreToken = RoomListStore.addListener(() => {
-                this.refreshProfileInfo();
-            });
+            const profileInfo = await this._getProfileInfo();
+            this.setState({ profileInfo });
         } catch (ex) {
-            console.log("could not fetch profile");
+            console.log('could not fetch profile');
             console.error(ex);
         }
     }
 
+    componentWillUnmount() {
+        dis.unregister(this._dispatcherRef);
+    }
+
+    onAction = payload => {
+        // For accessibility
+        if (payload.action === 'toggle_top_left_menu') {
+            if (this._buttonRef) this._buttonRef.click();
+        } else if (
+            payload.action === 'profile_name_changed' ||
+            payload.action === 'profile_img_changed'
+        ) {
+            this._getProfileInfo()
+                .then(profileInfo => {
+                    this.setState({ profileInfo });
+                })
+                .catch(err => console.err(err));
+        }
+    };
+
     _getDisplayName() {
         if (MatrixClientPeg.get().isGuest()) {
-            return _t("Guest");
+            return _t('Guest');
         } else if (this.state.profileInfo) {
             return this.state.profileInfo.name;
         } else {
@@ -89,23 +111,32 @@ export default class TopLeftMenuButton extends React.Component {
         const name = this._getDisplayName();
         let nameElement;
         if (!this.props.collapsed) {
-            nameElement = <div className="mx_TopLeftMenuButton_name">
-                { name }
-            </div>;
+            nameElement = (
+                <div className='mx_TopLeftMenuButton_name'>{name}</div>
+            );
         }
 
         return (
-            <AccessibleButton className="mx_TopLeftMenuButton" onClick={this.onToggleMenu}>
+            <AccessibleButton
+                className='mx_TopLeftMenuButton'
+                role='button'
+                onClick={this.onToggleMenu}
+                inputRef={r => (this._buttonRef = r)}
+                aria-label={_t('Your profile')}
+            >
                 <BaseAvatar
                     idName={MatrixClientPeg.get().getUserId()}
                     name={name}
-                    url={this.state.profileInfo && this.state.profileInfo.avatarUrl}
+                    url={
+                        this.state.profileInfo &&
+                        this.state.profileInfo.avatarUrl
+                    }
                     width={AVATAR_SIZE}
                     height={AVATAR_SIZE}
-                    resizeMethod="crop"
+                    resizeMethod='crop'
                 />
-                { nameElement }
-                <span className="mx_TopLeftMenuButton_chevron"></span>
+                {nameElement}
+                <span className='mx_TopLeftMenuButton_chevron' />
             </AccessibleButton>
         );
     }
@@ -114,20 +145,26 @@ export default class TopLeftMenuButton extends React.Component {
         e.preventDefault();
         e.stopPropagation();
 
+        if (this.state.menuDisplayed && this.state.menuFunctions) {
+            this.state.menuFunctions.close();
+            return;
+        }
+
         const elementRect = e.currentTarget.getBoundingClientRect();
         const x = elementRect.left;
         const y = elementRect.top + elementRect.height;
 
-        ContextualMenu.createMenu(TopLeftMenu, {
-            chevronFace: "none",
+        const menuFunctions = ContextualMenu.createMenu(TopLeftMenu, {
+            chevronFace: 'none',
             left: x,
             top: y,
             userId: MatrixClientPeg.get().getUserId(),
             displayName: this._getDisplayName(),
+            containerRef: focusCapturedRef, // Focus the TopLeftMenu on first render
             onFinished: () => {
-                this.setState({ menuDisplayed: false });
-            },
+                this.setState({ menuDisplayed: false, menuFunctions: null });
+            }
         });
-        this.setState({ menuDisplayed: true });
+        this.setState({ menuDisplayed: true, menuFunctions });
     }
 }

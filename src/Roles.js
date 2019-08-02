@@ -21,14 +21,17 @@ export function levelRoleMap(usersDefault) {
         // 0: _t('Restricted'),
         [usersDefault]: _t('Default'),
         // 50: _t('Moderator'),
-        100: _t('Admin'),
+        100: _t('Admin')
     };
 }
 
 export function textualPowerLevel(level, usersDefault) {
     const LEVEL_ROLE_MAP = this.levelRoleMap(usersDefault);
     if (LEVEL_ROLE_MAP[level]) {
-        return LEVEL_ROLE_MAP[level] + (level !== undefined ? ` (${level})` : ` (${usersDefault})`);
+        return (
+            LEVEL_ROLE_MAP[level] +
+            (level !== undefined ? ` (${level})` : ` (${usersDefault})`)
+        );
     } else {
         return level;
     }
