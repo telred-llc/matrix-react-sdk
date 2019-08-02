@@ -262,7 +262,11 @@ module.exports = withMatrixClient(React.createClass({
         });
     },
     _isMyMessage: function() {
-        return this.props.mxEvent.sender.userId === this.props.matrixClient.credentials.userId;
+        // check sender to avoid error when searching for messages
+        const {mxEvent} = this.props;
+        if (mxEvent.sender) {
+            return this.props.mxEvent.sender.userId === this.props.matrixClient.credentials.userId;
+        }
     },
 
     _propsEqual: function(objA, objB) {

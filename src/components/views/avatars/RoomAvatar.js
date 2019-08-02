@@ -127,8 +127,6 @@ module.exports = React.createClass({
             src: avatarUrl,
             name: this.props.room.name
         };
-        debugger;
-
         Modal.createDialog(ImageView, params, 'mx_Dialog_lightbox');
     },
 

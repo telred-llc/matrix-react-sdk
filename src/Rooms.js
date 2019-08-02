@@ -130,6 +130,7 @@ export function setDMRoom(roomId, userId) {
     if (MatrixClientPeg.get().isGuest()) {
         return Promise.resolve();
     }
+    // user must be owner (not guest) to set room as direct-message-room
 
     const mDirectEvent = MatrixClientPeg.get().getAccountData('m.direct');
     let dmRoomMap = {};

@@ -27,9 +27,9 @@ module.exports = React.createClass({
     displayName: 'SearchBar',
 
     getInitialState: function() {
-        return ({
-            scope: 'Room',
-        });
+        return {
+            scope: 'Room'
+        };
     },
 
     onThisRoomClick: function() {
@@ -41,10 +41,12 @@ module.exports = React.createClass({
     },
 
     onSearchChange: function(e) {
-        if (e.keyCode === 13) { // on enter...
+        if (e.keyCode === 13) {
+            // on enter...
             this.onSearch();
         }
-        if (e.keyCode === 27) { // escape...
+        if (e.keyCode === 27) {
+            // escape...
             this.props.onCancelClick();
         }
     },
@@ -60,20 +62,51 @@ module.exports = React.createClass({
     },
 
     render: function() {
-        const searchButtonClasses = classNames({ mx_SearchBar_searchButton: true, mx_SearchBar_searching: this.props.searchInProgress });
-        const thisRoomClasses = classNames({ mx_SearchBar_button: true, mx_SearchBar_unselected: this.state.scope !== 'Room' });
-        const allRoomsClasses = classNames({ mx_SearchBar_button: true, mx_SearchBar_unselected: this.state.scope !== 'All' });
+        const searchButtonClasses = classNames({
+            mx_SearchBar_searchButton: true,
+            mx_SearchBar_searching: this.props.searchInProgress
+        });
+        const thisRoomClasses = classNames({
+            mx_SearchBar_button: true,
+            mx_SearchBar_unselected: this.state.scope !== 'Room'
+        });
+        const allRoomsClasses = classNames({
+            mx_SearchBar_button: true,
+            mx_SearchBar_unselected: this.state.scope !== 'All'
+        });
 
         return (
-            <div className="mx_SearchBar">
-                <AccessibleButton className={ thisRoomClasses } onClick={this.onThisRoomClick}>{_t("This Room")}</AccessibleButton>
-                <AccessibleButton className={ allRoomsClasses } onClick={this.onAllRoomsClick}>{_t("All Rooms")}</AccessibleButton>
-                <div className="mx_SearchBar_input mx_textinput">
-                    <input ref="search_term" type="text" autoFocus={true} placeholder={_t("Search…")} onKeyDown={this.onSearchChange} />
-                    <AccessibleButton className={ searchButtonClasses } onClick={this.onSearch}></AccessibleButton>
+            <div className='mx_SearchBar'>
+                <AccessibleButton
+                    className={thisRoomClasses}
+                    onClick={this.onThisRoomClick}
+                >
+                    {_t('This Room')}
+                </AccessibleButton>
+                <AccessibleButton
+                    className={allRoomsClasses}
+                    onClick={this.onAllRoomsClick}
+                >
+                    {_t('All Rooms')}
+                </AccessibleButton>
+                <div className='mx_SearchBar_input mx_textinput'>
+                    <input
+                        ref='search_term'
+                        type='text'
+                        autoFocus={true}
+                        placeholder={_t('Search…')}
+                        onKeyDown={this.onSearchChange}
+                    />
+                    <AccessibleButton
+                        className={searchButtonClasses}
+                        onClick={this.onSearch}
+                    />
                 </div>
-                <AccessibleButton className="mx_SearchBar_cancel" onClick={this.props.onCancelClick}></AccessibleButton>
+                <AccessibleButton
+                    className='mx_SearchBar_cancel'
+                    onClick={this.props.onCancelClick}
+                />
             </div>
         );
-    },
+    }
 });
