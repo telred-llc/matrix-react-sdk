@@ -31,6 +31,7 @@ import SdkConfig from "../../SdkConfig";
 import * as RoomListSorter from "../../RoomListSorter";
 import dis from "../../dispatcher";
 import Notifier from '../../Notifier';
+// import {  } from '../../../../matrix-js-sdk/src/crypto/algorithms/olm';
 
 import Modal from "../../Modal";
 import Tinter from "../../Tinter";
@@ -43,6 +44,8 @@ import * as Lifecycle from '../../Lifecycle';
 require('../../stores/LifecycleStore');
 import PageTypes from '../../PageTypes';
 import { getHomePageUrl } from '../../utils/pages';
+// const MatrixEvent = require('../../../../matrix-js-sdk/src/models/event').MatrixEvent;
+import {MatrixEvent} from 'matrix-js-sdk';
 
 import createRoom from "../../createRoom";
 import KeyRequestHandler from '../../KeyRequestHandler';
@@ -1309,6 +1312,28 @@ export default React.createClass({
      * Called just before the matrix client is started
      * (useful for setting listeners)
      */
+    saveChatForSearch: function() {
+        console.log('+++ Save Chat For Search +++')
+        const cli = MatrixClientPeg.get()
+            const rooms = cli.getRooms();
+            window.allMsgs = [];
+            rooms.forEach(room => {
+                room.timeline.forEach(async t => {
+                    const event = t.event;
+                    const eventObj = new MatrixEvent(event);
+                    const content = eventObj.getContent();
+
+                    if (content && content.msgtype === 'm.text') {
+                        window.allMsgs.push(eventObj);
+                    } else if (content && content.ciphertext && cli._crypto.decryptEvent) {
+                        const result = await eventObj.attemptDecryption(cli._crypto);
+                        if (eventObj.getContent().msgtype === 'm.text') {
+                            window.allMsgs.push(eventObj);
+                        }
+                    }
+                });
+            });
+    },
     _onWillStartClient() {
         const self = this;
 
@@ -1374,6 +1399,7 @@ export default React.createClass({
                 ready: true,
                 showNotifierToolbar: Notifier.shouldShowToolbar(),
             });
+            self.saveChatForSearch();
         });
         cli.on('Call.incoming', function(call) {
             // we dispatch this synchronously to make sure that the event

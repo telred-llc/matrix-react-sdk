@@ -58,6 +58,8 @@ module.exports = React.createClass({
     },
 
     onSearch: function() {
+        const cli = MatrixClientPeg.get();
+
         this.props.onSearch(this.refs.search_term.value, this.state.scope);
     },
 

@@ -32,7 +32,7 @@ function createSyncAction(matrixClient, state, prevState) {
         action: 'MatrixActions.sync',
         state,
         prevState,
-        matrixClient,
+        matrixClient
     };
 }
 
@@ -58,7 +58,7 @@ function createAccountDataAction(matrixClient, accountDataEvent) {
         action: 'MatrixActions.accountData',
         event: accountDataEvent,
         event_type: accountDataEvent.getType(),
-        event_content: accountDataEvent.getContent(),
+        event_content: accountDataEvent.getContent()
     };
 }
 
@@ -87,7 +87,7 @@ function createRoomAccountDataAction(matrixClient, accountDataEvent, room) {
         event: accountDataEvent,
         event_type: accountDataEvent.getType(),
         event_content: accountDataEvent.getContent(),
-        room: room,
+        room: room
     };
 }
 
@@ -145,7 +145,7 @@ function createRoomReceiptAction(matrixClient, event, room) {
         action: 'MatrixActions.Room.receipt',
         event,
         room,
-        matrixClient,
+        matrixClient
     };
 }
 
@@ -178,13 +178,21 @@ function createRoomReceiptAction(matrixClient, event, room) {
  * @param {EventTimeline} data.timeline the timeline being altered.
  * @returns {RoomTimelineAction} an action of type `MatrixActions.Room.timeline`.
  */
-function createRoomTimelineAction(matrixClient, timelineEvent, room, toStartOfTimeline, removed, data) {
+function createRoomTimelineAction(
+    matrixClient,
+    timelineEvent,
+    room,
+    toStartOfTimeline,
+    removed,
+    data
+) {
     return {
         action: 'MatrixActions.Room.timeline',
         event: timelineEvent,
         isLiveEvent: data.liveEvent,
         isLiveUnfilteredRoomTimelineEvent:
-            room && data.timeline.getTimelineSet() === room.getUnfilteredTimelineSet(),
+            room &&
+            data.timeline.getTimelineSet() === room.getUnfilteredTimelineSet()
     };
 }
 
@@ -208,8 +216,18 @@ function createRoomTimelineAction(matrixClient, timelineEvent, room, toStartOfTi
  * @param {string} oldMembership the previous membership, can be null.
  * @returns {RoomMembershipAction} an action of type `MatrixActions.Room.myMembership`.
  */
-function createSelfMembershipAction(matrixClient, room, membership, oldMembership) {
-    return { action: 'MatrixActions.Room.myMembership', room, membership, oldMembership};
+function createSelfMembershipAction(
+    matrixClient,
+    room,
+    membership,
+    oldMembership
+) {
+    return {
+        action: 'MatrixActions.Room.myMembership',
+        room,
+        membership,
+        oldMembership
+    };
 }
 
 /**
@@ -247,14 +265,42 @@ export default {
      */
     start(matrixClient) {
         this._addMatrixClientListener(matrixClient, 'sync', createSyncAction);
-        this._addMatrixClientListener(matrixClient, 'accountData', createAccountDataAction);
-        this._addMatrixClientListener(matrixClient, 'Room.accountData', createRoomAccountDataAction);
+        this._addMatrixClientListener(
+            matrixClient,
+            'accountData',
+            createAccountDataAction
+        );
+        this._addMatrixClientListener(
+            matrixClient,
+            'Room.accountData',
+            createRoomAccountDataAction
+        );
         this._addMatrixClientListener(matrixClient, 'Room', createRoomAction);
-        this._addMatrixClientListener(matrixClient, 'Room.tags', createRoomTagsAction);
-        this._addMatrixClientListener(matrixClient, 'Room.receipt', createRoomReceiptAction);
-        this._addMatrixClientListener(matrixClient, 'Room.timeline', createRoomTimelineAction);
-        this._addMatrixClientListener(matrixClient, 'Room.myMembership', createSelfMembershipAction);
-        this._addMatrixClientListener(matrixClient, 'Event.decrypted', createEventDecryptedAction);
+        this._addMatrixClientListener(
+            matrixClient,
+            'Room.tags',
+            createRoomTagsAction
+        );
+        this._addMatrixClientListener(
+            matrixClient,
+            'Room.receipt',
+            createRoomReceiptAction
+        );
+        this._addMatrixClientListener(
+            matrixClient,
+            'Room.timeline',
+            createRoomTimelineAction
+        );
+        this._addMatrixClientListener(
+            matrixClient,
+            'Room.myMembership',
+            createSelfMembershipAction
+        );
+        this._addMatrixClientListener(
+            matrixClient,
+            'Event.decrypted',
+            createEventDecryptedAction
+        );
     },
 
     /**
@@ -283,6 +329,6 @@ export default {
      * Stop listening to events.
      */
     stop() {
-        this._matrixClientListenersStop.forEach((stopListener) => stopListener());
-    },
+        this._matrixClientListenersStop.forEach(stopListener => stopListener());
+    }
 };

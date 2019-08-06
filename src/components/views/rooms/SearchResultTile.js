@@ -33,7 +33,7 @@ module.exports = React.createClass({
         // href for the highlights in this result
         resultLink: PropTypes.string,
 
-        onHeightChanged: PropTypes.func,
+        onHeightChanged: PropTypes.func
     },
 
     render: function() {
@@ -44,26 +44,30 @@ module.exports = React.createClass({
         const eventId = mxEv.getId();
 
         const ts1 = mxEv.getTs();
-        const ret = [<DateSeparator key={ts1 + "-search"} ts={ts1} />];
+        const ret = [<DateSeparator key={ts1 + '-search'} ts={ts1} />];
 
         const timeline = result.context.getTimeline();
         for (var j = 0; j < timeline.length; j++) {
             const ev = timeline[j];
             var highlights;
-            const contextual = (j != result.context.getOurEventIndex());
+            const contextual = j != result.context.getOurEventIndex();
             if (!contextual) {
                 highlights = this.props.searchHighlights;
             }
             if (EventTile.haveTileForEvent(ev)) {
-                ret.push(<EventTile key={eventId+"+"+j} mxEvent={ev} contextual={contextual} highlights={highlights}
-                          permalinkCreator={this.props.permalinkCreator}
-                          highlightLink={this.props.resultLink}
-                          onHeightChanged={this.props.onHeightChanged} />);
+                ret.push(
+                    <EventTile
+                        key={eventId + '+' + j}
+                        mxEvent={ev}
+                        contextual={contextual}
+                        highlights={highlights}
+                        permalinkCreator={this.props.permalinkCreator}
+                        highlightLink={this.props.resultLink}
+                        onHeightChanged={this.props.onHeightChanged}
+                    />
+                );
             }
         }
-        return (
-            <li data-scroll-tokens={eventId+"+"+j}>
-                { ret }
-            </li>);
-    },
+        return <li data-scroll-tokens={eventId + '+' + j}>{ret}</li>;
+    }
 });

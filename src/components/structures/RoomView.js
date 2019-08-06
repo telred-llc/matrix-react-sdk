@@ -125,6 +125,7 @@ module.exports = React.createClass({
             draggingFile: false,
             searching: false,
             searchResults: null,
+            localSearchResults: [],
             callState: null,
             guestsCanJoin: false,
             canPeek: false,
@@ -1081,9 +1082,34 @@ module.exports = React.createClass({
             filter: filter,
             term: term,
         });
-        this._handleSearchResult(searchPromise).done();
+        // this._handleSearchResult(searchPromise).done();
+        this._handleLocalSearch(term, scope);
     },
-
+    _handleLocalSearch: function(term, scope) {
+        console.log('*** Do search for *** ', term, scope);
+        let searchResults = [];
+        if (window.allMsgs && window.allMsgs.length > 0) {
+            searchResults = window.allMsgs;
+            console.log('*** Data is available to search', window.allMsgs);
+            if (scope === 'Room' && this.state.room.roomId) {
+                searchResults = window.allMsgs.filter(e => e.event && e.event.room_id === this.state.room.roomId);
+                console.log('*** Events in Room ***', searchResults);
+            }
+            searchResults = searchResults.filter(mxEvent => {
+                const type = mxEvent && mxEvent.event && mxEvent.event.type;
+                if (type === 'm.room.message') {
+                    return mxEvent.event.content.body.includes(term)
+                } else if (type === 'm.room.encrypted') {
+                    return mxEvent._clearEvent.content.body.includes(term);
+                }
+                return false;
+            })
+        }
+        this.setState({
+            localSearchResults: searchResults,
+            searchInProgress: false,
+        });
+    },
     _handleSearchResult: function(searchPromise) {
         const self = this;
 
@@ -1135,6 +1161,26 @@ module.exports = React.createClass({
                 searchInProgress: false,
             });
         });
+    },
+
+    getLocalSearchResults: function() {
+        const SearchResultTile = sdk.getComponent('rooms.LocalSearchResult');
+
+        // once dynamic content in the search results load, make the scrollPanel check
+        // the scroll offsets.
+        const onHeightChanged = () => {
+            const scrollPanel = this.refs.searchResultsPanel;
+            if (scrollPanel) {
+                scrollPanel.checkScroll();
+            }
+        };
+
+        let id = 1;
+        return <SearchResultTile key={id++}
+                 searchResult={this.state.localSearchResults}
+                 searchHighlights={[]}
+                 resultLink={'http://www.google.com'}
+                 onHeightChanged={onHeightChanged} />;
     },
 
     getSearchResultTiles: function() {
@@ -1793,24 +1839,43 @@ module.exports = React.createClass({
         let searchResultsPanel;
         let hideMessagePanel = false;
 
-        if (this.state.searchResults) {
-            // show searching spinner
-            if (this.state.searchResults.results === undefined) {
-                searchResultsPanel = (<div className="mx_RoomView_messagePanel mx_RoomView_messagePanelSearchSpinner" />);
-            } else {
-                searchResultsPanel = (
-                    <ScrollPanel ref="searchResultsPanel"
-                        className="mx_RoomView_messagePanel mx_RoomView_searchResultsPanel"
-                        onFillRequest={this.onSearchResultsFillRequest}
-                        resizeNotifier={this.props.resizeNotifier}
-                    >
-                        <li className={scrollheader_classes}></li>
-                        { this.getSearchResultTiles() }
-                    </ScrollPanel>
-                );
-            }
-            hideMessagePanel = true;
+        // if (this.state.searchResults) {
+        //     // show searching spinner
+        //     if (this.state.searchResults.results === undefined) {
+        //         searchResultsPanel = (<div className="mx_RoomView_messagePanel mx_RoomView_messagePanelSearchSpinner" />);
+        //     } else {
+        //         searchResultsPanel = (
+        //             <ScrollPanel ref="searchResultsPanel"
+        //                 className="mx_RoomView_messagePanel mx_RoomView_searchResultsPanel"
+        //                 onFillRequest={this.onSearchResultsFillRequest}
+        //                 resizeNotifier={this.props.resizeNotifier}
+        //             >
+        //                 <li className={scrollheader_classes}></li>
+        //                 { this.getSearchResultTiles() }
+        //             </ScrollPanel>
+        //         );
+        //     }
+        //     hideMessagePanel = true;
+        // }
+
+        if (this.state.searchInProgress) {
+            searchResultsPanel = (<div className="mx_RoomView_messagePanel mx_RoomView_messagePanelSearchSpinner" />);
         }
+
+        if (this.state.localSearchResults && this.state.localSearchResults.length > 0) {
+                // show searching spinner
+                    searchResultsPanel = (
+                        <ScrollPanel ref="searchResultsPanel"
+                            className="mx_RoomView_messagePanel mx_RoomView_searchResultsPanel"
+                            onFillRequest={this.onSearchResultsFillRequest}
+                            resizeNotifier={this.props.resizeNotifier}
+                        >
+                            <li className={scrollheader_classes}></li>
+                            {this.getLocalSearchResults()}
+                        </ScrollPanel>
+                    );
+                hideMessagePanel = true;
+            }
 
         const shouldHighlight = this.state.isInitialEventHighlighted;
         let highlightedEventId = null;
