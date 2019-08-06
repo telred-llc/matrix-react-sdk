@@ -1082,13 +1082,18 @@ module.exports = React.createClass({
             filter: filter,
             term: term,
         });
-        // this._handleSearchResult(searchPromise).done();
+        if (!window.allMsgs) {
+            // if (true) { // TEST
+            // fall back to server searching (onlly applied to plain text)
+            return this._handleSearchResult(searchPromise).done();
+        }
         this._handleLocalSearch(term, scope);
     },
     _handleLocalSearch: function(term, scope) {
         console.log('*** Do search for *** ', term, scope);
-        const localSearchResults = {};
+        let localSearchResults;
         if (window.allMsgs && window.allMsgs.length > 0) {
+            localSearchResults = {};
             localSearchResults.results = window.allMsgs;
             console.log('*** Data is available to search', window.allMsgs);
             if (scope === 'Room' && this.state.room.roomId) {
@@ -1098,7 +1103,7 @@ module.exports = React.createClass({
             localSearchResults.results = localSearchResults.results.filter(mxEvent => {
                 const type = mxEvent && mxEvent.event && mxEvent.event.type;
                 if (type === 'm.room.message') {
-                    return mxEvent.event.content.body.includes(term)
+                    return mxEvent.event.content.body.includes(term);
                 } else if (type === 'm.room.encrypted') {
                     return mxEvent._clearEvent.content.body.includes(term);
                 }
@@ -1164,7 +1169,7 @@ module.exports = React.createClass({
     },
 
     getLocalSearchResults: function() {
-        const SearchResultTile = sdk.getComponent('rooms.LocalSearchResult');
+        const LocalSearchResult = sdk.getComponent('rooms.LocalSearchResult');
         const Spinner = sdk.getComponent("elements.Spinner");
 
         // once dynamic content in the search results load, make the scrollPanel check
@@ -1183,14 +1188,17 @@ module.exports = React.createClass({
         if (this.state.localSearchResults.results.length === 0) {
             return (<li key="search-top-marker">
             <h2 className="mx_RoomView_topMarker">{ _t("No results") }</h2>
-            </li>)
+            </li>
+            )
         }
 
-        return <SearchResultTile
+        // const resultLink = "#/room/"+roomId+"/"+mxEv.getId();
+
+        return <LocalSearchResult
                  searchResult={this.state.localSearchResults.results}
                  searchHighlights={[]}
-                 resultLink={'http://www.google.com'}
-                 onHeightChanged={onHeightChanged} />;
+                 onHeightChanged={onHeightChanged}
+                 />;
     },
 
     getSearchResultTiles: function() {
@@ -1849,24 +1857,24 @@ module.exports = React.createClass({
         let searchResultsPanel;
         let hideMessagePanel = false;
 
-        // if (this.state.searchResults) {
-        //     // show searching spinner
-        //     if (this.state.searchResults.results === undefined) {
-        //         searchResultsPanel = (<div className="mx_RoomView_messagePanel mx_RoomView_messagePanelSearchSpinner" />);
-        //     } else {
-        //         searchResultsPanel = (
-        //             <ScrollPanel ref="searchResultsPanel"
-        //                 className="mx_RoomView_messagePanel mx_RoomView_searchResultsPanel"
-        //                 onFillRequest={this.onSearchResultsFillRequest}
-        //                 resizeNotifier={this.props.resizeNotifier}
-        //             >
-        //                 <li className={scrollheader_classes}></li>
-        //                 { this.getSearchResultTiles() }
-        //             </ScrollPanel>
-        //         );
-        //     }
-        //     hideMessagePanel = true;
-        // }
+        if (this.state.searchResults) {
+            // show searching spinner
+            if (this.state.searchResults.results === undefined) {
+                searchResultsPanel = (<div className="mx_RoomView_messagePanel mx_RoomView_messagePanelSearchSpinner" />);
+            } else {
+                searchResultsPanel = (
+                    <ScrollPanel ref="searchResultsPanel"
+                        className="mx_RoomView_messagePanel mx_RoomView_searchResultsPanel"
+                        onFillRequest={this.onSearchResultsFillRequest}
+                        resizeNotifier={this.props.resizeNotifier}
+                    >
+                        <li className={scrollheader_classes}></li>
+                        { this.getSearchResultTiles() }
+                    </ScrollPanel>
+                );
+            }
+            hideMessagePanel = true;
+        }
 
         if (this.state.searchInProgress) {
             searchResultsPanel = (<div className="mx_RoomView_messagePanel mx_RoomView_messagePanelSearchSpinner" />);

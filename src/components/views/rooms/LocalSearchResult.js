@@ -25,7 +25,7 @@ module.exports = React.createClass({
 
     propTypes: {
         // a matrix-js-sdk SearchResult containing the details of this result
-        searchResult: PropTypes.array.isRequired
+        searchResult: PropTypes.array.isRequired,
 
         // a list of strings to be highlighted in the results
         // searchHighlights: PropTypes.array,
@@ -33,17 +33,15 @@ module.exports = React.createClass({
         // href for the highlights in this result
         // resultLink: PropTypes.string,
 
-        // onHeightChanged: PropTypes.func
+        onHeightChanged: PropTypes.func
     },
 
     render: function() {
         // const DateSeparator = sdk.getComponent('messages.DateSeparator');
         const EventTile = sdk.getComponent('rooms.EventTile');
         const result = this.props.searchResult;
+        const DateSeparator = sdk.getComponent('messages.DateSeparator');
         // const mxEv = result.context.getEvent();
-
-        // const ts1 = result.getTs();
-        // const ret = [<DateSeparator key={ts1 + '-search'} ts={ts1} />];
         const ret = [];
 
         // const timeline = result.context.getTimeline();
@@ -55,15 +53,17 @@ module.exports = React.createClass({
             //     highlights = this.props.searchHighlights;
             // }
 
+            const ts = ev.event.origin_server_ts;
+            ret.push([<DateSeparator key={ts + '-search'} ts={ts} />]);
             // if (EventTile.haveTileForEvent(ev)) {
+            const resultLink = '#/room/' + ev.event.room_id + '/' + ev.getId();
             ret.push(
                 <EventTile
                     key={'id-' + '+' + j}
                     mxEvent={ev}
-                    // contextual={contextual}
                     // highlights={highlights}
                     permalinkCreator={this.props.permalinkCreator}
-                    highlightLink={this.props.resultLink}
+                    highlightLink={resultLink}
                     onHeightChanged={this.props.onHeightChanged}
                 />
             );
