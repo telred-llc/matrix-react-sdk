@@ -18,6 +18,7 @@ limitations under the License.
 
 const React = require('react');
 import PropTypes from 'prop-types';
+import MatrixClientPeg from '../../../MatrixClientPeg';
 const sdk = require('../../../index');
 
 module.exports = React.createClass({
@@ -26,6 +27,7 @@ module.exports = React.createClass({
     propTypes: {
         // a matrix-js-sdk SearchResult containing the details of this result
         searchResult: PropTypes.array.isRequired,
+        allRoom: PropTypes.bool,
 
         // a list of strings to be highlighted in the results
         // searchHighlights: PropTypes.array,
@@ -43,15 +45,32 @@ module.exports = React.createClass({
         const DateSeparator = sdk.getComponent('messages.DateSeparator');
         // const mxEv = result.context.getEvent();
         const ret = [];
+        // ret.push([
+        //     <li>
+        //         <h2>Room: abc</h2>
+        //     </li>
+        // ]);
+        const RoomSeparator = props => <h2>Room: {props.children}</h2>;
+
+        function isNewRoom(prevRoom, currentRoom) {
+            if (!prevRoom) return true;
+            if (currentRoom !== prevRoom) return true;
+        }
 
         // const timeline = result.context.getTimeline();
         for (let j = 0; j < result.length; j++) {
             const ev = result[j];
-            // var highlights;
-            // const contextual = j != result.context.getOurEventIndex();
-            // if (!contextual) {
-            //     highlights = this.props.searchHighlights;
-            // }
+            // in case searching all rooms, needs grouping messages belong to one room
+            if (this.props.allRoom) {
+                const prevRoom = result[j - 1] && result[j - 1].event.room_id;
+                const currentRoom = result[j].event.room_id;
+                if (isNewRoom(prevRoom, currentRoom)) {
+                    let room = MatrixClientPeg.get().getRoom(currentRoom);
+                    ret.push(
+                        <RoomSeparator>{room && room.name}</RoomSeparator>
+                    );
+                }
+            }
 
             const ts = ev.event.origin_server_ts;
             ret.push([<DateSeparator key={ts + '-search'} ts={ts} />]);

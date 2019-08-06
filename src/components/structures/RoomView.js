@@ -1095,7 +1095,7 @@ module.exports = React.createClass({
         if (window.allMsgs && window.allMsgs.length > 0) {
             localSearchResults = {};
             localSearchResults.results = window.allMsgs;
-            console.log('*** Data is available to search', window.allMsgs);
+            console.log('*** Data is available to search', window.allMsgs.map(item => console.log(item.event.room_id) || item.event.room_id));
             if (scope === 'Room' && this.state.room.roomId) {
                 localSearchResults.results = window.allMsgs.filter(e => e.event && e.event.room_id === this.state.room.roomId);
                 console.log('*** Events in Room ***', localSearchResults.results);
@@ -1109,6 +1109,7 @@ module.exports = React.createClass({
                 }
                 return false;
             });
+            console.log('*** Fitlered data ***', localSearchResults.results);
         }
         this.setState({
             localSearchResults: localSearchResults,
@@ -1198,6 +1199,7 @@ module.exports = React.createClass({
                  searchResult={this.state.localSearchResults.results}
                  searchHighlights={[]}
                  onHeightChanged={onHeightChanged}
+                 allRoom={this.state.searchScope === 'All'}
                  />;
     },
 
