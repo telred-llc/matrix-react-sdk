@@ -125,7 +125,7 @@ module.exports = React.createClass({
             draggingFile: false,
             searching: false,
             searchResults: null,
-            localSearchResults: [],
+            localSearchResults: null,
             callState: null,
             guestsCanJoin: false,
             canPeek: false,
@@ -1087,15 +1087,15 @@ module.exports = React.createClass({
     },
     _handleLocalSearch: function(term, scope) {
         console.log('*** Do search for *** ', term, scope);
-        let searchResults = [];
+        const localSearchResults = {};
         if (window.allMsgs && window.allMsgs.length > 0) {
-            searchResults = window.allMsgs;
+            localSearchResults.results = window.allMsgs;
             console.log('*** Data is available to search', window.allMsgs);
             if (scope === 'Room' && this.state.room.roomId) {
-                searchResults = window.allMsgs.filter(e => e.event && e.event.room_id === this.state.room.roomId);
-                console.log('*** Events in Room ***', searchResults);
+                localSearchResults.results = window.allMsgs.filter(e => e.event && e.event.room_id === this.state.room.roomId);
+                console.log('*** Events in Room ***', localSearchResults.results);
             }
-            searchResults = searchResults.filter(mxEvent => {
+            localSearchResults.results = localSearchResults.results.filter(mxEvent => {
                 const type = mxEvent && mxEvent.event && mxEvent.event.type;
                 if (type === 'm.room.message') {
                     return mxEvent.event.content.body.includes(term)
@@ -1103,10 +1103,10 @@ module.exports = React.createClass({
                     return mxEvent._clearEvent.content.body.includes(term);
                 }
                 return false;
-            })
+            });
         }
         this.setState({
-            localSearchResults: searchResults,
+            localSearchResults: localSearchResults,
             searchInProgress: false,
         });
     },
@@ -1165,6 +1165,7 @@ module.exports = React.createClass({
 
     getLocalSearchResults: function() {
         const SearchResultTile = sdk.getComponent('rooms.LocalSearchResult');
+        const Spinner = sdk.getComponent("elements.Spinner");
 
         // once dynamic content in the search results load, make the scrollPanel check
         // the scroll offsets.
@@ -1175,9 +1176,18 @@ module.exports = React.createClass({
             }
         };
 
-        let id = 1;
-        return <SearchResultTile key={id++}
-                 searchResult={this.state.localSearchResults}
+        if (this.state.searchInProgress) {
+            return (<li key="search-spinner"><Spinner /></li>)
+        }
+
+        if (this.state.localSearchResults.results.length === 0) {
+            return (<li key="search-top-marker">
+            <h2 className="mx_RoomView_topMarker">{ _t("No results") }</h2>
+            </li>)
+        }
+
+        return <SearchResultTile
+                 searchResult={this.state.localSearchResults.results}
                  searchHighlights={[]}
                  resultLink={'http://www.google.com'}
                  onHeightChanged={onHeightChanged} />;
@@ -1862,7 +1872,7 @@ module.exports = React.createClass({
             searchResultsPanel = (<div className="mx_RoomView_messagePanel mx_RoomView_messagePanelSearchSpinner" />);
         }
 
-        if (this.state.localSearchResults && this.state.localSearchResults.length > 0) {
+        if (this.state.localSearchResults) {
                 // show searching spinner
                     searchResultsPanel = (
                         <ScrollPanel ref="searchResultsPanel"
