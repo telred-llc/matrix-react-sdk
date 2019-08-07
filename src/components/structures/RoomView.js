@@ -1378,6 +1378,7 @@ module.exports = React.createClass({
         this.setState({
             searching: false,
             searchResults: null,
+            localSearchResults: null,
         });
     },
 
