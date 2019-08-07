@@ -427,7 +427,7 @@ export default React.createClass({
         this.setState(newState);
     },
 
-    onAction: function(payload) {
+    onAction: async function(payload) {
         // console.log(`MatrixClientPeg.onAction: ${payload.action}`);
         const ErrorDialog = sdk.getComponent("dialogs.ErrorDialog");
         const QuestionDialog = sdk.getComponent("dialogs.QuestionDialog");
@@ -700,6 +700,10 @@ export default React.createClass({
                 this.setState({
                     showCookieBar: false,
                 });
+                break;
+            case 'message_sent':
+                console.log('+++ Msg sent +++');
+                this.saveChatForSearch();
                 break;
         }
     },
@@ -1373,6 +1377,8 @@ export default React.createClass({
             // So dispatch directly from here. Ideally we'd use a SyncStateStore that
             // would do this dispatch and expose the sync state itself (by listening to
             // its own dispatch).
+            console.log('+++ on Sync +++');
+            console.log('state: ', state, ', prevState: ', prevState, ', data: ', data);
             dis.dispatch({action: 'sync_state', prevState, state});
 
             if (state === "ERROR" || state === "RECONNECTING") {
