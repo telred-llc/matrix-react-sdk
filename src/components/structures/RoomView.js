@@ -891,7 +891,7 @@ module.exports = React.createClass({
             return Promise.resolve(false);
         }
 
-        if (this.state.searchResults.next_batch) {
+        if (this.state.searchResults && this.state.searchResults.next_batch) {
             debuglog("requesting more search results");
             const searchPromise = MatrixClientPeg.get().backPaginateRoomEventsSearch(
                 this.state.searchResults);

@@ -67,7 +67,9 @@ module.exports = React.createClass({
                 if (isNewRoom(prevRoom, currentRoom)) {
                     let room = MatrixClientPeg.get().getRoom(currentRoom);
                     ret.push(
-                        <RoomSeparator>{room && room.name}</RoomSeparator>
+                        <RoomSeparator key={room && room.name}>
+                            {room && room.name}
+                        </RoomSeparator>
                     );
                 }
             }
