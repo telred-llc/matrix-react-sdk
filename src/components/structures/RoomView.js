@@ -1102,10 +1102,11 @@ module.exports = React.createClass({
             }
             localSearchResults.results = localSearchResults.results.filter(mxEvent => {
                 const type = mxEvent && mxEvent.event && mxEvent.event.type;
+                term = term.toLowerCase();
                 if (type === 'm.room.message') {
-                    return mxEvent.event.content.body.includes(term);
+                    return mxEvent.event.content.body.toLowerCase().includes(term);
                 } else if (type === 'm.room.encrypted') {
-                    return mxEvent._clearEvent.content.body.includes(term);
+                    return mxEvent._clearEvent.content.body.toLowerCase().includes(term);
                 }
                 return false;
             });
