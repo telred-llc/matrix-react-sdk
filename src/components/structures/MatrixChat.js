@@ -705,7 +705,7 @@ export default React.createClass({
                 console.log('+++ Msg sent +++');
                 setTimeout(() => {
                     this.saveChatForSearch();
-                }, 0)
+                }, 1000)
                 break;
         }
     },
