@@ -19,8 +19,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import sdk from '../../index';
 import dis from '../../dispatcher';
-import Velocity from 'velocity-vector';
-import 'velocity-vector/velocity.ui';
+// import Velocity from 'velocity-vector';
+// import 'velocity-vector/velocity.ui';
 import SettingsStore from '../../settings/SettingsStore';
 
 const CALLOUT_ANIM_DURATION = 1000;
@@ -29,17 +29,17 @@ module.exports = React.createClass({
     displayName: 'BottomLeftMenu',
 
     propTypes: {
-        collapsed: React.PropTypes.bool.isRequired,
+        collapsed: React.PropTypes.bool.isRequired
     },
 
     getInitialState: function() {
-        return ({
+        return {
             directoryHover: false,
             roomsHover: false,
             homeHover: false,
             peopleHover: false,
-            settingsHover: false,
-        });
+            settingsHover: false
+        };
     },
 
     componentWillMount: function() {
@@ -135,9 +135,16 @@ module.exports = React.createClass({
         if (calloutElement) {
             const lastCallout = this._lastCallouts[payload.action];
             const now = Date.now();
-            if (lastCallout == undefined || lastCallout < now - CALLOUT_ANIM_DURATION) {
+            if (
+                lastCallout == undefined ||
+                lastCallout < now - CALLOUT_ANIM_DURATION
+            ) {
                 this._lastCallouts[payload.action] = now;
-                Velocity(ReactDOM.findDOMNode(calloutElement), "callout.bounce", CALLOUT_ANIM_DURATION);
+                Velocity(
+                    ReactDOM.findDOMNode(calloutElement),
+                    'callout.bounce',
+                    CALLOUT_ANIM_DURATION
+                );
             }
         }
     },
@@ -145,8 +152,13 @@ module.exports = React.createClass({
     // Get the label/tooltip to show
     getLabel: function(label, show) {
         if (show) {
-            const RoomTooltip = sdk.getComponent("rooms.RoomTooltip");
-            return <RoomTooltip className="mx_BottomLeftMenu_tooltip" label={label} />;
+            const RoomTooltip = sdk.getComponent('rooms.RoomTooltip');
+            return (
+                <RoomTooltip
+                    className='mx_BottomLeftMenu_tooltip'
+                    label={label}
+                />
+            );
         }
     },
 
@@ -165,17 +177,22 @@ module.exports = React.createClass({
     render: function() {
         const HomeButton = sdk.getComponent('elements.HomeButton');
         const StartChatButton = sdk.getComponent('elements.StartChatButton');
-        const RoomDirectoryButton = sdk.getComponent('elements.RoomDirectoryButton');
+        const RoomDirectoryButton = sdk.getComponent(
+            'elements.RoomDirectoryButton'
+        );
         const CreateRoomButton = sdk.getComponent('elements.CreateRoomButton');
         const SettingsButton = sdk.getComponent('elements.SettingsButton');
         const GroupsButton = sdk.getComponent('elements.GroupsButton');
 
-        const groupsButton = !SettingsStore.getValue("TagPanel.enableTagPanel") ?
-            <GroupsButton tooltip={true} /> : null;
+        const groupsButton = !SettingsStore.getValue(
+            'TagPanel.enableTagPanel'
+        ) ? (
+            <GroupsButton tooltip={true} />
+        ) : null;
 
         return (
-            <div className="mx_BottomLeftMenu">
-                <div className="mx_BottomLeftMenu_options">
+            <div className='mx_BottomLeftMenu'>
+                <div className='mx_BottomLeftMenu_options'>
                     <HomeButton tooltip={true} />
                     <div ref={this._collectPeopleButton}>
                         <StartChatButton tooltip={true} />
@@ -186,12 +203,12 @@ module.exports = React.createClass({
                     <div ref={this._collectCreateRoomButton}>
                         <CreateRoomButton tooltip={true} />
                     </div>
-                    { groupsButton }
-                    <span className="mx_BottomLeftMenu_settings">
+                    {groupsButton}
+                    <span className='mx_BottomLeftMenu_settings'>
                         <SettingsButton tooltip={true} />
                     </span>
                 </div>
             </div>
         );
-    },
+    }
 });
