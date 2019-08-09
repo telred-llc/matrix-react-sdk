@@ -1400,6 +1400,7 @@ export default React.createClass({
 
             self.updateStatusIndicator(state, prevState);
             if (state === "SYNCING" && prevState === "SYNCING") {
+                self.saveChatForSearch();
                 return;
             }
             console.log("MatrixClient sync state => %s", state);
@@ -1413,7 +1414,6 @@ export default React.createClass({
                 ready: true,
                 showNotifierToolbar: Notifier.shouldShowToolbar(),
             });
-            self.saveChatForSearch();
         });
         cli.on('Call.incoming', function(call) {
             // we dispatch this synchronously to make sure that the event
