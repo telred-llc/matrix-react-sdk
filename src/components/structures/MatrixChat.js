@@ -449,6 +449,10 @@ export default React.createClass({
         }
 
         switch (payload.action) {
+            case 'key_backup_restored':
+                console.log('+++ Key back-up restored +++');
+                this.saveChatForSearch();
+                break;
             case 'logout':
                 Lifecycle.logout();
                 break;
@@ -1321,25 +1325,26 @@ export default React.createClass({
     saveChatForSearch: function() {
         console.log('+++ Save Chat For Search +++')
         const cli = MatrixClientPeg.get()
-            const rooms = cli.getRooms();
-            window.allMsgs = [];
-            rooms.forEach(room => {
-                room.timeline.forEach(async t => {
-                    const event = t.event;
-                    const eventObj = new MatrixEvent(event);
-                    const content = eventObj.getContent();
+        const rooms = cli.getRooms();
+        console.log('Rooms now: ', rooms);
+        window.allMsgs = [];
+        rooms.forEach(room => {
+            room.timeline.forEach(async t => {
+                const event = t.event;
+                const eventObj = new MatrixEvent(event);
+                const content = eventObj.getContent();
 
-                    if (content && content.msgtype === 'm.text') {
+                if (content && content.msgtype === 'm.text') {
+                    window.allMsgs.push(eventObj);
+                } else if (content && content.ciphertext && cli._crypto.decryptEvent) {
+                    const result = await eventObj.attemptDecryption(cli._crypto);
+                    console.log('----', eventObj.getContent());
+                    if (eventObj.getContent().msgtype === 'm.text') {
                         window.allMsgs.push(eventObj);
-                    } else if (content && content.ciphertext && cli._crypto.decryptEvent) {
-                        const result = await eventObj.attemptDecryption(cli._crypto);
-                        console.log('----', eventObj.getContent());
-                        if (eventObj.getContent().msgtype === 'm.text') {
-                            window.allMsgs.push(eventObj);
-                        }
                     }
-                });
+                }
             });
+        });
     },
     _onWillStartClient() {
         const self = this;
