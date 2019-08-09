@@ -58,9 +58,11 @@ module.exports = React.createClass({
     },
 
     onSearch: function() {
-        const cli = MatrixClientPeg.get();
-
-        this.props.onSearch(this.refs.search_term.value, this.state.scope);
+        if (MatrixClientPeg.get()._crypto.backupInfo) {
+            this.props.onSearch(this.refs.search_term.value, this.state.scope);
+        } else {
+            console.log('Key for decrypting messages is not available');
+        }
     },
 
     render: function() {
