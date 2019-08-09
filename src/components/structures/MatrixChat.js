@@ -703,7 +703,9 @@ export default React.createClass({
                 break;
             case 'message_sent':
                 console.log('+++ Msg sent +++');
-                this.saveChatForSearch();
+                setTimeout(() => {
+                    this.saveChatForSearch();
+                }, 0)
                 break;
         }
     },
@@ -1331,6 +1333,7 @@ export default React.createClass({
                         window.allMsgs.push(eventObj);
                     } else if (content && content.ciphertext && cli._crypto.decryptEvent) {
                         const result = await eventObj.attemptDecryption(cli._crypto);
+                        console.log('----', eventObj.getContent());
                         if (eventObj.getContent().msgtype === 'm.text') {
                             window.allMsgs.push(eventObj);
                         }
