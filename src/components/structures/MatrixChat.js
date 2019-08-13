@@ -1339,7 +1339,7 @@ export default React.createClass({
                 } else if (content && content.ciphertext && cli._crypto.decryptEvent) {
                     const result = await eventObj.attemptDecryption(cli._crypto);
                     console.log('----', eventObj.getContent());
-                    if (eventObj.getContent().msgtype === 'm.text') {
+                    if (['m.text', 'm.file', 'm.image'].includes(eventObj.getContent().msgtype)) {
                         window.allMsgs.push(eventObj);
                     }
                 }
