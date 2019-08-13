@@ -112,9 +112,9 @@ function createRoom(opts) {
             // MatrixClientPeg.get()
             //     .getRoom(roomId)
             //     .setBlacklistUnverifiedDevices(false);
-            // MatrixClientPeg.get().sendStateEvent(roomId, 'm.room.encryption', {
-            //     algorithm: 'm.megolm.v1.aes-sha2'
-            // });
+            MatrixClientPeg.get().sendStateEvent(roomId, 'm.room.encryption', {
+                algorithm: 'm.megolm.v1.aes-sha2'
+            });
             // MatrixClientPeg.get()
             //     .sendStateEvent(
             //         roomId,
