@@ -1234,7 +1234,27 @@ const TimelinePanel = React.createClass({
 
     // get the list of events from the timeline window and the pending event list
     _getEvents: function() {
-        const events = this._timelineWindow.getEvents();
+        let events;
+        if (this.props.className === 'mx_FilePanel') {
+            // decrypt event instead
+            events = this._timelineWindow._timelineSet.room.timeline.filter(
+                item => {
+                    if (
+                        item.event.type === 'm.room.encrypted' &&
+                        item._clearEvent &&
+                        item._clearEvent.content &&
+                        ['m.image', 'm.file'].includes(
+                            item._clearEvent.content.msgtype
+                        )
+                    ) {
+                        return true;
+                    }
+                    return false;
+                }
+            );
+        } else {
+            events = this._timelineWindow.getEvents();
+        }
 
         // Hold onto the live events separately. The read receipt and read marker
         // should use this list, so that they don't advance into pending events.

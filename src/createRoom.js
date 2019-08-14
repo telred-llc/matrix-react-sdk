@@ -58,6 +58,7 @@ function createRoom(opts) {
     const createOpts = opts.createOpts || {};
     createOpts.preset = createOpts.preset || defaultPreset;
     createOpts.visibility = createOpts.visibility || 'private';
+    debugger;
     if (opts.dmUserId && createOpts.invite === undefined) {
         switch (getAddressType(opts.dmUserId)) {
             case 'mx-user-id':
