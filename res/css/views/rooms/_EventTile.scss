@@ -54,6 +54,10 @@ limitations under the License.
   & .mx_ReactionsRow {
     margin-right: 27px;
   }
+
+  & .mx_EventTile_msgOption {
+    float: left;
+  }
 }
 
 .mx_EventTile.mx_EventTile_info {

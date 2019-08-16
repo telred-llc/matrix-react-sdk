@@ -1234,24 +1234,50 @@ const TimelinePanel = React.createClass({
 
     // get the list of events from the timeline window and the pending event list
     _getEvents: function() {
+        const client = MatrixClientPeg.get();
+
+        // console.log(
+        //     '+++ Timeline: ',
+        //     window.allMsgs,
+        //     this._timelineWindow._timelineSet.room.timeline
+        // );
+        // debugger;
         let events;
-        if (this.props.className === 'mx_FilePanel') {
+        // debugger;
+        if (false) {
+            // if (this.props.className === 'mx_FilePanel') {
             // decrypt event instead
-            events = this._timelineWindow._timelineSet.room.timeline.filter(
-                item => {
-                    if (
-                        item.event.type === 'm.room.encrypted' &&
-                        item._clearEvent &&
-                        item._clearEvent.content &&
-                        ['m.image', 'm.file'].includes(
-                            item._clearEvent.content.msgtype
-                        )
-                    ) {
-                        return true;
-                    }
-                    return false;
-                }
-            );
+            // events = this._timelineWindow._timelineSet.room.timeline.filter(
+            events = !window.allMsgs
+                ? []
+                : window.allMsgs.filter(item => {
+                      // console.log(
+                      //     'item: ',
+                      //     item.event.type === 'm.room.encrypted' &&
+                      //         item._clearEvent.content.msgtype
+                      // );
+                      // if (
+                      //     item &&
+                      //     item.event &&
+                      //     item.event.content &&
+                      //     ['m.image', 'm.file'].includes(
+                      //         item.event.content.msgtype
+                      //     )
+                      // ) {
+                      //     return true;
+                      // }
+                      if (
+                          item.event.type === 'm.room.encrypted' &&
+                          item._clearEvent &&
+                          item._clearEvent.content &&
+                          ['m.image', 'm.file'].includes(
+                              item._clearEvent.content.msgtype
+                          )
+                      ) {
+                          return true;
+                      }
+                      return false;
+                  });
         } else {
             events = this._timelineWindow.getEvents();
         }

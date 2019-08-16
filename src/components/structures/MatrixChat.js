@@ -228,7 +228,6 @@ export default React.createClass({
         if (!props) props = SdkConfig.get()["validated_server_config"];
         return {serverConfig: props};
     },
-
     componentWillMount: function() {
         SdkConfig.put(this.props.config);
 
@@ -450,7 +449,6 @@ export default React.createClass({
 
         switch (payload.action) {
             case 'key_backup_restored':
-                console.log('+++ Key back-up restored +++');
                 this.saveChatForSearch();
                 break;
             case 'logout':
@@ -1326,6 +1324,7 @@ export default React.createClass({
         console.log('+++ Save Chat For Search +++')
         const cli = MatrixClientPeg.get()
         const rooms = cli.getRooms();
+        console.log('********************');
         console.log('Rooms now: ', rooms);
         window.allMsgs = [];
         rooms.forEach(room => {
@@ -1336,9 +1335,8 @@ export default React.createClass({
 
                 if (content && content.msgtype === 'm.text') {
                     window.allMsgs.push(eventObj);
-                } else if (content && content.ciphertext && cli._crypto.decryptEvent) {
-                    const result = await eventObj.attemptDecryption(cli._crypto);
-                    console.log('----', eventObj.getContent());
+                } else if (content && content.ciphertext && cli._crypto.decryptEvent && eventObj.isEncrypted()) {
+                    await eventObj.attemptDecryption(cli._crypto);
                     if (['m.text', 'm.file', 'm.image'].includes(eventObj.getContent().msgtype)) {
                         window.allMsgs.push(eventObj);
                     }
@@ -1385,8 +1383,6 @@ export default React.createClass({
             // So dispatch directly from here. Ideally we'd use a SyncStateStore that
             // would do this dispatch and expose the sync state itself (by listening to
             // its own dispatch).
-            console.log('+++ on Sync +++');
-            console.log('state: ', state, ', prevState: ', prevState, ', data: ', data);
             dis.dispatch({action: 'sync_state', prevState, state});
 
             if (state === "ERROR" || state === "RECONNECTING") {
@@ -1400,13 +1396,14 @@ export default React.createClass({
 
             self.updateStatusIndicator(state, prevState);
             if (state === "SYNCING" && prevState === "SYNCING") {
-                self.saveChatForSearch();
                 return;
             }
             console.log("MatrixClient sync state => %s", state);
             if (state !== "PREPARED") { return; }
 
             self.firstSyncComplete = true;
+            debugger;
+            self.saveChatForSearch();
             self.firstSyncPromise.resolve();
 
             dis.dispatch({action: 'focus_composer'});

@@ -14,12 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const React = require("react");
+const React = require('react');
 import PropTypes from 'prop-types';
 import Promise from 'bluebird';
 import { KeyCode } from '../../Keyboard';
 import Timer from '../../utils/Timer';
-import AutoHideScrollbar from "./AutoHideScrollbar";
+import AutoHideScrollbar from './AutoHideScrollbar';
 
 const DEBUG_SCROLL = false;
 
@@ -38,7 +38,7 @@ const PAGE_SIZE = 400;
 let debuglog;
 if (DEBUG_SCROLL) {
     // using bind means that we get to keep useful line numbers in the console
-    debuglog = console.log.bind(console, "ScrollPanel debuglog:");
+    debuglog = console.log.bind(console, 'ScrollPanel debuglog:');
 } else {
     debuglog = function() {};
 }
@@ -143,26 +143,28 @@ module.exports = React.createClass({
         style: PropTypes.object,
         /* resizeNotifier: ResizeNotifier to know when middle column has changed size
          */
-        resizeNotifier: PropTypes.object,
+        resizeNotifier: PropTypes.object
     },
 
     getDefaultProps: function() {
         return {
             stickyBottom: true,
             startAtBottom: true,
-            onFillRequest: function(backwards) { return Promise.resolve(false); },
+            onFillRequest: function(backwards) {
+                return Promise.resolve(false);
+            },
             onUnfillRequest: function(backwards, scrollToken) {},
-            onScroll: function() {},
+            onScroll: function() {}
         };
     },
 
     componentWillMount: function() {
         this._fillRequestWhileRunning = false;
         this._isFilling = false;
-        this._pendingFillRequests = {b: null, f: null};
+        this._pendingFillRequests = { b: null, f: null };
 
         if (this.props.resizeNotifier) {
-            this.props.resizeNotifier.on("middlePanelResized", this.onResize);
+            this.props.resizeNotifier.on('middlePanelResized', this.onResize);
         }
 
         this.resetScrollState();
@@ -190,12 +192,15 @@ module.exports = React.createClass({
         this.unmounted = true;
 
         if (this.props.resizeNotifier) {
-            this.props.resizeNotifier.removeListener("middlePanelResized", this.onResize);
+            this.props.resizeNotifier.removeListener(
+                'middlePanelResized',
+                this.onResize
+            );
         }
     },
 
     onScroll: function(ev) {
-        debuglog("onScroll", this._getScrollNode().scrollTop);
+        debuglog('onScroll', this._getScrollNode().scrollTop);
         this._scrollTimeout.restart();
         this._saveScrollState();
         this.updatePreventShrinking();
@@ -232,8 +237,9 @@ module.exports = React.createClass({
         // for scrollTop happen on certain browsers/platforms
         // when scrolled all the way down. E.g. Chrome 72 on debian.
         // so check difference <= 1;
-        return Math.abs(sn.scrollHeight - (sn.scrollTop + sn.clientHeight)) <= 1;
-
+        return (
+            Math.abs(sn.scrollHeight - (sn.scrollTop + sn.clientHeight)) <= 1
+        );
     },
 
     // returns the vertical height in the given direction that can be removed from
@@ -277,12 +283,16 @@ module.exports = React.createClass({
         if (backwards) {
             return unclippedScrollTop - sn.clientHeight - UNPAGINATION_PADDING;
         } else {
-            return contentHeight - (unclippedScrollTop + 2*sn.clientHeight) - UNPAGINATION_PADDING;
+            return (
+                contentHeight -
+                (unclippedScrollTop + 2 * sn.clientHeight) -
+                UNPAGINATION_PADDING
+            );
         }
     },
 
     // check the scroll state and send out backfill requests if necessary.
-    checkFillState: async function(depth=0) {
+    checkFillState: async function(depth = 0) {
         if (this.unmounted) {
             return;
         }
@@ -320,11 +330,13 @@ module.exports = React.createClass({
         // so we can trigger a new chain of calls once done.
         if (isFirstCall) {
             if (this._isFilling) {
-                debuglog("_isFilling: not entering while request is ongoing, marking for a subsequent request");
+                debuglog(
+                    '_isFilling: not entering while request is ongoing, marking for a subsequent request'
+                );
                 this._fillRequestWhileRunning = true;
                 return;
             }
-            debuglog("_isFilling: setting");
+            debuglog('_isFilling: setting');
             this._isFilling = true;
         }
 
@@ -335,13 +347,13 @@ module.exports = React.createClass({
 
         // if scrollTop gets to 1 screen from the top of the first tile,
         // try backward filling
-        if (!firstTile || (sn.scrollTop - contentTop) < sn.clientHeight) {
+        if (!firstTile || sn.scrollTop - contentTop < sn.clientHeight) {
             // need to back-fill
             fillPromises.push(this._maybeFill(depth, true));
         }
         // if scrollTop gets to 2 screens from the end (so 1 screen below viewport),
         // try forward filling
-        if ((sn.scrollHeight - sn.scrollTop) < sn.clientHeight * 2) {
+        if (sn.scrollHeight - sn.scrollTop < sn.clientHeight * 2) {
             // need to forward-fill
             fillPromises.push(this._maybeFill(depth, false));
         }
@@ -354,7 +366,7 @@ module.exports = React.createClass({
             }
         }
         if (isFirstCall) {
-            debuglog("_isFilling: clearing");
+            debuglog('_isFilling: clearing');
             this._isFilling = false;
         }
 
@@ -407,7 +419,7 @@ module.exports = React.createClass({
             }
             this._unfillDebouncer = setTimeout(() => {
                 this._unfillDebouncer = null;
-                debuglog("unfilling now", backwards, origExcessHeight);
+                debuglog('unfilling now', backwards, origExcessHeight);
                 this.props.onUnfillRequest(backwards, markerScrollToken);
             }, UNFILL_REQUEST_DEBOUNCE_MS);
         }
@@ -417,11 +429,13 @@ module.exports = React.createClass({
     _maybeFill: function(depth, backwards) {
         const dir = backwards ? 'b' : 'f';
         if (this._pendingFillRequests[dir]) {
-            debuglog("Already a "+dir+" fill in progress - not starting another");
+            debuglog(
+                'Already a ' + dir + ' fill in progress - not starting another'
+            );
             return;
         }
 
-        debuglog("starting "+dir+" fill");
+        debuglog('starting ' + dir + ' fill');
 
         // onFillRequest can end up calling us recursively (via onScroll
         // events) so make sure we set this before firing off the call.
@@ -431,25 +445,33 @@ module.exports = React.createClass({
         // this will block the scroll event handler for +700ms
         // if messages are already cached in memory,
         // This would cause jumping to happen on Chrome/macOS.
-        return new Promise(resolve => setTimeout(resolve, 1)).then(() => {
-            return this.props.onFillRequest(backwards);
-        }).finally(() => {
-            this._pendingFillRequests[dir] = false;
-        }).then((hasMoreResults) => {
-            if (this.unmounted) {
-                return;
-            }
-            // Unpaginate once filling is complete
-            this._checkUnfillState(!backwards);
+        return new Promise(resolve => setTimeout(resolve, 1))
+            .then(() => {
+                return this.props.onFillRequest(backwards);
+            })
+            .finally(() => {
+                this._pendingFillRequests[dir] = false;
+            })
+            .then(hasMoreResults => {
+                if (this.unmounted) {
+                    return;
+                }
+                // Unpaginate once filling is complete
+                this._checkUnfillState(!backwards);
 
-            debuglog(""+dir+" fill complete; hasMoreResults:"+hasMoreResults);
-            if (hasMoreResults) {
-                // further pagination requests have been disabled until now, so
-                // it's time to check the fill state again in case the pagination
-                // was insufficient.
-                return this.checkFillState(depth + 1);
-            }
-        });
+                debuglog(
+                    '' +
+                        dir +
+                        ' fill complete; hasMoreResults:' +
+                        hasMoreResults
+                );
+                if (hasMoreResults) {
+                    // further pagination requests have been disabled until now, so
+                    // it's time to check the fill state again in case the pagination
+                    // was insufficient.
+                    return this.checkFillState(depth + 1);
+                }
+            });
     },
 
     /* get the current scroll state. This returns an object with the following
@@ -484,7 +506,7 @@ module.exports = React.createClass({
      */
     resetScrollState: function() {
         this.scrollState = {
-            stuckAtBottom: this.props.startAtBottom,
+            stuckAtBottom: this.props.startAtBottom
         };
         this._bottomGrowth = 0;
         this._pages = 0;
@@ -575,7 +597,7 @@ module.exports = React.createClass({
         // set the trackedScrollToken so we can get the node through _getTrackedNode
         this.scrollState = {
             stuckAtBottom: false,
-            trackedScrollToken: scrollToken,
+            trackedScrollToken: scrollToken
         };
         const trackedNode = this._getTrackedNode();
         const scrollNode = this._getScrollNode();
@@ -586,8 +608,15 @@ module.exports = React.createClass({
             // This because when setting the scrollTop only 10 or so events might be loaded,
             // not giving enough content below the trackedNode to scroll downwards
             // enough so it ends up in the top of the viewport.
-            debuglog("scrollToken: setting scrollTop", {offsetBase, pixelOffset, offsetTop: trackedNode.offsetTop});
-            scrollNode.scrollTop = (trackedNode.offsetTop - (scrollNode.clientHeight * offsetBase)) + pixelOffset;
+            debuglog('scrollToken: setting scrollTop', {
+                offsetBase,
+                pixelOffset,
+                offsetTop: trackedNode.offsetTop
+            });
+            scrollNode.scrollTop =
+                trackedNode.offsetTop -
+                scrollNode.clientHeight * offsetBase +
+                pixelOffset;
             this._saveScrollState();
         }
     },
@@ -595,12 +624,14 @@ module.exports = React.createClass({
     _saveScrollState: function() {
         if (this.props.stickyBottom && this.isAtBottom()) {
             this.scrollState = { stuckAtBottom: true };
-            debuglog("saved stuckAtBottom state");
+            debuglog('saved stuckAtBottom state');
             return;
         }
 
         const scrollNode = this._getScrollNode();
-        const viewportBottom = scrollNode.scrollHeight - (scrollNode.scrollTop + scrollNode.clientHeight);
+        const viewportBottom =
+            scrollNode.scrollHeight -
+            (scrollNode.scrollTop + scrollNode.clientHeight);
 
         const itemlist = this.refs.itemlist;
         const messages = itemlist.children;
@@ -608,7 +639,7 @@ module.exports = React.createClass({
 
         // TODO: do a binary search here, as items are sorted by offsetTop
         // loop backwards, from bottom-most message (as that is the most common case)
-        for (let i = messages.length-1; i >= 0; --i) {
+        for (let i = messages.length - 1; i >= 0; --i) {
             if (!messages[i].dataset.scrollTokens) {
                 continue;
             }
@@ -622,18 +653,24 @@ module.exports = React.createClass({
         }
 
         if (!node) {
-            debuglog("unable to save scroll state: found no children in the viewport");
+            debuglog(
+                'unable to save scroll state: found no children in the viewport'
+            );
             return;
         }
         const scrollToken = node.dataset.scrollTokens.split(',')[0];
-        debuglog("saving anchored scroll state to message", node && node.innerText, scrollToken);
+        debuglog(
+            'saving anchored scroll state to message',
+            node && node.innerText,
+            scrollToken
+        );
         const bottomOffset = this._topFromBottom(node);
         this.scrollState = {
             stuckAtBottom: false,
             trackedNode: node,
             trackedScrollToken: scrollToken,
             bottomOffset: bottomOffset,
-            pixelOffset: bottomOffset - viewportBottom, //needed for restoring the scroll position when coming back to the room
+            pixelOffset: bottomOffset - viewportBottom //needed for restoring the scroll position when coming back to the room
         };
     },
 
@@ -652,7 +689,10 @@ module.exports = React.createClass({
                 this._bottomGrowth += bottomDiff;
                 scrollState.bottomOffset = newBottomOffset;
                 itemlist.style.height = `${this._getListHeight()}px`;
-                debuglog("balancing height because messages below viewport grew by", bottomDiff);
+                debuglog(
+                    'balancing height because messages below viewport grew by',
+                    bottomDiff
+                );
             }
         }
         if (!this._heightUpdateInProgress) {
@@ -663,17 +703,19 @@ module.exports = React.createClass({
                 this._heightUpdateInProgress = false;
             }
         } else {
-            debuglog("not updating height because request already in progress");
+            debuglog('not updating height because request already in progress');
         }
     },
     // need a better name that also indicates this will change scrollTop? Rebalance height? Reveal content?
     async _updateHeight() {
         // wait until user has stopped scrolling
         if (this._scrollTimeout.isRunning()) {
-            debuglog("updateHeight waiting for scrolling to end ... ");
+            debuglog('updateHeight waiting for scrolling to end ... ');
             await this._scrollTimeout.finished();
         } else {
-            debuglog("updateHeight getting straight to business, no scrolling going on.");
+            debuglog(
+                'updateHeight getting straight to business, no scrolling going on.'
+            );
         }
 
         const sn = this._getScrollNode();
@@ -689,7 +731,7 @@ module.exports = React.createClass({
         if (scrollState.stuckAtBottom) {
             itemlist.style.height = `${newHeight}px`;
             sn.scrollTop = sn.scrollHeight;
-            debuglog("updateHeight to", newHeight);
+            debuglog('updateHeight to', newHeight);
         } else if (scrollState.trackedScrollToken) {
             const trackedNode = this._getTrackedNode();
             // if the timeline has been reloaded
@@ -708,7 +750,11 @@ module.exports = React.createClass({
                 const newTop = trackedNode.offsetTop;
                 const topDiff = newTop - oldTop;
                 sn.scrollTop = preexistingScrollTop + topDiff;
-                debuglog("updateHeight to", {newHeight, topDiff, preexistingScrollTop});
+                debuglog('updateHeight to', {
+                    newHeight,
+                    topDiff,
+                    preexistingScrollTop
+                });
             }
         }
     },
@@ -722,24 +768,30 @@ module.exports = React.createClass({
             const messages = this.refs.itemlist.children;
             const scrollToken = scrollState.trackedScrollToken;
 
-            for (let i = messages.length-1; i >= 0; --i) {
+            for (let i = messages.length - 1; i >= 0; --i) {
                 const m = messages[i];
                 // 'data-scroll-tokens' is a DOMString of comma-separated scroll tokens
                 // There might only be one scroll token
-                if (m.dataset.scrollTokens &&
-                    m.dataset.scrollTokens.split(',').indexOf(scrollToken) !== -1) {
+                if (
+                    m.dataset.scrollTokens &&
+                    m.dataset.scrollTokens.split(',').indexOf(scrollToken) !==
+                        -1
+                ) {
                     node = m;
                     break;
                 }
             }
             if (node) {
-                debuglog("had to find tracked node again for " + scrollState.trackedScrollToken);
+                debuglog(
+                    'had to find tracked node again for ' +
+                        scrollState.trackedScrollToken
+                );
             }
             scrollState.trackedNode = node;
         }
 
         if (!scrollState.trackedNode) {
-            debuglog("No node with ; '"+scrollState.trackedScrollToken+"'");
+            debuglog("No node with ; '" + scrollState.trackedScrollToken + "'");
             return;
         }
 
@@ -747,18 +799,27 @@ module.exports = React.createClass({
     },
 
     _getListHeight() {
-        return this._bottomGrowth + (this._pages * PAGE_SIZE);
+        return this._bottomGrowth + this._pages * PAGE_SIZE;
     },
 
     _getMessagesHeight() {
         const itemlist = this.refs.itemlist;
         const lastNode = itemlist.lastElementChild;
         // 18 is itemlist padding
-        return (lastNode.offsetTop + lastNode.clientHeight) - itemlist.firstElementChild.offsetTop + (18 * 2);
+        if (lastNode && itemlist) {
+            return (
+                lastNode.offsetTop +
+                lastNode.clientHeight -
+                itemlist.firstElementChild.offsetTop +
+                18 * 2
+            );
+        }
     },
 
     _topFromBottom(node) {
-        return this.refs.itemlist.clientHeight - node.offsetTop;
+        if (node) {
+            return this.refs.itemlist.clientHeight - node.offsetTop;
+        }
     },
 
     /* get the DOM node which has the scrollTop property we care about for our
@@ -768,13 +829,15 @@ module.exports = React.createClass({
         if (this.unmounted) {
             // this shouldn't happen, but when it does, turn the NPE into
             // something more meaningful.
-            throw new Error("ScrollPanel._getScrollNode called when unmounted");
+            throw new Error('ScrollPanel._getScrollNode called when unmounted');
         }
 
         if (!this._divScroll) {
             // Likewise, we should have the ref by this point, but if not
             // turn the NPE into something meaningful.
-            throw new Error("ScrollPanel._getScrollNode called before gemini ref collected");
+            throw new Error(
+                'ScrollPanel._getScrollNode called before gemini ref collected'
+            );
         }
 
         return this._divScroll;
@@ -807,12 +870,18 @@ module.exports = React.createClass({
             return;
         }
         this.clearPreventShrinking();
-        const offsetFromBottom = messageList.clientHeight - (lastTileNode.offsetTop + lastTileNode.clientHeight);
+        const offsetFromBottom =
+            messageList.clientHeight -
+            (lastTileNode.offsetTop + lastTileNode.clientHeight);
         this.preventShrinkingState = {
             offsetFromBottom: offsetFromBottom,
-            offsetNode: lastTileNode,
+            offsetNode: lastTileNode
         };
-        debuglog("prevent shrinking, last tile ", offsetFromBottom, "px from bottom");
+        debuglog(
+            'prevent shrinking, last tile ',
+            offsetFromBottom,
+            'px from bottom'
+        );
     },
 
     /** Clear shrinking prevention. Used internally, and when the timeline is reloaded. */
@@ -821,7 +890,7 @@ module.exports = React.createClass({
         const balanceElement = messageList && messageList.parentElement;
         if (balanceElement) balanceElement.style.paddingBottom = null;
         this.preventShrinkingState = null;
-        debuglog("prevent shrinking cleared");
+        debuglog('prevent shrinking cleared');
     },
 
     /**
@@ -837,23 +906,30 @@ module.exports = React.createClass({
             const sn = this._getScrollNode();
             const scrollState = this.scrollState;
             const messageList = this.refs.itemlist;
-            const {offsetNode, offsetFromBottom} = this.preventShrinkingState;
+            const { offsetNode, offsetFromBottom } = this.preventShrinkingState;
             // element used to set paddingBottom to balance the typing notifs disappearing
             const balanceElement = messageList.parentElement;
             // if the offsetNode got unmounted, clear
             let shouldClear = !offsetNode.parentElement;
             // also if 200px from bottom
             if (!shouldClear && !scrollState.stuckAtBottom) {
-                const spaceBelowViewport = sn.scrollHeight - (sn.scrollTop + sn.clientHeight);
+                const spaceBelowViewport =
+                    sn.scrollHeight - (sn.scrollTop + sn.clientHeight);
                 shouldClear = spaceBelowViewport >= 200;
             }
             // try updating if not clearing
             if (!shouldClear) {
-                const currentOffset = messageList.clientHeight - (offsetNode.offsetTop + offsetNode.clientHeight);
+                const currentOffset =
+                    messageList.clientHeight -
+                    (offsetNode.offsetTop + offsetNode.clientHeight);
                 const offsetDiff = offsetFromBottom - currentOffset;
                 if (offsetDiff > 0) {
                     balanceElement.style.paddingBottom = `${offsetDiff}px`;
-                    debuglog("update prevent shrinking ", offsetDiff, "px from bottom");
+                    debuglog(
+                        'update prevent shrinking ',
+                        offsetDiff,
+                        'px from bottom'
+                    );
                 } else if (offsetDiff < 0) {
                     shouldClear = true;
                 }
@@ -868,15 +944,23 @@ module.exports = React.createClass({
         // TODO: the classnames on the div and ol could do with being updated to
         // reflect the fact that we don't necessarily contain a list of messages.
         // it's not obvious why we have a separate div and ol anyway.
-        return (<AutoHideScrollbar wrappedRef={this._collectScroll}
+        return (
+            <AutoHideScrollbar
+                wrappedRef={this._collectScroll}
                 onScroll={this.onScroll}
-                className={`mx_ScrollPanel ${this.props.className}`} style={this.props.style}>
-                    <div className="mx_RoomView_messageListWrapper">
-                        <ol ref="itemlist" className="mx_RoomView_MessageList" aria-live="polite">
-                            { this.props.children }
-                        </ol>
-                    </div>
-                </AutoHideScrollbar>
-            );
-    },
+                className={`mx_ScrollPanel ${this.props.className}`}
+                style={this.props.style}
+            >
+                <div className='mx_RoomView_messageListWrapper'>
+                    <ol
+                        ref='itemlist'
+                        className='mx_RoomView_MessageList'
+                        aria-live='polite'
+                    >
+                        {this.props.children}
+                    </ol>
+                </div>
+            </AutoHideScrollbar>
+        );
+    }
 });
