@@ -57,7 +57,12 @@ export default class RoomSettingsDialog extends React.Component {
             new Tab(
                 _td('General'),
                 'mx_RoomSettingsDialog_settingsIcon',
-                <GeneralRoomSettingsTab roomId={this.props.roomId} />
+                (
+                    <GeneralRoomSettingsTab
+                        roomId={this.props.roomId}
+                        onFinish={() => {}}
+                    />
+                )
             )
         );
         tabs.push(

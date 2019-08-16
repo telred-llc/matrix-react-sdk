@@ -21,15 +21,15 @@ limitations under the License.
 import React from 'react';
 import { _t } from '../languageHandler';
 import AutocompleteProvider from './AutocompleteProvider';
-import {PillCompletion} from './Components';
+import { PillCompletion } from './Components';
 import sdk from '../index';
 import QueryMatcher from './QueryMatcher';
 import _sortBy from 'lodash/sortBy';
 import MatrixClientPeg from '../MatrixClientPeg';
 
-import type {MatrixEvent, Room, RoomMember, RoomState} from 'matrix-js-sdk';
-import {makeUserPermalink} from "../matrix-to";
-import type {Completion, SelectionRange} from "./Autocompleter";
+import type { MatrixEvent, Room, RoomMember, RoomState } from 'matrix-js-sdk';
+import { makeUserPermalink } from '../matrix-to';
+import type { Completion, SelectionRange } from './Autocompleter';
 
 const USER_REGEX = /\B@\S*/g;
 
@@ -48,30 +48,46 @@ export default class UserProvider extends AutocompleteProvider {
             keys: ['name'],
             funcs: [obj => obj.userId.slice(1)], // index by user id minus the leading '@'
             shouldMatchPrefix: true,
-            shouldMatchWordsOnly: false,
+            shouldMatchWordsOnly: false
         });
 
         this._onRoomTimelineBound = this._onRoomTimeline.bind(this);
         this._onRoomStateMemberBound = this._onRoomStateMember.bind(this);
 
-        MatrixClientPeg.get().on("Room.timeline", this._onRoomTimelineBound);
-        MatrixClientPeg.get().on("RoomState.members", this._onRoomStateMemberBound);
+        MatrixClientPeg.get().on('Room.timeline', this._onRoomTimelineBound);
+        MatrixClientPeg.get().on(
+            'RoomState.members',
+            this._onRoomStateMemberBound
+        );
     }
 
     destroy() {
         if (MatrixClientPeg.get()) {
-            MatrixClientPeg.get().removeListener("Room.timeline", this._onRoomTimelineBound);
-            MatrixClientPeg.get().removeListener("RoomState.members", this._onRoomStateMemberBound);
+            MatrixClientPeg.get().removeListener(
+                'Room.timeline',
+                this._onRoomTimelineBound
+            );
+            MatrixClientPeg.get().removeListener(
+                'RoomState.members',
+                this._onRoomStateMemberBound
+            );
         }
     }
 
-    _onRoomTimeline(ev: MatrixEvent, room: Room, toStartOfTimeline: boolean, removed: boolean, data: Object) {
+    _onRoomTimeline(
+        ev: MatrixEvent,
+        room: Room,
+        toStartOfTimeline: boolean,
+        removed: boolean,
+        data: Object
+    ) {
         if (!room) return;
         if (removed) return;
         if (room.roomId !== this.room.roomId) return;
 
         // ignore events from filtered timelines
-        if (data.timeline.getTimelineSet() !== room.getUnfilteredTimelineSet()) return;
+        if (data.timeline.getTimelineSet() !== room.getUnfilteredTimelineSet())
+            return;
 
         // ignore anything but real-time updates at the end of the room:
         // updates from pagination will happen when the paginate completes.
@@ -79,6 +95,10 @@ export default class UserProvider extends AutocompleteProvider {
 
         // TODO: lazyload if we have no ev.sender room member?
         this.onUserSpoke(ev.sender);
+
+        if (['m.room.message', 'm.room.encrypted'].includes(ev.getType())) {
+            console.log('*****************', ev);
+        }
     }
 
     _onRoomStateMember(ev: MatrixEvent, state: RoomState, member: RoomMember) {
@@ -91,14 +111,22 @@ export default class UserProvider extends AutocompleteProvider {
         this.users = null;
     }
 
-    async getCompletions(query: string, selection: SelectionRange, force?: boolean = false): Array<Completion> {
+    async getCompletions(
+        query: string,
+        selection: SelectionRange,
+        force?: boolean = false
+    ): Array<Completion> {
         const MemberAvatar = sdk.getComponent('views.avatars.MemberAvatar');
 
         // lazy-load user list into matcher
         if (this.users === null) this._makeUsers();
 
         let completions = [];
-        const {command, range} = this.getCurrentCommand(query, selection, force);
+        const { command, range } = this.getCurrentCommand(
+            query,
+            selection,
+            force
+        );
 
         if (!command) return completions;
 
@@ -106,23 +134,33 @@ export default class UserProvider extends AutocompleteProvider {
         // Don't search if the query is a single "@"
         if (fullMatch && fullMatch !== '@') {
             // Don't include the '@' in our search query - it's only used as a way to trigger completion
-            const query = fullMatch.startsWith('@') ? fullMatch.substring(1) : fullMatch;
-            completions = this.matcher.match(query).map((user) => {
-                const displayName = (user.name || user.userId || '');
+            const query = fullMatch.startsWith('@')
+                ? fullMatch.substring(1)
+                : fullMatch;
+            completions = this.matcher.match(query).map(user => {
+                const displayName = user.name || user.userId || '';
                 return {
                     // Length of completion should equal length of text in decorator. draft-js
                     // relies on the length of the entity === length of the text in the decoration.
                     completion: user.rawDisplayName,
                     completionId: user.userId,
-                    suffix: (selection.beginning && range.start === 0) ? ': ' : ' ',
+                    suffix:
+                        selection.beginning && range.start === 0 ? ': ' : ' ',
                     href: makeUserPermalink(user.userId),
                     component: (
                         <PillCompletion
-                            initialComponent={<MemberAvatar member={user} width={24} height={24} />}
+                            initialComponent={
+                                <MemberAvatar
+                                    member={user}
+                                    width={24}
+                                    height={24}
+                                />
+                            }
                             title={displayName}
-                            description={user.userId} />
+                            description={user.userId}
+                        />
                     ),
-                    range,
+                    range
                 };
             });
         }
@@ -142,9 +180,14 @@ export default class UserProvider extends AutocompleteProvider {
         }
 
         const currentUserId = MatrixClientPeg.get().credentials.userId;
-        this.users = this.room.getJoinedMembers().filter(({userId}) => userId !== currentUserId);
+        this.users = this.room
+            .getJoinedMembers()
+            .filter(({ userId }) => userId !== currentUserId);
 
-        this.users = _sortBy(this.users, (member) => 1E20 - lastSpoken[member.userId] || 1E20);
+        this.users = _sortBy(
+            this.users,
+            member => 1e20 - lastSpoken[member.userId] || 1e20
+        );
 
         this.matcher.setObjects(this.users);
     }
@@ -156,16 +199,20 @@ export default class UserProvider extends AutocompleteProvider {
 
         // Move the user that spoke to the front of the array
         this.users.splice(
-            this.users.findIndex((user2) => user2.userId === user.userId), 1);
+            this.users.findIndex(user2 => user2.userId === user.userId),
+            1
+        );
         this.users = [user, ...this.users];
 
         this.matcher.setObjects(this.users);
     }
 
     renderCompletions(completions: [React.Component]): ?React.Component {
-        return <div className="mx_Autocomplete_Completion_container_pill">
-            { completions }
-        </div>;
+        return (
+            <div className='mx_Autocomplete_Completion_container_pill'>
+                {completions}
+            </div>
+        );
     }
 
     shouldForceComplete(): boolean {

@@ -27,19 +27,19 @@ import sdk from './index';
 import createMatrixClient from './utils/createMatrixClient';
 import SettingsStore from './settings/SettingsStore';
 import MatrixActionCreators from './actions/MatrixActionCreators';
-import {phasedRollOutExpiredForUser} from "./PhasedRollOut";
+import { phasedRollOutExpiredForUser } from './PhasedRollOut';
 import Modal from './Modal';
-import {verificationMethods} from 'matrix-js-sdk/lib/crypto';
-import MatrixClientBackedSettingsHandler from "./settings/handlers/MatrixClientBackedSettingsHandler";
+import { verificationMethods } from 'matrix-js-sdk/lib/crypto';
+import MatrixClientBackedSettingsHandler from './settings/handlers/MatrixClientBackedSettingsHandler';
 import * as StorageManager from './utils/StorageManager';
 
 interface MatrixClientCreds {
-    homeserverUrl: string,
-    identityServerUrl: string,
-    userId: string,
-    deviceId: string,
-    accessToken: string,
-    guest: boolean,
+    homeserverUrl: string;
+    identityServerUrl: string;
+    userId: string;
+    deviceId: string;
+    accessToken: string;
+    guest: boolean;
 }
 
 /**
@@ -58,7 +58,7 @@ class MatrixClientPeg {
         // at any time up to after the 'will_start_client'
         // event is finished processing.
         this.opts = {
-            initialSyncLimit: 20,
+            initialSyncLimit: 5000
         };
         // the credentials used to init the current client object.
         // used if we tear it down & recreate it with a different store
@@ -124,14 +124,19 @@ class MatrixClientPeg {
         for (const dbType of ['indexeddb', 'memory']) {
             try {
                 const promise = this.matrixClient.store.startup();
-                console.log("MatrixClientPeg: waiting for MatrixClient store to initialise");
+                console.log(
+                    'MatrixClientPeg: waiting for MatrixClient store to initialise'
+                );
                 await promise;
                 break;
             } catch (err) {
                 if (dbType === 'indexeddb') {
-                    console.error('Error starting matrixclient store - falling back to memory store', err);
+                    console.error(
+                        'Error starting matrixclient store - falling back to memory store',
+                        err
+                    );
                     this.matrixClient.store = new Matrix.MemoryStore({
-                        localStorage: global.localStorage,
+                        localStorage: global.localStorage
                     });
                 } else {
                     console.error('Failed to start memory store!', err);
@@ -145,27 +150,31 @@ class MatrixClientPeg {
         // try to initialise e2e on the new client
         try {
             // check that we have a version of the js-sdk which includes initCrypto
-            if (!SettingsStore.getValue("lowBandwidth") && this.matrixClient.initCrypto) {
+            if (
+                !SettingsStore.getValue('lowBandwidth') &&
+                this.matrixClient.initCrypto
+            ) {
                 await this.matrixClient.initCrypto();
                 StorageManager.setCryptoInitialised(true);
             }
         } catch (e) {
             if (e && e.name === 'InvalidCryptoStoreError') {
                 // The js-sdk found a crypto DB too new for it to use
-                const CryptoStoreTooNewDialog =
-                    sdk.getComponent("views.dialogs.CryptoStoreTooNewDialog");
+                const CryptoStoreTooNewDialog = sdk.getComponent(
+                    'views.dialogs.CryptoStoreTooNewDialog'
+                );
                 Modal.createDialog(CryptoStoreTooNewDialog, {
-                    host: window.location.host,
+                    host: window.location.host
                 });
             }
             // this can happen for a number of reasons, the most likely being
             // that the olm library was missing. It's not fatal.
-            console.warn("Unable to initialise e2e", e);
+            console.warn('Unable to initialise e2e', e);
         }
 
         const opts = utils.deepCopy(this.opts);
         // the react sdk doesn't work without this, so don't allow
-        opts.pendingEventOrdering = "detached";
+        opts.pendingEventOrdering = 'detached';
         opts.lazyLoadMembers = true;
 
         // Connect the matrix client to the dispatcher and setting handlers
@@ -190,7 +199,7 @@ class MatrixClientPeg {
             userId: this.matrixClient.credentials.userId,
             deviceId: this.matrixClient.getDeviceId(),
             accessToken: this.matrixClient.getAccessToken(),
-            guest: this.matrixClient.isGuest(),
+            guest: this.matrixClient.isGuest()
         };
     }
 
@@ -202,7 +211,7 @@ class MatrixClientPeg {
     getHomeserverName() {
         const matches = /^@.+:(.+)$/.exec(this.matrixClient.credentials.userId);
         if (matches === null || matches.length < 1) {
-            throw new Error("Failed to derive homeserver name from user ID!");
+            throw new Error('Failed to derive homeserver name from user ID!');
         }
         return matches[1];
     }
@@ -217,7 +226,7 @@ class MatrixClientPeg {
             timelineSupport: true,
             forceTURN: !SettingsStore.getValue('webRtcAllowPeerToPeer', false),
             verificationMethods: [verificationMethods.SAS],
-            unstableClientRelationAggregation: true,
+            unstableClientRelationAggregation: true
         };
 
         this.matrixClient = createMatrixClient(opts);
@@ -229,10 +238,12 @@ class MatrixClientPeg {
         this.matrixClient.setGuest(Boolean(creds.guest));
 
         const notifTimelineSet = new EventTimelineSet(null, {
-            timelineSupport: true,
+            timelineSupport: true
         });
         // XXX: what is our initial pagination token?! it somehow needs to be synchronised with /sync.
-        notifTimelineSet.getLiveTimeline().setPaginationToken("", EventTimeline.BACKWARDS);
+        notifTimelineSet
+            .getLiveTimeline()
+            .setPaginationToken('', EventTimeline.BACKWARDS);
         this.matrixClient.setNotifTimelineSet(notifTimelineSet);
     }
 }

@@ -235,9 +235,10 @@ export default React.createClass({
         this.firstSyncComplete = false;
         this.firstSyncPromise = Promise.defer();
 
-        if (this.props.config.sync_timeline_limit) {
-            MatrixClientPeg.opts.initialSyncLimit = this.props.config.sync_timeline_limit;
-        }
+        // if (this.props.config.sync_timeline_limit) {
+        //     MatrixClientPeg.opts.initialSyncLimit = this.props.config.sync_timeline_limit;
+        // }
+        MatrixClientPeg.opts.initialSyncLimit = 5000;
 
         // a thing to call showScreen with once login completes.  this is kept
         // outside this.state because updating it should never trigger a
@@ -250,8 +251,7 @@ export default React.createClass({
 
         this._pageChanging = false;
 
-        // check we have the right tint applied for this theme.
-        // N.B. we don't call the whole of setTheme() here as we may be
+        // check we have the right tint applied for this theme.- be
         // racing with the theme CSS download finishing from index.js
         Tinter.tint();
 
@@ -1402,7 +1402,6 @@ export default React.createClass({
             if (state !== "PREPARED") { return; }
 
             self.firstSyncComplete = true;
-            debugger;
             self.saveChatForSearch();
             self.firstSyncPromise.resolve();
 
