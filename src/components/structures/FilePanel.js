@@ -29,12 +29,12 @@ const FilePanel = React.createClass({
     displayName: 'FilePanel',
 
     propTypes: {
-        roomId: PropTypes.string.isRequired,
+        roomId: PropTypes.string.isRequired
     },
 
     getInitialState: function() {
         return {
-            timelineSet: null,
+            timelineSet: null
         };
     },
 
@@ -63,78 +63,100 @@ const FilePanel = React.createClass({
 
         if (room) {
             const filter = new Matrix.Filter(client.credentials.userId);
-            filter.setDefinition(
-                {
-                    "room": {
-                        "timeline": {
-                            "contains_url": true,
-                            "types": [
-                                "m.room.message",
-                            ],
-                        },
-                    },
-                },
-            );
+            filter.setDefinition({
+                room: {
+                    timeline: {
+                        types: ['m.room.message']
+                    }
+                }
+            });
 
             // FIXME: we shouldn't be doing this every time we change room - see comment above.
-            client.getOrCreateFilter("FILTER_FILES_" + client.credentials.userId, filter).then(
-                (filterId)=>{
-                    filter.filterId = filterId;
-                    const timelineSet = room.getOrCreateFilteredTimelineSet(filter);
-                    this.setState({ timelineSet: timelineSet });
-                },
-                (error)=>{
-                    console.error("Failed to get or create file panel filter", error);
-                },
-            );
+            client
+                .getOrCreateFilter(
+                    'FILTER_FILES_' + client.credentials.userId,
+                    filter
+                )
+                .then(
+                    filterId => {
+                        filter.filterId = filterId;
+                        const timelineSet = room.getOrCreateFilteredTimelineSet(
+                            filter
+                        );
+                        debugger;
+                        this.setState({ timelineSet: timelineSet });
+                    },
+                    error => {
+                        console.error(
+                            'Failed to get or create file panel filter',
+                            error
+                        );
+                    }
+                );
         } else {
-            console.error("Failed to add filtered timelineSet for FilePanel as no room!");
+            console.error(
+                'Failed to add filtered timelineSet for FilePanel as no room!'
+            );
         }
     },
 
     render: function() {
         if (MatrixClientPeg.get().isGuest()) {
-            return <div className="mx_FilePanel mx_RoomView_messageListWrapper">
-                <div className="mx_RoomView_empty">
-                { _t("You must <a>register</a> to use this functionality",
-                    {},
-                    { 'a': (sub) => <a href="#/register" key="sub">{ sub }</a> })
-                }
+            return (
+                <div className='mx_FilePanel mx_RoomView_messageListWrapper'>
+                    <div className='mx_RoomView_empty'>
+                        {_t(
+                            'You must <a>register</a> to use this functionality',
+                            {},
+                            {
+                                a: sub => (
+                                    <a href='#/register' key='sub'>
+                                        {sub}
+                                    </a>
+                                )
+                            }
+                        )}
+                    </div>
                 </div>
-            </div>;
+            );
         } else if (this.noRoom) {
-            return <div className="mx_FilePanel mx_RoomView_messageListWrapper">
-                <div className="mx_RoomView_empty">{ _t("You must join the room to see its files") }</div>
-            </div>;
+            return (
+                <div className='mx_FilePanel mx_RoomView_messageListWrapper'>
+                    <div className='mx_RoomView_empty'>
+                        {_t('You must join the room to see its files')}
+                    </div>
+                </div>
+            );
         }
 
         // wrap a TimelinePanel with the jump-to-event bits turned off.
-        const TimelinePanel = sdk.getComponent("structures.TimelinePanel");
-        const Loader = sdk.getComponent("elements.Spinner");
+        const TimelinePanel = sdk.getComponent('structures.TimelinePanel');
+        const Loader = sdk.getComponent('elements.Spinner');
 
         if (this.state.timelineSet) {
             // console.log("rendering TimelinePanel for timelineSet " + this.state.timelineSet.room.roomId + " " +
             //             "(" + this.state.timelineSet._timelines.join(", ") + ")" + " with key " + this.props.roomId);
             return (
-                <TimelinePanel key={"filepanel_" + this.props.roomId}
-                    className="mx_FilePanel"
+                <TimelinePanel
+                    key={'filepanel_' + this.props.roomId}
+                    className='mx_FilePanel'
                     manageReadReceipts={false}
                     manageReadMarkers={false}
                     timelineSet={this.state.timelineSet}
-                    showUrlPreview = {false}
-                    tileShape="file_grid"
+                    showUrlPreview={false}
+                    tileShape='file_grid'
                     resizeNotifier={this.props.resizeNotifier}
                     empty={_t('There are no visible files in this room')}
                 />
             );
         } else {
             return (
-                <div className="mx_FilePanel">
+                <div className='mx_FilePanel'>
                     <Loader />
                 </div>
             );
         }
-    },
+    }
 });
 
 module.exports = FilePanel;
