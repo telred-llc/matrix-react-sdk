@@ -48,7 +48,7 @@ limitations under the License.
   }
 
   & .mx_EventTile_readAvatars {
-    top: 7px;
+    // top: 7px;
   }
 
   & .mx_ReactionsRow {
@@ -57,6 +57,7 @@ limitations under the License.
 
   & .mx_EventTile_msgOption {
     float: left;
+    width: 100%;
   }
 }
 
