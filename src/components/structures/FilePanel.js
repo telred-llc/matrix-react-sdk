@@ -83,7 +83,6 @@ const FilePanel = React.createClass({
                         const timelineSet = room.getOrCreateFilteredTimelineSet(
                             filter
                         );
-                        debugger;
                         this.setState({ timelineSet: timelineSet });
                     },
                     error => {
