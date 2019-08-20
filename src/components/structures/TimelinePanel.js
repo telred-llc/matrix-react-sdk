@@ -1238,10 +1238,18 @@ const TimelinePanel = React.createClass({
         if (this.props.className === 'mx_FilePanel') {
             events = events.filter(item => {
                 if (
+                    item.event.type === 'm.room.message' &&
+                    ['m.image', 'm.file', 'm.video'].includes(
+                        item.event.content.msgtype
+                    )
+                ) {
+                    return true;
+                }
+                if (
                     item.event.type === 'm.room.encrypted' &&
                     item._clearEvent &&
                     item._clearEvent.content &&
-                    ['m.image', 'm.file'].includes(
+                    ['m.image', 'm.file', 'm.video'].includes(
                         item._clearEvent.content.msgtype
                     )
                 ) {
