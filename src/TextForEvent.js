@@ -19,14 +19,19 @@ import { _t } from './languageHandler';
 import * as Roles from './Roles';
 import {isValid3pidInvite} from "./RoomInvite";
 import SettingsStore from "./settings/SettingsStore";
+import * as Lifecycle from './Lifecycle';
 
+const sessionOwner = Lifecycle.getStoredSessionOwner();
 function textForMemberEvent(ev) {
     // XXX: SYJS-16 "sender is sometimes null for join messages"
-    const senderName = ev.sender ? ev.sender.name : ev.getSender();
-    const targetName = ev.target ? ev.target.name : ev.getStateKey();
+    let senderName = getSenderName4Event(ev);
+    let targetName = ev.target ? ev.target.name : ev.getStateKey();
+    if(ev.target && ev.target.userId === sessionOwner){
+        targetName = 'You'
+    }
+
     const prevContent = ev.getPrevContent();
     const content = ev.getContent();
-
     const ConferenceHandler = CallHandler.getConferenceHandler();
     const reason = content.reason ? (_t('Reason') + ': ' + content.reason) : '';
     switch (content.membership) {
@@ -332,7 +337,7 @@ function textForCallAnswerEvent(event) {
 }
 
 function textForCallHangupEvent(event) {
-    const senderName = event.sender ? event.sender.name : _t('Someone');
+    const senderName = getSenderName(event, 'sender');
     const eventContent = event.getContent();
     let reason = "";
     if (!MatrixClientPeg.get().supportsVoip()) {
@@ -356,11 +361,11 @@ function textForCallHangupEvent(event) {
 }
 
 function textForCallInviteEvent(event) {
-    const senderName = event.sender ? event.sender.name : _t('Someone');
+    const senderName = getSenderName(event, 'sender');
     // FIXME: Find a better way to determine this from the event?
     let callType = "voice";
     if (event.getContent().offer && event.getContent().offer.sdp &&
-            event.getContent().offer.sdp.indexOf('m=video') !== -1) {
+        event.getContent().offer.sdp.indexOf('m=video') !== -1) {
         callType = "video";
     }
     const supported = MatrixClientPeg.get().supportsVoip() ? "" : _t('(not supported by this browser)');
@@ -368,7 +373,7 @@ function textForCallInviteEvent(event) {
 }
 
 function textForThreePidInviteEvent(event) {
-    const senderName = event.sender ? event.sender.name : event.getSender();
+    const senderName = getSenderName4Event(event);
 
     if (!isValid3pidInvite(event)) {
         const targetDisplayName = event.getPrevContent().display_name || _t("Someone");
@@ -385,7 +390,7 @@ function textForThreePidInviteEvent(event) {
 }
 
 function textForHistoryVisibilityEvent(event) {
-    const senderName = event.sender ? event.sender.name : event.getSender();
+    const senderName = getSenderName4Event(event);
     switch (event.getContent().history_visibility) {
         case 'invited':
             return _t('%(senderName)s made future room history visible to all room members, '
@@ -406,7 +411,7 @@ function textForHistoryVisibilityEvent(event) {
 }
 
 function textForEncryptionEvent(event) {
-    const senderName = event.sender ? event.sender.name : event.getSender();
+    const senderName = getSenderName4Event(event);
     return _t('%(senderName)s turned on end-to-end encryption (algorithm %(algorithm)s).', {
         senderName,
         algorithm: event.getContent().algorithm,
@@ -415,7 +420,7 @@ function textForEncryptionEvent(event) {
 
 // Currently will only display a change if a user's power level is changed
 function textForPowerEvent(event) {
-    const senderName = event.sender ? event.sender.name : event.getSender();
+    const senderName = getSenderName4Event(event)
     if (!event.getPrevContent() || !event.getPrevContent().users ||
         !event.getContent() || !event.getContent().users) {
         return '';
@@ -492,6 +497,21 @@ function textForWidgetEvent(event) {
             widgetName, senderName,
         });
     }
+}
+
+function getSenderName (event, field){
+    if(event[field] && event[field].userId === sessionOwner){
+        return 'You'
+    }
+    return (event[field] ? event[field].name : _t('Someone'))
+}
+
+function getSenderName4Event(event){
+    let senderName = event.sender ? event.sender.name : event.getSender();
+    if(event.sender && event.sender.userId === sessionOwner){
+        senderName = 'You'
+    }
+    return senderName
 }
 
 const handlers = {

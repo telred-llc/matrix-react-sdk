@@ -393,8 +393,8 @@ module.exports = React.createClass({
         if (this.props.showReadReceipts) {
             this._readReceiptsByEvent = this._getReadReceiptsByShownEvent();
         }
-
-        for (i = 0; i < this.props.events.length; i++) {
+        const eventLength = this.props.events.length;
+        for (i = 0; i < eventLength; i++) {
             const mxEv = this.props.events[i];
             const eventId = mxEv.getId();
             const last = mxEv === lastShownEvent;

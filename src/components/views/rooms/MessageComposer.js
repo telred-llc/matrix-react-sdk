@@ -64,8 +64,8 @@ function CallButton(props) {
     };
 
     return <AccessibleButton className="mx_MessageComposer_button mx_MessageComposer_voicecall"
-        onClick={onVoiceCallClick}
-        title={_t('Voice call')}
+                             onClick={onVoiceCallClick}
+                             title={_t('Voice call')}
     />
 }
 
@@ -84,8 +84,8 @@ function VideoCallButton(props) {
     };
 
     return <AccessibleButton className="mx_MessageComposer_button mx_MessageComposer_videocall"
-        onClick={onCallClick}
-        title={_t('Video call')}
+                             onClick={onCallClick}
+                             title={_t('Video call')}
     />;
 }
 
@@ -108,8 +108,8 @@ function HangupButton(props) {
         });
     };
     return  <AccessibleButton className="mx_MessageComposer_button mx_MessageComposer_hangup"
-        onClick={onHangupClick}
-        title={_t('Hangup')}
+                              onClick={onHangupClick}
+                              title={_t('Hangup')}
     />;
 }
 
@@ -179,13 +179,13 @@ class UploadButton extends React.Component {
         const AccessibleButton = sdk.getComponent('elements.AccessibleButton');
         return (
             <AccessibleButton className="mx_MessageComposer_button mx_MessageComposer_upload"
-                onClick={this.onUploadClick}
-                title={_t('Upload file')}
+                              onClick={this.onUploadClick}
+                              title={_t('Upload file')}
             >
                 <input ref="uploadInput" type="file"
-                    style={uploadInputStyle}
-                    multiple
-                    onChange={this.onUploadFileInputChange}
+                       style={uploadInputStyle}
+                       multiple
+                       onChange={this.onUploadFileInputChange}
                 />
             </AccessibleButton>
         );
@@ -369,11 +369,11 @@ export default class MessageComposer extends React.Component {
             const className = 'mx_MessageComposer_format_button mx_filterFlipColor';
             return (
                 <img className={className}
-                    title={_t(name)}
-                    onMouseDown={onFormatButtonClicked}
-                    key={name}
-                    src={require(`../../../../res/img/button-text-${name}${suffix}.svg`)}
-                    height="17"
+                     title={_t(name)}
+                     onMouseDown={onFormatButtonClicked}
+                     key={name}
+                     src={require(`../../../../res/img/button-text-${name}${suffix}.svg`)}
+                     height="17"
                 />
             );
         })
@@ -381,18 +381,18 @@ export default class MessageComposer extends React.Component {
         return (
             <div className="mx_MessageComposer_formatbar_wrapper">
                 <div className="mx_MessageComposer_formatbar">
-                { formatButtons }
-                <div style={{ flex: 1 }}></div>
-                <AccessibleButton
-                    className="mx_MessageComposer_formatbar_markdown mx_MessageComposer_markdownDisabled"
-                    onClick={this.onToggleMarkdownClicked}
-                    title={_t("Markdown is disabled")}
-                />
-                <AccessibleButton element="img" title={_t("Hide Text Formatting Toolbar")}
-                    onClick={this.onToggleFormattingClicked}
-                    className="mx_MessageComposer_formatbar_cancel mx_filterFlipColor"
-                    src={require("../../../../res/img/icon-text-cancel.svg")}
-                />
+                    { formatButtons }
+                    <div style={{ flex: 1 }}></div>
+                    <AccessibleButton
+                        className="mx_MessageComposer_formatbar_markdown mx_MessageComposer_markdownDisabled"
+                        onClick={this.onToggleMarkdownClicked}
+                        title={_t("Markdown is disabled")}
+                    />
+                    <AccessibleButton element="img" title={_t("Hide Text Formatting Toolbar")}
+                                      onClick={this.onToggleFormattingClicked}
+                                      className="mx_MessageComposer_formatbar_cancel mx_filterFlipColor"
+                                      src={require("../../../../res/img/icon-text-cancel.svg")}
+                    />
                 </div>
             </div>
         );
@@ -410,7 +410,6 @@ export default class MessageComposer extends React.Component {
             // complex because of conference calls.
 
             const MessageComposerInput = sdk.getComponent("rooms.MessageComposerInput");
-            const showFormattingButton = this.state.inputState.isRichTextEnabled;
             const callInProgress = this.props.callState && this.props.callState !== 'ended';
 
             controls.push(
@@ -421,8 +420,6 @@ export default class MessageComposer extends React.Component {
                     placeholder={this.renderPlaceholderText()}
                     onInputStateChanged={this.onInputStateChanged}
                     permalinkCreator={this.props.permalinkCreator} />,
-                showFormattingButton ? <FormattingButton key="controls_formatting"
-                    showFormatting={this.state.showFormatting} onClickHandler={this.onToggleFormattingClicked} /> : null,
                 <Stickerpicker key='stickerpicker_controls_button' room={this.props.room} />,
                 <UploadButton key="controls_upload" roomId={this.props.room.roomId} />,
                 callInProgress ? <HangupButton key="controls_hangup" roomId={this.props.room.roomId} /> : null,
@@ -434,8 +431,8 @@ export default class MessageComposer extends React.Component {
 
             const continuesLink = replacementRoomId ? (
                 <a href={makeRoomPermalink(replacementRoomId)}
-                    className="mx_MessageComposer_roomReplaced_link"
-                    onClick={this._onTombstoneClick}
+                   className="mx_MessageComposer_roomReplaced_link"
+                   onClick={this._onTombstoneClick}
                 >
                     {_t("The conversation continues here.")}
                 </a>
@@ -458,8 +455,6 @@ export default class MessageComposer extends React.Component {
             );
         }
 
-        const showFormatBar = this.state.showFormatting && this.state.inputState.isRichTextEnabled;
-
         const wrapperClasses = classNames({
             mx_MessageComposer_wrapper: true,
             mx_MessageComposer_hasE2EIcon: !!this.props.e2eStatus,
@@ -471,7 +466,6 @@ export default class MessageComposer extends React.Component {
                         { controls }
                     </div>
                 </div>
-                { showFormatBar ? this.renderFormatBar() : null }
             </div>
         );
     }
