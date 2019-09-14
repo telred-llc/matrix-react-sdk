@@ -333,6 +333,9 @@ div.mx_EventTile_notSent.mx_EventTile_redacted .mx_UnknownBody {
 /* De-zalgoing */
 .mx_EventTile_body {
   overflow-y: hidden;
+    text-align: left;
+    display: block;
+    float: right;
 }
 
 .mx_EventTile_e2eIcon {
