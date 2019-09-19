@@ -691,7 +691,9 @@ module.exports = withMatrixClient(React.createClass({
                 </span>
                 <TooltipButton helpText={keyRequestHelpText} />
             </div> : null;
-
+        if (isEncryptionFailure && !this.state.previouslyRequestedKeys) {
+            this.onRequestKeysClick();
+        }
         let reactionsRow;
         if (!isRedacted) {
             const ReactionsRow = sdk.getComponent('messages.ReactionsRow');
