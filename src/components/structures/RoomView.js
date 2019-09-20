@@ -185,8 +185,7 @@ module.exports = React.createClass({
         const userPass = localStorage.getItem("mx_pass");
         const backupInfo = await MatrixClientPeg.get().getKeyBackupVersion();
         if(hasPassPhrase && !MatrixClientPeg.get().getKeyBackupEnabled()){
-            await CryptoPassPhrase.deletePhrase(accessToken)
-            debugger
+            //await CryptoPassPhrase.deletePhrase(accessToken)
             const backupSigStatus = await MatrixClientPeg.get().isKeyBackupTrusted(backupInfo);
             const passPhrase = CryptoPassPhrase.DeCryptoPassPhrase(userId, hasPassPhrase);
             if(!backupInfo){
@@ -206,7 +205,6 @@ module.exports = React.createClass({
                     } catch (e) {
                         if(userPass){
                             const RestoreKeyBackupDialog = sdk.getComponent('dialogs.keybackup.RestoreKeyBackupDialog');
-                            debugger
                             Modal.createTrackedDialog('Restore Backup', '', RestoreKeyBackupDialog, {onFinished: this.onFinished});
                         }else{
                             dis.dispatch({action: 'logout'});
@@ -216,7 +214,6 @@ module.exports = React.createClass({
             }
         }else if(!hasPassPhrase && userPass && backupInfo) {
             const RestoreKeyBackupDialog = sdk.getComponent('dialogs.keybackup.RestoreKeyBackupDialog');
-            debugger
             Modal.createTrackedDialog('Restore Backup', '', RestoreKeyBackupDialog, {onFinished: this.onFinished});
         }else if(!hasPassPhrase && userPass && !backupInfo){
             await CryptoPassPhrase.createPassPhrase(userPass, userId, accessToken);
@@ -306,9 +303,7 @@ module.exports = React.createClass({
             info = await MatrixClientPeg.get().createKeyBackupVersion(
                 _keyBackupInfo
             );
-            debugger
             await MatrixClientPeg.get().scheduleAllGroupSessionsForBackup();
-            debugger
         } catch (e) {
             if (info) {
                 MatrixClientPeg.get().deleteKeyBackupVersion(info.version);
