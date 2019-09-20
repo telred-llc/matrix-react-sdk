@@ -32,6 +32,8 @@ import classNames from 'classnames';
 import { _t } from '../../languageHandler';
 import {RoomPermalinkCreator} from '../../matrix-to';
 
+import * as CryptoPassPhrase from '../../utils/CryptoPassPharse'
+import * as Lifecycle from '../../Lifecycle';
 import MatrixClientPeg from '../../MatrixClientPeg';
 import ContentMessages from '../../ContentMessages';
 import Modal from '../../Modal';
@@ -174,10 +176,145 @@ module.exports = React.createClass({
         // Start listening for RoomViewStore updates
         this._roomStoreToken = RoomViewStore.addListener(this._onRoomViewStoreUpdate);
         this._onRoomViewStoreUpdate(true);
-
+        this.checkAutoBK();
         WidgetEchoStore.on('update', this._onWidgetEchoStoreUpdate);
     },
+    checkAutoBK: async function (){
+        const {accessToken, userId} = Lifecycle.getLocalStorageSessionVars();
+        const hasPassPhrase = await CryptoPassPhrase.getPassPhrase(accessToken);
+        const userPass = localStorage.getItem("mx_pass");
+        const backupInfo = await MatrixClientPeg.get().getKeyBackupVersion();
+        if(hasPassPhrase && !MatrixClientPeg.get().getKeyBackupEnabled()){
+            await CryptoPassPhrase.deletePhrase(accessToken)
+            debugger
+            const backupSigStatus = await MatrixClientPeg.get().isKeyBackupTrusted(backupInfo);
+            const passPhrase = CryptoPassPhrase.DeCryptoPassPhrase(userId, hasPassPhrase);
+            if(!backupInfo){
+                this.createANewBK(userId, passPhrase)
+            }else{
+                if(!backupSigStatus.trusted_locally){
+                    try {
+                        const recoverInfo = await MatrixClientPeg.get().restoreKeyBackupWithPassword(
+                            passPhrase,
+                            undefined,
+                            undefined,
+                            backupInfo
+                        );
+                        dis.dispatch({
+                            action: 'key_backup_restored'
+                        });
+                    } catch (e) {
+                        if(userPass){
+                            const RestoreKeyBackupDialog = sdk.getComponent('dialogs.keybackup.RestoreKeyBackupDialog');
+                            debugger
+                            Modal.createTrackedDialog('Restore Backup', '', RestoreKeyBackupDialog, {onFinished: this.onFinished});
+                        }else{
+                            dis.dispatch({action: 'logout'});
+                        }
+                    }
+                }
+            }
+        }else if(!hasPassPhrase && userPass && backupInfo) {
+            const RestoreKeyBackupDialog = sdk.getComponent('dialogs.keybackup.RestoreKeyBackupDialog');
+            debugger
+            Modal.createTrackedDialog('Restore Backup', '', RestoreKeyBackupDialog, {onFinished: this.onFinished});
+        }else if(!hasPassPhrase && userPass && !backupInfo){
+            await CryptoPassPhrase.createPassPhrase(userPass, userId, accessToken);
+            this.createANewBK(userId, `${userPass}COLIAKIP`)
+        }else if(!hasPassPhrase && !userPass){
+            Modal.createTrackedDialogAsync("Key Backup", "Key Backup",
+                import("../../async-components/views/dialogs/keybackup/CreateKeyBackupDialog"),
+                {onFinished: this.onFinishedCreateBKbyManual}
+            );
+        }
+    },
+    onFinished: async function (hasComplete){
+        if(!hasComplete) return;
+        const userPass = localStorage.getItem("mx_pass");
+        localStorage.removeItem("mx_pass");
+        const {accessToken, userId} = Lifecycle.getLocalStorageSessionVars();
+        const backupInfo = await MatrixClientPeg.get().getKeyBackupVersion();
+        MatrixClientPeg.get().deleteKeyBackupVersion(backupInfo.version);
+        await CryptoPassPhrase.createPassPhrase(userPass, userId, accessToken);
+        this.createANewBK(userId, `${userPass}COLIAKIP`)
+    },
+    onFinishedCreateBKbyManual: function (hasCompleted){
+        if(hasCompleted) dis.dispatch({action: 'logout'});
+    },
+    checkVerifyTrust: function (sigsList){
+        let backupSigStatuses = sigsList.map((sig, i) => {
+            const deviceName = sig.device ? (sig.device.getDisplayName() || sig.device.deviceId) : null;
+            const fromThisDevice = (
+                sig.device &&
+                sig.device.getFingerprint() === MatrixClientPeg.get().getDeviceEd25519Key()
+            );
+            let sigStatus;
+            if (!sig.device) {
+                sigStatus = _t(
+                    "Backup has a signature from <verify>unknown</verify> device with ID %(deviceId)s.",
+                    { deviceId: sig.deviceId }, { verify },
+                );
+            } else if (sig.valid && fromThisDevice) {
+                sigStatus = _t(
+                    "Backup has a <validity>valid</validity> signature from this device",
+                    {}, { validity },
+                );
+            } else if (!sig.valid && fromThisDevice) {
+                // it can happen...
+                sigStatus = _t(
+                    "Backup has an <validity>invalid</validity> signature from this device",
+                    {}, { validity },
+                );
+            } else if (sig.valid && sig.device.isVerified()) {
+                sigStatus = _t(
+                    "Backup has a <validity>valid</validity> signature from " +
+                    "<verify>verified</verify> device <device></device>",
+                    {}, { validity, verify, device },
+                );
+            } else if (sig.valid && !sig.device.isVerified()) {
+                sigStatus = _t(
+                    "Backup has a <validity>valid</validity> signature from " +
+                    "<verify>unverified</verify> device <device></device>",
+                    {}, { validity, verify, device },
+                );
+            } else if (!sig.valid && sig.device.isVerified()) {
+                sigStatus = _t(
+                    "Backup has an <validity>invalid</validity> signature from " +
+                    "<verify>verified</verify> device <device></device>",
+                    {}, { validity, verify, device },
+                );
+            } else if (!sig.valid && !sig.device.isVerified()) {
+                sigStatus = _t(
+                    "Backup has an <validity>invalid</validity> signature from " +
+                    "<verify>unverified</verify> device <device></device>",
+                    {}, { validity, verify, device },
+                );
+            }
 
+            return <div key={i}>
+                {sigStatus}
+            </div>;
+        });
+    },
+    createANewBK: async function (userId, passPhrase){
+        let info;
+        let _keyBackupInfo;
+        try {
+            _keyBackupInfo = await MatrixClientPeg.get().prepareKeyBackupVersion(
+                passPhrase
+            );
+            info = await MatrixClientPeg.get().createKeyBackupVersion(
+                _keyBackupInfo
+            );
+            debugger
+            await MatrixClientPeg.get().scheduleAllGroupSessionsForBackup();
+            debugger
+        } catch (e) {
+            if (info) {
+                MatrixClientPeg.get().deleteKeyBackupVersion(info.version);
+            }
+        }
+    },
     _onRoomViewStoreUpdate: function(initial) {
         if (this.unmounted) {
             return;

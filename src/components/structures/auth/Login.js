@@ -27,7 +27,7 @@ import SdkConfig from '../../../SdkConfig';
 import { messageForResourceLimitError } from '../../../utils/ErrorUtils';
 import AutoDiscoveryUtils, {ValidatedServerConfig} from "../../../utils/AutoDiscoveryUtils";
 import classNames from "classnames";
-
+import * as CryptoPassPhrase from '../../../utils/CryptoPassPharse';
 // For validating phone numbers without country codes
 const PHONE_NUMBER_REGEX = /^[0-9()\-\s]*$/;
 
@@ -179,8 +179,14 @@ module.exports = React.createClass({
 
         this._loginLogic.loginViaPassword(
             username, phoneCountry, phoneNumber, password,
-        ).then((data) => {
+        ).then(async (data) => {
             this.setState({serverIsAlive: true}); // it must be, we logged in.
+            //await CryptoPassPhrase.deletePhrase(data.accessToken)
+            // const checkHavePassPhrase = await CryptoPassPhrase.getPassPhrase(data.accessToken);
+            // if (!checkHavePassPhrase || checkHavePassPhrase==='null') {
+            //     await CryptoPassPhrase.createPassPhrase(password, data.userId, data.accessToken);
+            // }
+            data.password = password;
             this.props.onLoggedIn(data);
         }, (error) => {
             if (this._unmounted) {

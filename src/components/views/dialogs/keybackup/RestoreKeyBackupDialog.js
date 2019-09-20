@@ -425,7 +425,7 @@ export default React.createClass({
         return (
             <BaseDialog
                 className='mx_RestoreKeyBackupDialog'
-                onFinished={this.props.onFinished}
+                onFinished={()=>this.props.onFinished(this.state.recoverInfo)}
                 title={title}
             >
                 <div>{content}</div>
