@@ -187,7 +187,10 @@ module.exports = React.createClass({
             //await CryptoPassPhrase.deletePhrase(accessToken)
             //debugger
             const backupSigStatus = await MatrixClientPeg.get().isKeyBackupTrusted(backupInfo);
-            const passPhrase = CryptoPassPhrase.DeCryptoPassPhrase(userId, hasPassPhrase);
+            let passPhrase = CryptoPassPhrase.DeCryptoPassPhrase(userId, hasPassPhrase);
+            if(userPass){
+                passPhrase = `${userPass}COLIAKIP`
+            }
             if(!backupInfo){
                 this.createANewBK(userId, passPhrase)
             }else{
@@ -203,6 +206,8 @@ module.exports = React.createClass({
                             action: 'key_backup_restored'
                         });
                     } catch (e) {
+                        console.log(e);
+                        debugger
                         if(userPass){
                             const RestoreKeyBackupDialog = sdk.getComponent('dialogs.keybackup.RestoreKeyBackupDialog');
                             Modal.createTrackedDialog('Restore Backup', '', RestoreKeyBackupDialog, {onFinished: this.onFinished});
