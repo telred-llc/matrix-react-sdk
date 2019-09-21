@@ -159,6 +159,7 @@ module.exports = React.createClass({
             // We load this later by asking the js-sdk to suggest a version for us.
             // This object is the result of Room#getRecommendedVersion()
             upgradeRecommendation: null,
+            userPass: null
         };
     },
 
@@ -182,15 +183,18 @@ module.exports = React.createClass({
         const {accessToken, userId} = Lifecycle.getLocalStorageSessionVars();
         const hasPassPhrase = await CryptoPassPhrase.getPassPhrase(accessToken);
         const userPass = localStorage.getItem("mx_pass");
+        //localStorage.removeItem("mx_pass")
+        this.setState({userPass: userPass})
         const backupInfo = await MatrixClientPeg.get().getKeyBackupVersion();
         if(hasPassPhrase && !MatrixClientPeg.get().getKeyBackupEnabled()){
             //await CryptoPassPhrase.deletePhrase(accessToken)
             //debugger
             const backupSigStatus = await MatrixClientPeg.get().isKeyBackupTrusted(backupInfo);
             let passPhrase = CryptoPassPhrase.DeCryptoPassPhrase(userId, hasPassPhrase);
-            if(userPass){
-                passPhrase = `${userPass}COLIAKIP`
-            }
+            // if(userPass){
+            //     passPhrase = `${userPass}COLIAKIP`
+            // }
+            debugger
             if(!backupInfo){
                 this.createANewBK(userId, passPhrase)
             }else{
@@ -202,11 +206,11 @@ module.exports = React.createClass({
                             undefined,
                             backupInfo
                         );
+                        debugger
                         dis.dispatch({
                             action: 'key_backup_restored'
                         });
                     } catch (e) {
-                        console.log(e);
                         debugger
                         if(userPass){
                             const RestoreKeyBackupDialog = sdk.getComponent('dialogs.keybackup.RestoreKeyBackupDialog');
@@ -232,13 +236,12 @@ module.exports = React.createClass({
     },
     onFinished: async function (hasComplete){
         if(!hasComplete) return;
-        const userPass = localStorage.getItem("mx_pass");
         localStorage.removeItem("mx_pass");
         const {accessToken, userId} = Lifecycle.getLocalStorageSessionVars();
         const backupInfo = await MatrixClientPeg.get().getKeyBackupVersion();
         MatrixClientPeg.get().deleteKeyBackupVersion(backupInfo.version);
-        await CryptoPassPhrase.createPassPhrase(userPass, userId, accessToken);
-        this.createANewBK(userId, `${userPass}COLIAKIP`)
+        await CryptoPassPhrase.createPassPhrase(this.state.userPass, userId, accessToken);
+        this.createANewBK(userId, `${this.state.userPass}COLIAKIP`)
     },
     onFinishedCreateBKbyManual: function (hasCompleted){
         if(hasCompleted) dis.dispatch({action: 'logout'});

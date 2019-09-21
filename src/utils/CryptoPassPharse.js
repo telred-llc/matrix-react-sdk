@@ -2,14 +2,13 @@ import CryptoJS from 'crypto-js';
 import ENC from 'crypto-js/enc-utf8'
 
 const iterations = 100;
-const ivLength = 128;
 const serverApi = 'https://ck-server-demo.herokuapp.com'
-var str = "AAAAAAAAAAAAAAAAAAAAAA=="
+const str = "AAAAAAAAAAAAAAAAAAAAAA=="
 
 function CryptoPassPhrase(pass, userID) {
-    const salt = CryptoJS.lib.WordArray.random(ivLength);
+    const salt = CryptoJS.lib.WordArray.random(32);
     const key = CryptoJS.PBKDF2(`${userID}COLIAKIP`, salt, {
-        keySize: 16,
+        keySize: 8,
         iterations: iterations
     });
     let iv = CryptoJS.enc.Base64.parse(str);
@@ -21,7 +20,7 @@ function CryptoPassPhrase(pass, userID) {
     // salt, iv will be hex 32 in length
     // append them to the ciphertext for use  in decryption
     const transitmessage = encrypted.toString();
-    const saltB64 = CryptoJS.enc.Base64.stringify(salt);
+    const saltB64 = salt.toString(CryptoJS.enc.Base64);
     return `${saltB64}:${transitmessage}`;
 }
 
@@ -29,11 +28,11 @@ function DeCryptoPassPhrase(userID, passPhrase) {
     // Decrypt
     const arrSalt = passPhrase.split(':');
     const key = CryptoJS.PBKDF2(`${userID}COLIAKIP`, CryptoJS.enc.Base64.parse(arrSalt[0]), {
-        keySize: 16,
+        keySize: 8,
         iterations: iterations
     });
     const iv = CryptoJS.enc.Base64.parse(str);
-    let transitmessage = CryptoJS.AES.decrypt(arrSalt[1], key, {
+    const transitmessage = CryptoJS.AES.decrypt(arrSalt[1], key, {
         iv: iv,
         padding: CryptoJS.pad.Pkcs7,
         mode: CryptoJS.mode.CBC
