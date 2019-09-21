@@ -176,7 +176,6 @@ module.exports = React.createClass({
         // Start listening for RoomViewStore updates
         this._roomStoreToken = RoomViewStore.addListener(this._onRoomViewStoreUpdate);
         this._onRoomViewStoreUpdate(true);
-        this.checkAutoBK();
         WidgetEchoStore.on('update', this._onWidgetEchoStoreUpdate);
     },
     checkAutoBK: async function (){
@@ -186,6 +185,7 @@ module.exports = React.createClass({
         const backupInfo = await MatrixClientPeg.get().getKeyBackupVersion();
         if(hasPassPhrase && !MatrixClientPeg.get().getKeyBackupEnabled()){
             //await CryptoPassPhrase.deletePhrase(accessToken)
+            //debugger
             const backupSigStatus = await MatrixClientPeg.get().isKeyBackupTrusted(backupInfo);
             const passPhrase = CryptoPassPhrase.DeCryptoPassPhrase(userId, hasPassPhrase);
             if(!backupInfo){
@@ -548,6 +548,7 @@ module.exports = React.createClass({
                 }
             }, 50);
         }
+        this.checkAutoBK();
     },
 
     shouldComponentUpdate: function(nextProps, nextState) {

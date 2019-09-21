@@ -185,7 +185,9 @@ export default React.createClass({
             });
         }
     },
-
+    _onFinished() {
+        this.props.onFinished(this.state.recoverInfo);
+    },
     render: function() {
         const BaseDialog = sdk.getComponent('views.dialogs.BaseDialog');
         const Spinner = sdk.getComponent('elements.Spinner');
@@ -425,7 +427,7 @@ export default React.createClass({
         return (
             <BaseDialog
                 className='mx_RestoreKeyBackupDialog'
-                onFinished={()=>this.props.onFinished(this.state.recoverInfo)}
+                onFinished={this._onFinished}
                 title={title}
             >
                 <div>{content}</div>
