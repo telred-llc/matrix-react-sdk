@@ -385,14 +385,6 @@ async function _doSetLoggedIn(credentials, clearStorage) {
 
     const softLogout = isSoftLogout();
 
-    console.log(
-        "setLoggedIn: mxid: " + credentials.userId +
-        " deviceId: " + credentials.deviceId +
-        " guest: " + credentials.guest +
-        " hs: " + credentials.homeserverUrl +
-        " softLogout: " + softLogout,
-    );
-
     // This is dispatched to indicate that the user is still in the process of logging in
     // because async code may take some time to resolve, breaking the assumption that
     // `setLoggedIn` takes an "instant" to complete, and dispatch `on_logged_in` a few ms

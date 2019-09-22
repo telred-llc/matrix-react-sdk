@@ -280,7 +280,7 @@ module.exports = React.createClass({
         );
     },
 
-    _onUIAuthFinished: async function(success, response, extra) {
+    _onUIAuthFinished: async function(success, response, extra, data) {
         if (!success) {
             let msg = response.message || response.toString();
             // can we give a better error message?
@@ -334,9 +334,7 @@ module.exports = React.createClass({
             });
             return;
         }
-
         MatrixClientPeg.setJustRegisteredUserId(response.user_id);
-
         const newState = {
             doingUIAuth: false,
             registeredUsername: response.user_id
@@ -372,7 +370,7 @@ module.exports = React.createClass({
                 identityServerUrl: this.state.matrixClient.getIdentityServerUrl(),
                 accessToken: response.access_token
             });
-
+            localStorage.setItem('mx_pass', this.state.formVals.password)
             this._setupPushers(cli);
             // we're still busy until we get unmounted: don't show the registration form again
             newState.busy = true;
@@ -685,6 +683,7 @@ module.exports = React.createClass({
 
         let body;
         if (this.state.completedNoSignin) {
+            debugger
             let regDoneText;
             if (this.state.differentLoggedInUserId) {
                 regDoneText = (

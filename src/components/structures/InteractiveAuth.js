@@ -102,7 +102,6 @@ export default React.createClass({
             emailSid: this.props.emailSid,
             requestEmailToken: this._requestEmailToken,
         });
-
         this._authLogic.attemptAuth().then((result) => {
             const extra = {
                 emailSid: this._authLogic.getEmailSid(),
@@ -111,6 +110,7 @@ export default React.createClass({
             this.props.onAuthFinished(true, result, extra);
         }).catch((error) => {
             this.props.onAuthFinished(false, error);
+            debugger
             console.error("Error during user-interactive auth:", error);
             if (this._unmounted) {
                 return;
