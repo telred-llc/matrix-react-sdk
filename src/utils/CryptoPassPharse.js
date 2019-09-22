@@ -1,8 +1,10 @@
 import CryptoJS from 'crypto-js';
 import ENC from 'crypto-js/enc-utf8'
 
-const iterations = 100;
+const iterations = 10000;
+//environment: dev
 const serverApi = 'https://ck-server-demo.herokuapp.com'
+//const serverApi = 'https://op.clearkeep.me'
 const str = "AAAAAAAAAAAAAAAAAAAAAA=="
 
 function CryptoPassPhrase(pass, userID) {

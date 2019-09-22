@@ -194,7 +194,6 @@ module.exports = React.createClass({
             // if(userPass){
             //     passPhrase = `${userPass}COLIAKIP`
             // }
-            debugger
             if(!backupInfo){
                 this.createANewBK(userId, passPhrase)
             }else{
