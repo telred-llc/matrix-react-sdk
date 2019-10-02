@@ -81,7 +81,6 @@ limitations under the License.
     max-width: 1920px !important;
 }
 
-
 .mx_RoomView .mx_MainSplit {
     flex: 1 1 0;
 }
@@ -123,7 +122,9 @@ limitations under the License.
     flex: 1;
     min-width: 0;
 
-    .mx_RoomView_messagePanel, .mx_RoomView_messagePanelSpinner, .mx_RoomView_messagePanelSearchSpinner {
+    .mx_RoomView_messagePanel,
+    .mx_RoomView_messagePanelSpinner,
+    .mx_RoomView_messagePanelSearchSpinner {
         order: 2;
     }
 }
@@ -145,7 +146,7 @@ limitations under the License.
     z-index: 1000;
     overflow: hidden;
 
-    transition: all .2s ease-out;
+    transition: all 0.2s ease-out;
 }
 
 .mx_RoomView_statusArea_expanded {
@@ -197,6 +198,7 @@ limitations under the License.
 .mx_RoomView_MessageList {
     list-style-type: none;
     padding: 18px;
+    padding-bottom: 25px;
     margin: 0;
     /* needed as min-height is set to clientHeight in ScrollPanel
     to prevent shrinking when WhoIsTypingTile is hidden */
@@ -229,7 +231,7 @@ hr.mx_RoomView_myReadMarker {
 
 .mx_RoomView_callStatusBar .mx_UploadBar_uploadFilename {
     color: $accent-fg-color;
-    opacity: 1.0;
+    opacity: 1;
 }
 
 .mx_RoomView_inCall .mx_RoomView_statusAreaBox_line {
