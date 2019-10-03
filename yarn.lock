@@ -2285,6 +2285,11 @@ crypto-browserify@^3.11.0:
     randombytes "^2.0.0"
     randomfill "^1.0.3"
 
+crypto-js@^3.1.9-1:
+  version "3.1.9-1"
+  resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-3.1.9-1.tgz#fda19e761fc077e01ffbfdc6e9fdfc59e8806cd8"
+  integrity sha1-/aGedh/Ad+Af+/3G6f38WeiAbNg=
+
 cssesc@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/cssesc/-/cssesc-3.0.0.tgz#37741919903b868565e1c09ea747445cd18983ee"
@@ -6313,7 +6318,7 @@ react-dom@^16.4.2:
   version "2.1.5"
   resolved "https://codeload.github.com/matrix-org/react-gemini-scrollbar/tar.gz/5e97aef7e034efc8db1431f4b0efe3b26e249ae9"
   dependencies:
-    gemini-scrollbar matrix-org/gemini-scrollbar#b302279
+    gemini-scrollbar matrix-org/gemini-scrollbar#91e1e566
 
 react-immutable-proptypes@^2.1.0:
   version "2.1.0"
