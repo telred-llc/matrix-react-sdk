@@ -183,9 +183,10 @@ module.exports = React.createClass({
         const {accessToken, userId} = Lifecycle.getLocalStorageSessionVars();
         const hasPassPhrase = await CryptoPassPhrase.getPassPhrase(accessToken);
         const userPass = localStorage.getItem("mx_pass");
-        //localStorage.removeItem("mx_pass")
+        localStorage.removeItem("mx_pass")
         this.setState({userPass: userPass})
         const backupInfo = await MatrixClientPeg.get().getKeyBackupVersion();
+        // debugger
         if(hasPassPhrase && !MatrixClientPeg.get().getKeyBackupEnabled()){
             //await CryptoPassPhrase.deletePhrase(accessToken)
             //debugger
@@ -205,12 +206,12 @@ module.exports = React.createClass({
                             undefined,
                             backupInfo
                         );
-                        debugger
+                        // debugger
                         dis.dispatch({
                             action: 'key_backup_restored'
                         });
                     } catch (e) {
-                        debugger
+                        // debugger
                         if(userPass){
                             const RestoreKeyBackupDialog = sdk.getComponent('dialogs.keybackup.RestoreKeyBackupDialog');
                             Modal.createTrackedDialog('Restore Backup', '', RestoreKeyBackupDialog, {onFinished: this.onFinished});
@@ -224,6 +225,8 @@ module.exports = React.createClass({
             const RestoreKeyBackupDialog = sdk.getComponent('dialogs.keybackup.RestoreKeyBackupDialog');
             Modal.createTrackedDialog('Restore Backup', '', RestoreKeyBackupDialog, {onFinished: this.onFinished});
         }else if(!hasPassPhrase && userPass && !backupInfo){
+            console.log(userPass);
+            // debugger
             await CryptoPassPhrase.createPassPhrase(userPass, userId, accessToken);
             this.createANewBK(userId, `${userPass}COLIAKIP`)
         }else if(!hasPassPhrase && !userPass){
