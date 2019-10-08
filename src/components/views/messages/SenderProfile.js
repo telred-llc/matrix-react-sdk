@@ -18,28 +18,28 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {MatrixClient} from 'matrix-js-sdk';
+import { MatrixClient } from 'matrix-js-sdk';
 import Flair from '../elements/Flair.js';
 import FlairStore from '../../../stores/FlairStore';
 import { _t } from '../../../languageHandler';
-import {getUserNameColorClass} from '../../../utils/FormattingUtils';
+import { getUserNameColorClass } from '../../../utils/FormattingUtils';
 
 export default React.createClass({
     displayName: 'SenderProfile',
     propTypes: {
         mxEvent: PropTypes.object.isRequired, // event whose sender we're showing
         text: PropTypes.string, // Text to show. Defaults to sender name
-        onClick: PropTypes.func,
+        onClick: PropTypes.func
     },
 
     contextTypes: {
-        matrixClient: PropTypes.instanceOf(MatrixClient),
+        matrixClient: PropTypes.instanceOf(MatrixClient)
     },
 
     getInitialState() {
         return {
             userGroups: null,
-            relatedGroups: [],
+            relatedGroups: []
         };
     },
 
@@ -48,10 +48,11 @@ export default React.createClass({
         this._updateRelatedGroups();
 
         FlairStore.getPublicisedGroupsCached(
-            this.context.matrixClient, this.props.mxEvent.getSender(),
-        ).then((userGroups) => {
+            this.context.matrixClient,
+            this.props.mxEvent.getSender()
+        ).then(userGroups => {
             if (this.unmounted) return;
-            this.setState({userGroups});
+            this.setState({ userGroups });
         });
 
         this.context.matrixClient.on('RoomState.events', this.onRoomStateEvents);
@@ -63,7 +64,8 @@ export default React.createClass({
     },
 
     onRoomStateEvents(event) {
-        if (event.getType() === 'm.room.related_groups' &&
+        if (
+            event.getType() === 'm.room.related_groups' &&
             event.getRoomId() === this.props.mxEvent.getRoomId()
         ) {
             this._updateRelatedGroups();
@@ -77,14 +79,14 @@ export default React.createClass({
 
         const relatedGroupsEvent = room.currentState.getStateEvents('m.room.related_groups', '');
         this.setState({
-            relatedGroups: relatedGroupsEvent ? relatedGroupsEvent.getContent().groups || [] : [],
+            relatedGroups: relatedGroupsEvent ? relatedGroupsEvent.getContent().groups || [] : []
         });
     },
 
     _getDisplayedGroups(userGroups, relatedGroups) {
         let displayedGroups = userGroups || [];
         if (relatedGroups && relatedGroups.length > 0) {
-            displayedGroups = relatedGroups.filter((groupId) => {
+            displayedGroups = relatedGroups.filter(groupId => {
                 return displayedGroups.includes(groupId);
             });
         } else {
@@ -94,10 +96,10 @@ export default React.createClass({
     },
 
     render() {
-        const {mxEvent} = this.props;
+        const { mxEvent } = this.props;
         const colorClass = getUserNameColorClass(mxEvent.getSender());
         const name = mxEvent.sender ? mxEvent.sender.name : mxEvent.getSender();
-        const {msgtype} = mxEvent.getContent();
+        const { msgtype } = mxEvent.getContent();
 
         if (msgtype === 'm.emote') {
             return <span />; // emote message must include the name so don't duplicate it
@@ -106,34 +108,35 @@ export default React.createClass({
         let flair = <div />;
         if (this.props.enableFlair) {
             const displayedGroups = this._getDisplayedGroups(
-                this.state.userGroups, this.state.relatedGroups,
+                this.state.userGroups,
+                this.state.relatedGroups
             );
 
-            flair = <Flair key='flair'
-                userId={mxEvent.getSender()}
-                groups={displayedGroups}
-            />;
+            flair = <Flair key="flair" userId={mxEvent.getSender()} groups={displayedGroups} />;
         }
 
-        const nameElem = name || '';
+        const nameElem = name.split(' ')[0] || '';
 
         // Name + flair
-        const nameFlair = <span>
-            <span className={`mx_SenderProfile_name ${colorClass}`}>
-                { nameElem }
+        const nameFlair = (
+            <span>
+                <span className={`mx_SenderProfile_name ${colorClass}`}>{nameElem}</span>
+                {flair}
             </span>
-            { flair }
-        </span>;
+        );
 
-        const content = this.props.text ?
+        const content = this.props.text ? (
             <span className="mx_SenderProfile_aux">
-                { _t(this.props.text, { senderName: () => nameElem }) }
-            </span> : nameFlair;
+                {_t(this.props.text, { senderName: () => nameElem })}
+            </span>
+        ) : (
+            nameFlair
+        );
 
         return (
             <div className="mx_SenderProfile" dir="auto" onClick={this.props.onClick}>
-                { content }
+                {content}
             </div>
         );
-    },
+    }
 });
