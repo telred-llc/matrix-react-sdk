@@ -31,10 +31,7 @@ import { isContentActionable } from '../../../utils/EventUtils';
 import DMRoomMap from '../../../utils/DMRoomMap';
 
 function canCancel(eventStatus) {
-    return (
-        eventStatus === EventStatus.QUEUED ||
-        eventStatus === EventStatus.NOT_SENT
-    );
+    return eventStatus === EventStatus.QUEUED || eventStatus === EventStatus.NOT_SENT;
 }
 
 module.exports = React.createClass({
@@ -70,10 +67,7 @@ module.exports = React.createClass({
     },
 
     componentWillMount: function() {
-        MatrixClientPeg.get().on(
-            'RoomMember.powerLevel',
-            this._checkPermissions
-        );
+        MatrixClientPeg.get().on('RoomMember.powerLevel', this._checkPermissions);
         this._checkPermissions();
     },
 
@@ -92,10 +86,7 @@ module.exports = React.createClass({
             this.props.mxEvent,
             cli.credentials.userId
         );
-        let canPin = room.currentState.mayClientSendStateEvent(
-            'm.room.pinned_events',
-            cli
-        );
+        let canPin = room.currentState.mayClientSendStateEvent('m.room.pinned_events', cli);
 
         // HACK: Intentionally say we can't pin if the user doesn't want to use the functionality
         if (!SettingsStore.isFeatureEnabled('feature_pinning')) canPin = false;
@@ -104,17 +95,10 @@ module.exports = React.createClass({
     },
 
     _isPinned: function() {
-        const room = MatrixClientPeg.get().getRoom(
-            this.props.mxEvent.getRoomId()
-        );
-        const pinnedEvent = room.currentState.getStateEvents(
-            'm.room.pinned_events',
-            ''
-        );
+        const room = MatrixClientPeg.get().getRoom(this.props.mxEvent.getRoomId());
+        const pinnedEvent = room.currentState.getStateEvents('m.room.pinned_events', '');
         if (!pinnedEvent) return false;
-        return pinnedEvent
-            .getContent()
-            .pinned.includes(this.props.mxEvent.getId());
+        return pinnedEvent.getContent().pinned.includes(this.props.mxEvent.getId());
     },
 
     onResendClick: function() {
@@ -178,9 +162,7 @@ module.exports = React.createClass({
     },
 
     onRedactClick: function() {
-        const ConfirmRedactDialog = sdk.getComponent(
-            'dialogs.ConfirmRedactDialog'
-        );
+        const ConfirmRedactDialog = sdk.getComponent('dialogs.ConfirmRedactDialog');
         Modal.createTrackedDialog(
             'Confirm Redact Dialog',
             '',
@@ -201,9 +183,7 @@ module.exports = React.createClass({
                         // (e.g. no errcode or statusCode) as in that case the redactions end up in the
                         // detached queue and we show the room status bar to allow retry
                         if (typeof code !== 'undefined') {
-                            const ErrorDialog = sdk.getComponent(
-                                'dialogs.ErrorDialog'
-                            );
+                            const ErrorDialog = sdk.getComponent('dialogs.ErrorDialog');
                             // display error message stating you couldn't delete this.
                             Modal.createTrackedDialog(
                                 'You cannot delete this message',
@@ -211,10 +191,9 @@ module.exports = React.createClass({
                                 ErrorDialog,
                                 {
                                     title: _t('Error'),
-                                    description: _t(
-                                        'You cannot delete this message. (%(code)s)',
-                                        { code }
-                                    )
+                                    description: _t('You cannot delete this message. (%(code)s)', {
+                                        code
+                                    })
                                 }
                             );
                         }
@@ -257,13 +236,31 @@ module.exports = React.createClass({
         this.closeMenu();
     },
 
+    onCopyClick: function(e) {
+        const { mxEvent } = this.props;
+        const text = mxEvent._replacingEvent
+            ? mxEvent._replacingEvent._clearEvent.content.body.slice(3)
+            : mxEvent._clearEvent.content.body;
+        var textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('Copy');
+        textArea.remove();
+
+        const target = e.target;
+        target.style.color = '#33b37f';
+        target.textContent = 'Copied!';
+        setTimeout(() => {
+            target.style.color = 'black';
+            target.textContent = 'Copy';
+            this.closeMenu();
+        }, 500);
+    },
+
     onPinClick: function() {
         MatrixClientPeg.get()
-            .getStateEvent(
-                this.props.mxEvent.getRoomId(),
-                'm.room.pinned_events',
-                ''
-            )
+            .getStateEvent(this.props.mxEvent.getRoomId(), 'm.room.pinned_events', '')
             .catch(e => {
                 // Intercept the Event Not Found error and fall through the promise chain with no event.
                 if (e.errcode === 'M_NOT_FOUND') return null;
@@ -276,10 +273,7 @@ module.exports = React.createClass({
                     eventIds.push(this.props.mxEvent.getId());
                 } else {
                     // Pinned - remove
-                    eventIds.splice(
-                        eventIds.indexOf(this.props.mxEvent.getId()),
-                        1
-                    );
+                    eventIds.splice(eventIds.indexOf(this.props.mxEvent.getId()), 1);
                 }
 
                 const cli = MatrixClientPeg.get();
@@ -315,15 +309,10 @@ module.exports = React.createClass({
     onPermalinkClick: function(e: Event) {
         e.preventDefault();
         const ShareDialog = sdk.getComponent('dialogs.ShareDialog');
-        Modal.createTrackedDialog(
-            'share room message dialog',
-            '',
-            ShareDialog,
-            {
-                target: this.props.mxEvent,
-                permalinkCreator: this.props.permalinkCreator
-            }
-        );
+        Modal.createTrackedDialog('share room message dialog', '', ShareDialog, {
+            target: this.props.mxEvent,
+            permalinkCreator: this.props.permalinkCreator
+        });
         this.closeMenu();
     },
 
@@ -357,12 +346,10 @@ module.exports = React.createClass({
 
     render: function() {
         const mxEvent = this.props.mxEvent;
+
         const eventStatus = mxEvent.status;
-        const editStatus =
-            mxEvent.replacingEvent() && mxEvent.replacingEvent().status;
-        const redactStatus =
-            mxEvent.localRedactionEvent() &&
-            mxEvent.localRedactionEvent().status;
+        const editStatus = mxEvent.replacingEvent() && mxEvent.replacingEvent().status;
+        const redactStatus = mxEvent.localRedactionEvent() && mxEvent.localRedactionEvent().status;
         const unsentReactionsCount = this._getUnsentReactions().length;
         const pendingReactionsCount = this._getPendingReactions().length;
         const allowCancel =
@@ -377,6 +364,7 @@ module.exports = React.createClass({
         let redactButton;
         let cancelButton;
         let forwardButton;
+        let copyButton;
         let pinButton;
         let viewClearSourceButton;
         let unhidePreviewButton;
@@ -389,10 +377,7 @@ module.exports = React.createClass({
         if (!mxEvent.isRedacted()) {
             if (eventStatus === EventStatus.NOT_SENT) {
                 resendButton = (
-                    <div
-                        className='mx_MessageContextMenu_field'
-                        onClick={this.onResendClick}
-                    >
+                    <div className="mx_MessageContextMenu_field" onClick={this.onResendClick}>
                         {_t('Resend')}
                     </div>
                 );
@@ -400,10 +385,7 @@ module.exports = React.createClass({
 
             if (editStatus === EventStatus.NOT_SENT) {
                 resendEditButton = (
-                    <div
-                        className='mx_MessageContextMenu_field'
-                        onClick={this.onResendEditClick}
-                    >
+                    <div className="mx_MessageContextMenu_field" onClick={this.onResendEditClick}>
                         {_t('Resend edit')}
                     </div>
                 );
@@ -412,7 +394,7 @@ module.exports = React.createClass({
             if (unsentReactionsCount !== 0) {
                 resendReactionsButton = (
                     <div
-                        className='mx_MessageContextMenu_field'
+                        className="mx_MessageContextMenu_field"
                         onClick={this.onResendReactionsClick}
                     >
                         {_t('Resend %(unsentCount)s reaction(s)', {
@@ -425,10 +407,7 @@ module.exports = React.createClass({
 
         if (redactStatus === EventStatus.NOT_SENT) {
             resendRedactionButton = (
-                <div
-                    className='mx_MessageContextMenu_field'
-                    onClick={this.onResendRedactionClick}
-                >
+                <div className="mx_MessageContextMenu_field" onClick={this.onResendRedactionClick}>
                     {_t('Resend removal')}
                 </div>
             );
@@ -438,10 +417,7 @@ module.exports = React.createClass({
             redactButton =
                 this._isDirectMessageRoom(this.props.mxEvent.event.room_id) &&
                 !this._isAuthorOfMessage() ? null : (
-                    <div
-                        className='mx_MessageContextMenu_field'
-                        onClick={this.onRedactClick}
-                    >
+                    <div className="mx_MessageContextMenu_field" onClick={this.onRedactClick}>
                         {_t('Remove')}
                     </div>
                 );
@@ -449,10 +425,7 @@ module.exports = React.createClass({
 
         if (allowCancel) {
             cancelButton = (
-                <div
-                    className='mx_MessageContextMenu_field'
-                    onClick={this.onCancelSendClick}
-                >
+                <div className="mx_MessageContextMenu_field" onClick={this.onCancelSendClick}>
                     {_t('Cancel Sending')}
                 </div>
             );
@@ -460,43 +433,36 @@ module.exports = React.createClass({
 
         if (isContentActionable(mxEvent)) {
             forwardButton = (
-                <div
-                    className='mx_MessageContextMenu_field'
-                    onClick={this.onForwardClick}
-                >
+                <div className="mx_MessageContextMenu_field" onClick={this.onForwardClick}>
                     {_t('Forward Message')}
                 </div>
             );
-
             if (this.state.canPin) {
                 pinButton = (
-                    <div
-                        className='mx_MessageContextMenu_field'
-                        onClick={this.onPinClick}
-                    >
-                        {this._isPinned()
-                            ? _t('Unpin Message')
-                            : _t('Pin Message')}
+                    <div className="mx_MessageContextMenu_field" onClick={this.onPinClick}>
+                        {this._isPinned() ? _t('Unpin Message') : _t('Pin Message')}
                     </div>
                 );
             }
         }
 
+        if (mxEvent._clearEvent.content.msgtype === 'm.text') {
+            copyButton = (
+                <div className="mx_MessageContextMenu_field" onClick={this.onCopyClick}>
+                    {'Copy'}
+                </div>
+            );
+        }
+
         const viewSourceButton = (
-            <div
-                className='mx_MessageContextMenu_field'
-                onClick={this.onViewSourceClick}
-            >
+            <div className="mx_MessageContextMenu_field" onClick={this.onViewSourceClick}>
                 {_t('View Source')}
             </div>
         );
 
         if (mxEvent.getType() !== mxEvent.getWireType()) {
             viewClearSourceButton = (
-                <div
-                    className='mx_MessageContextMenu_field'
-                    onClick={this.onViewClearSourceClick}
-                >
+                <div className="mx_MessageContextMenu_field" onClick={this.onViewClearSourceClick}>
                     {_t('View Decrypted Source')}
                 </div>
             );
@@ -506,7 +472,7 @@ module.exports = React.createClass({
             if (this.props.eventTileOps.isWidgetHidden()) {
                 unhidePreviewButton = (
                     <div
-                        className='mx_MessageContextMenu_field'
+                        className="mx_MessageContextMenu_field"
                         onClick={this.onUnhidePreviewClick}
                     >
                         {_t('Unhide Preview')}
@@ -517,21 +483,13 @@ module.exports = React.createClass({
 
         let permalink;
         if (this.props.permalinkCreator) {
-            permalink = this.props.permalinkCreator.forEvent(
-                this.props.mxEvent.getId()
-            );
+            permalink = this.props.permalinkCreator.forEvent(this.props.mxEvent.getId());
         }
         // XXX: if we use room ID, we should also include a server where the event can be found (other than in the domain of the event ID)
         const permalinkButton = (
-            <div className='mx_MessageContextMenu_field'>
-                <a
-                    href={permalink}
-                    target='_blank'
-                    rel='noopener'
-                    onClick={this.onPermalinkClick}
-                >
-                    {mxEvent.isRedacted() ||
-                    mxEvent.getType() !== 'm.room.message'
+            <div className="mx_MessageContextMenu_field">
+                <a href={permalink} target="_blank" rel="noopener" onClick={this.onPermalinkClick}>
+                    {mxEvent.isRedacted() || mxEvent.getType() !== 'm.room.message'
                         ? _t('Share Permalink')
                         : _t('Share Message')}
                 </a>
@@ -540,10 +498,7 @@ module.exports = React.createClass({
 
         if (this.props.eventTileOps && this.props.eventTileOps.getInnerText) {
             quoteButton = (
-                <div
-                    className='mx_MessageContextMenu_field'
-                    onClick={this.onQuoteClick}
-                >
+                <div className="mx_MessageContextMenu_field" onClick={this.onQuoteClick}>
                     {_t('Quote')}
                 </div>
             );
@@ -555,11 +510,11 @@ module.exports = React.createClass({
             isUrlPermitted(mxEvent.event.content.external_url)
         ) {
             externalURLButton = (
-                <div className='mx_MessageContextMenu_field'>
+                <div className="mx_MessageContextMenu_field">
                     <a
                         href={mxEvent.event.content.external_url}
-                        rel='noopener'
-                        target='_blank'
+                        rel="noopener"
+                        target="_blank"
                         onClick={this.closeMenu}
                     >
                         {_t('Source URL')}
@@ -571,7 +526,7 @@ module.exports = React.createClass({
         if (this.props.collapseReplyThread) {
             collapseReplyThread = (
                 <div
-                    className='mx_MessageContextMenu_field'
+                    className="mx_MessageContextMenu_field"
                     onClick={this.onCollapseReplyThreadClick}
                 >
                     {_t('Collapse Reply Thread')}
@@ -582,17 +537,14 @@ module.exports = React.createClass({
         let e2eInfo;
         if (this.props.e2eInfoCallback) {
             e2eInfo = (
-                <div
-                    className='mx_MessageContextMenu_field'
-                    onClick={this.e2eInfoClicked}
-                >
+                <div className="mx_MessageContextMenu_field" onClick={this.e2eInfoClicked}>
                     {_t('End-to-end encryption information')}
                 </div>
             );
         }
 
         return (
-            <div className='mx_MessageContextMenu'>
+            <div className="mx_MessageContextMenu">
                 {resendButton}
                 {resendEditButton}
                 {resendReactionsButton}
@@ -600,6 +552,7 @@ module.exports = React.createClass({
                 {redactButton}
                 {cancelButton}
                 {forwardButton}
+                {copyButton}
                 {pinButton}
                 {viewSourceButton}
                 {viewClearSourceButton}
