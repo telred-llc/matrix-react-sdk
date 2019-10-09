@@ -183,20 +183,23 @@ module.exports = React.createClass({
         const {accessToken, userId} = Lifecycle.getLocalStorageSessionVars();
         const hasPassPhrase = await CryptoPassPhrase.getPassPhrase(accessToken);
         const userPass = localStorage.getItem("mx_pass");
-        //localStorage.removeItem("mx_pass")
+        localStorage.removeItem("mx_pass")
         this.setState({userPass: userPass})
         const backupInfo = await MatrixClientPeg.get().getKeyBackupVersion();
+        // debugger
         if(hasPassPhrase && !MatrixClientPeg.get().getKeyBackupEnabled()){
             const backupSigStatus = await MatrixClientPeg.get().isKeyBackupTrusted(backupInfo);
             let passPhrase = CryptoPassPhrase.DeCryptoPassPhrase(userId, hasPassPhrase);
             this.setState({passPhrase: passPhrase})
             if(!backupInfo){
+
                 this.createANewBK(passPhrase)
             } else if (!backupSigStatus.trusted_locally) {
                 this.DecryptByKeyBackup(passPhrase, backupInfo);
             }
         }
         else if(!hasPassPhrase && userPass && !backupInfo){
+
             await CryptoPassPhrase.createPassPhrase(userPass, userId, accessToken);
             this.createANewBK(`${userPass}COLIAKIP`)
         }

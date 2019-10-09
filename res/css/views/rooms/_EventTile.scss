@@ -47,6 +47,8 @@ limitations under the License.
     & .mx_MessageEditor_editor {
         overflow-x: inherit;
         text-align: left;
+        max-height: 250px;
+        overflow: auto;
     }
 
     & .mx_EventTile_readAvatars {

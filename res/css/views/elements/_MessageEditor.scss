@@ -21,7 +21,7 @@ limitations under the License.
     // padding around and in the editor.
     // Actual values from fiddling around in inspector
     margin: -7px -10px -5px -10px;
-    overflow: visible !important;   // override mx_EventTile_content
+    overflow: visible !important; // override mx_EventTile_content
 
     .mx_MessageEditor_editor {
         border-radius: 4px;
@@ -31,14 +31,15 @@ limitations under the License.
         white-space: pre-wrap;
         word-wrap: break-word;
         outline: none;
-        max-height: 200px;
+        // max-height: 200px;
         overflow-x: auto;
 
         &:focus {
             border-color: $accent-color-50pct;
         }
 
-        span.mx_UserPill, span.mx_RoomPill {
+        span.mx_UserPill,
+        span.mx_RoomPill {
             padding-left: 21px;
             position: relative;
 
@@ -68,13 +69,11 @@ limitations under the License.
         flex-direction: row;
         justify-content: flex-end;
         padding: 5px;
-        position: absolute;
-        left: 0;
         background: $header-panel-bg-color;
         z-index: 100;
         right: 0;
-        margin: 0 -110px 0 0;
-        padding-right: 147px;
+        // margin: 0 -110px 0 0;
+        padding-right: 0;
 
         .mx_AccessibleButton {
             margin-left: 5px;
@@ -90,5 +89,5 @@ limitations under the License.
 
 .mx_EventTile_last .mx_MessageEditor_buttons {
     position: static;
-    margin-right: -147px;
+    // margin-right: -147px;
 }

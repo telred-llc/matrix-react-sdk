@@ -118,6 +118,7 @@ limitations under the License.
     overflow-y: auto;
     overflow-x: hidden;
     word-break: break-word;
+    word-break: break-all;
 }
 
 // FIXME: rather unpleasant hack to get rid of <p/> margins.
@@ -130,8 +131,12 @@ limitations under the License.
 }
 
 @keyframes visualbell {
-    from { background-color: #faa; }
-    to { background-color: $primary-bg-color; }
+    from {
+        background-color: #faa;
+    }
+    to {
+        background-color: $primary-bg-color;
+    }
 }
 
 .mx_MessageComposer_input_error {
@@ -174,7 +179,7 @@ limitations under the License.
 .mx_MessageComposer_input textarea::-moz-placeholder {
     line-height: 100%;
     color: $accent-color;
-    opacity: 1.0;
+    opacity: 1;
 }
 .mx_MessageComposer_input textarea::-webkit-input-placeholder {
     color: $accent-color;
