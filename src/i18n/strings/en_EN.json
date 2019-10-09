@@ -1694,5 +1694,10 @@
     "If you didn't remove the recovery method, an attacker may be trying to access your account. Change your account password and set a new recovery method immediately in Settings.": "If you didn't remove the recovery method, an attacker may be trying to access your account. Change your account password and set a new recovery method immediately in Settings.",
     "Failed to set direct chat tag": "Failed to set direct chat tag",
     "Failed to remove tag %(tagName)s from room": "Failed to remove tag %(tagName)s from room",
-    "Failed to add tag %(tagName)s to room": "Failed to add tag %(tagName)s to room"
+    "Failed to add tag %(tagName)s to room": "Failed to add tag %(tagName)s to room",
+    "Try Again": "Try Again",
+    "New Key": "New Key",
+    "Create new backup key": "Create new backup key",
+    "You’ll lose access to your old encrypted messages.": "You’ll lose access to your old encrypted messages.",
+    "Try again or using new key (Old data will be lost)": "Try again or using new key (Old data will be lost)"
 }

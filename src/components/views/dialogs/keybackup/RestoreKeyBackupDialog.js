@@ -42,7 +42,8 @@ export default React.createClass({
             recoveryKeyValid: false,
             forceRecoveryKey: false,
             passPhrase: '',
-            restoreType: null
+            restoreType: null,
+            createNewBk: false,
         };
     },
 
@@ -71,7 +72,7 @@ export default React.createClass({
             'Key Backup',
             import(
                 '../../../../async-components/views/dialogs/keybackup/CreateKeyBackupDialog'
-            ),
+                ),
             {
                 onFinished: () => {
                     this._loadBackupStatus();
@@ -188,6 +189,25 @@ export default React.createClass({
     _onFinished() {
         this.props.onFinished(this.state.recoverInfo);
     },
+    _onTryAgain() {
+        const newState = {
+            ...this.state,
+            loading: false,
+            loadError: null,
+            restoreError: null,
+            recoveryKey: '',
+            recoverInfo: null,
+            recoveryKeyValid: false,
+            forceRecoveryKey: false,
+            passPhrase: '',
+            restoreType: null,
+            createNewBk: false
+        }
+        this.setState(newState);
+    },
+    _onCreateNewBk() {
+        this.props.onFinished(true);
+    },
     render: function() {
         const BaseDialog = sdk.getComponent('views.dialogs.BaseDialog');
         const Spinner = sdk.getComponent('elements.Spinner');
@@ -200,13 +220,18 @@ export default React.createClass({
 
         let content;
         let title;
+        const DialogButtons = sdk.getComponent(
+            'views.elements.DialogButtons',
+        );
         if (this.state.loading) {
             title = _t('Loading...');
             content = <Spinner />;
-        } else if (this.state.loadError) {
+        }
+        else if (this.state.loadError) {
             title = _t('Error');
             content = _t('Unable to load backup status');
-        } else if (this.state.restoreError) {
+        }
+        else if (this.state.restoreError) {
             if (
                 this.state.restoreError.errcode ===
                 MatrixClient.RESTORE_BACKUP_ERROR_BAD_KEY
@@ -218,21 +243,38 @@ export default React.createClass({
                             <p>
                                 {_t(
                                     'Backup could not be decrypted with this key: ' +
-                                        'please verify that you entered the correct recovery key.'
+                                    'please verify that you entered the correct recovery key.'
                                 )}
                             </p>
                         </div>
                     );
-                } else {
+                }
+                else {
                     title = _t('Incorrect Recovery Passphrase');
+                    let message = 'Backup could not be decrypted with this passphrase: ' +
+                        'please verify that you entered the correct recovery passphrase.'
+                    if (this.props.hasUserPass) {
+                        message= 'Try again or using new key (Old data will be lost)';
+                    }
                     content = (
                         <div>
                             <p>
                                 {_t(
-                                    'Backup could not be decrypted with this passphrase: ' +
-                                        'please verify that you entered the correct recovery passphrase.'
+                                    message,
                                 )}
                             </p>
+                            {
+                                this.props.hasUserPass?(
+                                    <DialogButtons
+                                        primaryButton={_t('New Key')}
+                                        onPrimaryButtonClick={this._onCreateNewBk}
+                                        hasCancel={true}
+                                        cancelButton={_t('Try Again')}
+                                        onCancel={this._onTryAgain}
+                                        focus={false}
+                                    />
+                                ):('')
+                            }
                         </div>
                     );
                 }
@@ -240,10 +282,12 @@ export default React.createClass({
                 title = _t('Error');
                 content = _t('Unable to restore backup');
             }
-        } else if (this.state.backupInfo === null) {
+        }
+        else if (this.state.backupInfo === null) {
             title = _t('Error');
             content = _t('No backup found!');
-        } else if (this.state.recoverInfo) {
+        }
+        else if (this.state.recoverInfo) {
             title = _t('Backup Restored');
             let failedToDecrypt;
             if (
@@ -269,10 +313,8 @@ export default React.createClass({
                     {failedToDecrypt}
                 </div>
             );
-        } else if (backupHasPassphrase && !this.state.forceRecoveryKey) {
-            const DialogButtons = sdk.getComponent(
-                'views.elements.DialogButtons'
-            );
+        }
+        else if (backupHasPassphrase && !this.state.forceRecoveryKey && !this.state.createNewBk) {
             const AccessibleButton = sdk.getComponent(
                 'elements.AccessibleButton'
             );
@@ -282,7 +324,7 @@ export default React.createClass({
                     <p>
                         {_t(
                             '<b>Warning</b>: you should only set up key backup ' +
-                                'from a trusted computer.',
+                            'from a trusted computer.',
                             {},
                             { b: sub => <b>{sub}</b> }
                         )}
@@ -290,7 +332,7 @@ export default React.createClass({
                     <p>
                         {_t(
                             'Access your secure message history and set up secure ' +
-                                'messaging by entering your recovery passphrase.'
+                            'messaging by entering your recovery passphrase.'
                         )}
                     </p>
 
@@ -313,8 +355,8 @@ export default React.createClass({
                     </div>
                     {_t(
                         "If you've forgotten your recovery passphrase you can " +
-                            '<button1>use your recovery key</button1> or ' +
-                            '<button2>set up new recovery options</button2>',
+                        '<button1>use your recovery key</button1> or ' +
+                        '<button2>set up new recovery options</button2>',
                         {},
                         {
                             button1: s => (
@@ -339,11 +381,28 @@ export default React.createClass({
                     )}
                 </div>
             );
-        } else {
-            title = _t('Enter Recovery Key');
-            const DialogButtons = sdk.getComponent(
-                'views.elements.DialogButtons'
+        }
+        else if (this.state.createNewBk) {
+            title = _t('Create new backup key');
+            content = (
+                <div>
+                    <p>
+                        {_t(
+                            'You’ll lose access to your old encrypted messages.'
+                        )}
+                    </p>
+                    <DialogButtons
+                        primaryButton={_t('Yes')}
+                        onPrimaryButtonClick={this._onCreateNewBk}
+                        hasCancel={true}
+                        onCancel={this._onCancel}
+                        focus={false}
+                    />
+                </div>
             );
+        }
+        else {
+            title = _t('Enter Recovery Key');
             const AccessibleButton = sdk.getComponent(
                 'elements.AccessibleButton'
             );
@@ -374,7 +433,7 @@ export default React.createClass({
                     <p>
                         {_t(
                             '<b>Warning</b>: you should only set up key backup ' +
-                                'from a trusted computer.',
+                            'from a trusted computer.',
                             {},
                             { b: sub => <b>{sub}</b> }
                         )}
@@ -382,7 +441,7 @@ export default React.createClass({
                     <p>
                         {_t(
                             'Access your secure message history and set up secure ' +
-                                'messaging by entering your recovery key.'
+                            'messaging by entering your recovery key.'
                         )}
                     </p>
 
@@ -406,7 +465,7 @@ export default React.createClass({
                     </div>
                     {_t(
                         "If you've forgotten your recovery passphrase you can " +
-                            '<button>set up new recovery options</button>',
+                        '<button>set up new recovery options</button>',
                         {},
                         {
                             button: s => (
