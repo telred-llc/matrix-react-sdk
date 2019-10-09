@@ -1,11 +1,11 @@
 import CryptoJS from 'crypto-js';
-import ENC from 'crypto-js/enc-utf8'
+import ENC from 'crypto-js/enc-utf8';
 
 const iterations = 10000;
 //environment: dev
-const serverApi = 'https://ck-server-demo.herokuapp.com'
-//const serverApi = 'https://op.clearkeep.me'
-const str = "AAAAAAAAAAAAAAAAAAAAAA=="
+// const serverApi = 'https://ck-server-demo.herokuapp.com'
+const serverApi = 'https://op.clearkeep.me';
+const str = 'AAAAAAAAAAAAAAAAAAAAAA==';
 
 function CryptoPassPhrase(pass, userID) {
     const salt = CryptoJS.lib.WordArray.random(32);
@@ -45,7 +45,7 @@ function DeCryptoPassPhrase(userID, passPhrase) {
 function getPassPhrase(access_token) {
     const myInit = {
         headers: {
-            'Authorization': 'Bearer ' + access_token
+            Authorization: 'Bearer ' + access_token
         }
     };
     const url = `${serverApi}/api/user/get-passphrase`;
@@ -68,7 +68,7 @@ function createPassPhrase(userPass, userID, access_token) {
     const myInit = {
         method: 'post',
         headers: {
-            'Authorization': 'Bearer ' + access_token,
+            Authorization: 'Bearer ' + access_token,
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
@@ -84,7 +84,7 @@ function deletePhrase(access_token) {
     const init = {
         method: 'delete',
         headers: {
-            'Authorization': 'Bearer ' + access_token
+            Authorization: 'Bearer ' + access_token
         }
     };
     return fetch(url, init);
