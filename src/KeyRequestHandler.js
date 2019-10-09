@@ -43,8 +43,8 @@ export default class KeyRequestHandler {
 
         // check if we already have this request
         const requests = this._pendingKeyRequests[userId][deviceId];
-        if (requests.find((r) => r.requestId === requestId)) {
-            console.log("Already have this key request, ignoring");
+        if (requests.find(r => r.requestId === requestId)) {
+            console.log('Already have this key request, ignoring');
             return;
         }
 
@@ -52,7 +52,7 @@ export default class KeyRequestHandler {
 
         if (this._currentUser) {
             // ignore for now
-            console.log("Key request, but we already have a dialog open");
+            console.log('Key request, but we already have a dialog open');
             return;
         }
 
@@ -67,8 +67,8 @@ export default class KeyRequestHandler {
 
         if (userId === this._currentUser && deviceId === this._currentDevice) {
             console.log(
-                "room key request cancellation for the user we currently have a"
-                + " dialog open for",
+                'room key request cancellation for the user we currently have a' +
+                    ' dialog open for'
             );
             // TODO: update the dialog. For now, we just ignore the
             // cancellation.
@@ -82,11 +82,11 @@ export default class KeyRequestHandler {
         if (!requests) {
             return;
         }
-        const idx = requests.findIndex((r) => r.requestId === requestId);
+        const idx = requests.findIndex(r => r.requestId === requestId);
         if (idx < 0) {
             return;
         }
-        console.log("Forgetting room key request");
+        console.log('Forgetting room key request');
         requests.splice(idx, 1);
         if (requests.length === 0) {
             delete this._pendingKeyRequests[userId][deviceId];
@@ -107,7 +107,7 @@ export default class KeyRequestHandler {
         }
         console.log(`Starting KeyShareDialog for ${userId}:${deviceId}`);
 
-        const finished = (r) => {
+        const finished = r => {
             this._currentUser = null;
             this._currentDevice = null;
 
@@ -123,16 +123,15 @@ export default class KeyRequestHandler {
 
             this._processNextRequest();
         };
-
-        const KeyShareDialog = sdk.getComponent("dialogs.KeyShareDialog");
-        Modal.appendTrackedDialog('Key Share', 'Process Next Request', KeyShareDialog, {
-            matrixClient: this._matrixClient,
-            userId: userId,
-            deviceId: deviceId,
-            onFinished: finished,
-        });
+        finished(true);
+        // const KeyShareDialog = sdk.getComponent("dialogs.KeyShareDialog");
+        // Modal.appendTrackedDialog('Key Share', 'Process Next Request', KeyShareDialog, {
+        //     matrixClient: this._matrixClient,
+        //     userId: userId,
+        //     deviceId: deviceId,
+        //     onFinished: finished,
+        // });
         this._currentUser = userId;
         this._currentDevice = deviceId;
     }
 }
-
