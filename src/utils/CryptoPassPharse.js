@@ -90,17 +90,10 @@ function deletePhrase(access_token) {
     return fetch(url, init);
 }
 
-async function checkKeyBackup(userID, passPhraseEnCrypt, MatrixClientPeg) {
-    const passPhrase = DeCryptoPassPhrase(userID, passPhraseEnCrypt);
-    const resultKey = await MatrixClientPeg.get().checkKeyBackup();
-    console.log(resultKey);
-    return passPhrase;
-}
 export default {
     CryptoPassPhrase,
     DeCryptoPassPhrase,
     getPassPhrase,
     createPassPhrase,
-    deletePhrase,
-    checkKeyBackup
+    deletePhrase
 };
