@@ -35,14 +35,11 @@ export default class ProfileSettings extends React.Component {
             // There seems to be a condition where the User object won't exist until a room
             // exists on the account. To work around this, we'll just create a temporary User
             // and use that.
-            console.warn(
-                'User object not found - creating one for ProfileSettings'
-            );
+            console.warn('User object not found - creating one for ProfileSettings');
             user = new User(client.getUserId());
         }
         let avatarUrl = user.avatarUrl;
-        if (avatarUrl)
-            avatarUrl = client.mxcUrlToHttp(avatarUrl, 96, 96, 'crop', false);
+        if (avatarUrl) avatarUrl = client.mxcUrlToHttp(avatarUrl, 96, 96, 'crop', false);
         this.state = {
             userId: user.userId,
             originalDisplayName: user.displayName,
@@ -50,7 +47,8 @@ export default class ProfileSettings extends React.Component {
             originalAvatarUrl: avatarUrl,
             avatarUrl: avatarUrl,
             avatarFile: null,
-            enableProfileSave: false
+            enableProfileSave: false,
+            spaceError: false
         };
     }
 
@@ -74,21 +72,17 @@ export default class ProfileSettings extends React.Component {
         // TODO: What do we do about errors?
 
         if (this.state.originalDisplayName !== this.state.displayName) {
-            await client.setDisplayName(this.state.displayName);
-            newState.originalDisplayName = this.state.displayName;
+            const trimmedDisplayname = this.state.displayName.trim();
+            await this.setState({ displayName: trimmedDisplayname });
+            await client.setDisplayName(trimmedDisplayname);
+            newState.originalDisplayName = trimmedDisplayname;
             dis.dispatch({ action: 'profile_name_changed' });
         }
 
         if (this.state.avatarFile) {
             const uri = await client.uploadContent(this.state.avatarFile);
             await client.setAvatarUrl(uri);
-            newState.avatarUrl = client.mxcUrlToHttp(
-                uri,
-                96,
-                96,
-                'crop',
-                false
-            );
+            newState.avatarUrl = client.mxcUrlToHttp(uri, 96, 96, 'crop', false);
             newState.originalAvatarUrl = newState.avatarUrl;
             newState.avatarFile = null;
             dis.dispatch({ action: 'profile_img_changed' });
@@ -98,9 +92,12 @@ export default class ProfileSettings extends React.Component {
     };
 
     _onDisplayNameChanged = e => {
+        const text = e.target.value;
+        const isSpaceOnly = !text.replace(/\s/g, '').length;
         this.setState({
-            displayName: e.target.value,
-            enableProfileSave: true
+            displayName: text,
+            enableProfileSave: !isSpaceOnly,
+            spaceError: isSpaceOnly
         });
     };
 
@@ -130,14 +127,10 @@ export default class ProfileSettings extends React.Component {
         // TODO: Why is rendering a box with an overlay so complicated? Can the DOM be reduced?
 
         let showOverlayAnyways = true;
-        let avatarElement = (
-            <div className='mx_ProfileSettings_avatarPlaceholder' />
-        );
+        let avatarElement = <div className="mx_ProfileSettings_avatarPlaceholder" />;
         if (this.state.avatarUrl) {
             showOverlayAnyways = false;
-            avatarElement = (
-                <img src={this.state.avatarUrl} alt={_t('Profile picture')} />
-            );
+            avatarElement = <img src={this.state.avatarUrl} alt={_t('Profile picture')} />;
         }
 
         const avatarOverlayClasses = classNames({
@@ -146,11 +139,11 @@ export default class ProfileSettings extends React.Component {
         });
         const avatarHoverElement = (
             <div className={avatarOverlayClasses} onClick={this._uploadAvatar}>
-                <span className='mx_ProfileSettings_avatarOverlayText'>
+                <span className="mx_ProfileSettings_avatarOverlayText">
                     {_t('Upload profile picture')}
                 </span>
-                <div className='mx_ProfileSettings_avatarOverlayImgContainer'>
-                    <div className='mx_ProfileSettings_avatarOverlayImg' />
+                <div className="mx_ProfileSettings_avatarOverlayImgContainer">
+                    <div className="mx_ProfileSettings_avatarOverlayImg" />
                 </div>
             </div>
         );
@@ -159,28 +152,24 @@ export default class ProfileSettings extends React.Component {
         let hostingSignup = null;
         if (hostingSignupLink) {
             hostingSignup = (
-                <span className='mx_ProfileSettings_hostingSignup'>
+                <span className="mx_ProfileSettings_hostingSignup">
                     {_t(
                         '<a>Upgrade</a> to your own domain',
                         {},
                         {
                             a: sub => (
-                                <a
-                                    href={hostingSignupLink}
-                                    target='_blank'
-                                    rel='noopener'
-                                >
+                                <a href={hostingSignupLink} target="_blank" rel="noopener">
                                     {sub}
                                 </a>
                             )
                         }
                     )}
-                    <a href={hostingSignupLink} target='_blank' rel='noopener'>
+                    <a href={hostingSignupLink} target="_blank" rel="noopener">
                         <img
                             src={require('../../../../res/img/external-link.svg')}
-                            width='11'
-                            height='10'
-                            alt=''
+                            width="11"
+                            height="10"
+                            alt=""
                         />
                     </a>
                 </span>
@@ -188,41 +177,40 @@ export default class ProfileSettings extends React.Component {
         }
 
         return (
-            <form
-                onSubmit={this._saveProfile}
-                autoComplete={false}
-                noValidate={true}
-            >
+            <form onSubmit={this._saveProfile} autoComplete={false} noValidate={true}>
                 <input
-                    type='file'
-                    ref='avatarUpload'
-                    className='mx_ProfileSettings_avatarUpload'
+                    type="file"
+                    ref="avatarUpload"
+                    className="mx_ProfileSettings_avatarUpload"
                     onChange={this._onAvatarChanged}
-                    accept='image/*'
+                    accept="image/*"
                 />
-                <div className='mx_ProfileSettings_profile'>
-                    <div className='mx_ProfileSettings_controls'>
+                <div className="mx_ProfileSettings_profile">
+                    <div className="mx_ProfileSettings_controls">
                         <p>
                             {this.state.userId}
                             {hostingSignup}
                         </p>
                         <Field
-                            id='profileDisplayName'
+                            id="profileDisplayName"
                             label={_t('Display Name')}
-                            type='text'
+                            type="text"
                             value={this.state.displayName}
-                            autoComplete='off'
+                            autoComplete="off"
                             onChange={this._onDisplayNameChanged}
                         />
+                        {this.state.spaceError && (
+                            <p style={{ color: 'red' }}>You're not allowed to enter space only</p>
+                        )}
                     </div>
-                    <div className='mx_ProfileSettings_avatar'>
+                    <div className="mx_ProfileSettings_avatar">
                         {avatarElement}
                         {avatarHoverElement}
                     </div>
                 </div>
                 <AccessibleButton
                     onClick={this._saveProfile}
-                    kind='primary'
+                    kind="primary"
                     disabled={!this.state.enableProfileSave}
                 >
                     {_t('Save')}
