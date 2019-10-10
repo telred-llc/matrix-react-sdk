@@ -238,9 +238,11 @@ module.exports = React.createClass({
 
     onCopyClick: function(e) {
         const { mxEvent } = this.props;
+
         const text = mxEvent._replacingEvent
             ? mxEvent._replacingEvent._clearEvent.content.body.slice(3)
             : mxEvent._clearEvent.content.body;
+
         var textArea = document.createElement('textarea');
         textArea.value = text;
         document.body.appendChild(textArea);
