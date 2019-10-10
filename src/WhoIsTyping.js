@@ -14,20 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const MatrixClientPeg = require("./MatrixClientPeg");
+const MatrixClientPeg = require('./MatrixClientPeg');
 import { _t } from './languageHandler';
 
 module.exports = {
     usersTypingApartFromMeAndIgnored: function(room) {
         return this.usersTyping(
-            room, [MatrixClientPeg.get().credentials.userId].concat(MatrixClientPeg.get().getIgnoredUsers()),
+            room,
+            [MatrixClientPeg.get().credentials.userId].concat(
+                MatrixClientPeg.get().getIgnoredUsers()
+            )
         );
     },
 
     usersTypingApartFromMe: function(room) {
-        return this.usersTyping(
-            room, [MatrixClientPeg.get().credentials.userId],
-        );
+        return this.usersTyping(room, [MatrixClientPeg.get().credentials.userId]);
     },
 
     /**
@@ -63,16 +64,24 @@ module.exports = {
         if (whoIsTyping.length == 0) {
             return '';
         } else if (whoIsTyping.length == 1) {
-            return _t('%(displayName)s is typing …', {displayName: whoIsTyping[0].name});
+            return _t('%(displayName)s is typing …', {
+                displayName: whoIsTyping[0].name.split(' ')[0]
+            });
         }
         const names = whoIsTyping.map(function(m) {
             return m.name;
         });
-        if (othersCount>=1) {
-            return _t('%(names)s and %(count)s others are typing …', {names: names.slice(0, limit - 1).join(', '), count: othersCount});
+        if (othersCount >= 1) {
+            return _t('%(names)s and %(count)s others are typing …', {
+                names: names.slice(0, limit - 1).join(', '),
+                count: othersCount
+            });
         } else {
             const lastPerson = names.pop();
-            return _t('%(names)s and %(lastPerson)s are typing …', {names: names.join(', '), lastPerson: lastPerson});
+            return _t('%(names)s and %(lastPerson)s are typing …', {
+                names: names.join(', '),
+                lastPerson: lastPerson
+            });
         }
-    },
+    }
 };
