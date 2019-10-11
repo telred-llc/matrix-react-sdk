@@ -500,7 +500,10 @@ module.exports = React.createClass({
                 }
             }, 50);
         }
-        this.checkAutoBK();
+        if (this.props.currentRoomId !== null) {
+            this.checkAutoBK();
+        }
+
     },
 
     shouldComponentUpdate: function(nextProps, nextState) {

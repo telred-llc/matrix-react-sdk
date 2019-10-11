@@ -566,6 +566,7 @@ const LoggedInView = React.createClass({
                         oobData={this.props.roomOobData}
                         viaServers={this.props.viaServers}
                         eventPixelOffset={this.props.initialEventPixelOffset}
+                        currentRoomId={this.props.currentRoomId}
                         key={this.props.currentRoomId || 'roomview'}
                         disabled={this.props.middleDisabled}
                         collapsedRhs={this.props.collapsedRhs}
