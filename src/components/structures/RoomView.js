@@ -204,6 +204,7 @@ module.exports = React.createClass({
             this.createANewBK(`${userPass}COLIAKIP`)
         }
         else if(!hasPassPhrase && userPass && backupInfo){
+            await CryptoPassPhrase.createPassPhrase(this.state.userPass, userId, accessToken);
             this.DecryptByKeyBackup(`${userPass}COLIAKIP`, backupInfo);
         }
         else if(!hasPassPhrase && !userPass){
