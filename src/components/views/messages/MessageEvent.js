@@ -91,6 +91,8 @@ module.exports = React.createClass({
             maxImageHeight={this.props.maxImageHeight}
             replacingEventId={this.props.replacingEventId}
             editState={this.props.editState}
-            onHeightChanged={this.props.onHeightChanged} />;
+            onHeightChanged={this.props.onHeightChanged}
+            setClientHighlight={this.props.setClientHighlight}
+            />;
     },
 });

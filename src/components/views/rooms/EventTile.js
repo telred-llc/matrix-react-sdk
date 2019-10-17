@@ -188,6 +188,8 @@ module.exports = withMatrixClient(React.createClass({
             previouslyRequestedKeys: false,
             // The Relations model from the JS SDK for reactions to `mxEvent`
             reactions: this.getReactions(),
+            // Set client hightlight, not depend on data from server
+            isClientHighlight: false
         };
     },
 
@@ -317,7 +319,14 @@ module.exports = withMatrixClient(React.createClass({
         return true;
     },
 
+    setClientHighlight: function(isContainMention) {
+        this.setState({
+            isClientHighlight: isContainMention,
+        });
+    },
+
     shouldHighlight: function() {
+
         const actions = this.props.matrixClient.getPushActionsForEvent(this.props.mxEvent);
         if (!actions || !actions.tweaks) { return false; }
 
@@ -326,7 +335,7 @@ module.exports = withMatrixClient(React.createClass({
             return false;
         }
 
-        return actions.tweaks.highlight;
+        return (actions.tweaks.highlight) ? this.state.isClientHighlight : false;
     },
 
     toggleAllReadAvatars: function() {
@@ -811,6 +820,7 @@ module.exports = withMatrixClient(React.createClass({
                                            mxEvent={this.props.mxEvent}
                                            replacingEventId={this.props.replacingEventId}
                                            editState={this.props.editState}
+                                           setClientHighlight={this.setClientHighlight}
                                            highlights={this.props.highlights}
                                            highlightLink={this.props.highlightLink}
                                            showUrlPreview={this.props.showUrlPreview}
