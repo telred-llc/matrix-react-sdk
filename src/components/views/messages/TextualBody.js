@@ -87,7 +87,13 @@ module.exports = React.createClass({
         return successful;
     },
 
+    setClientHighlight: function() {
+        let elements = this.refs.content.querySelectorAll('a[title^="@"]')
+        this.props.setClientHighlight(elements.length > 0)
+    },
+
     componentDidMount: function() {
+        setTimeout(this.setClientHighlight, 5)
         this._unmounted = false;
         if (!this.props.editState) {
             this._applyFormatting();
@@ -130,6 +136,7 @@ module.exports = React.createClass({
     },
 
     componentDidUpdate: function(prevProps) {
+        setTimeout(this.setClientHighlight, 5)
         if (!this.props.editState) {
             const stoppedEditing = prevProps.editState && !this.props.editState;
             const messageWasEdited = prevProps.replacingEventId !== this.props.replacingEventId;
