@@ -86,8 +86,8 @@ export function isValid3pidInvite(event) {
 }
 
 function _onStartChatFinished(shouldInvite, addrs) {
+    debugger
     if (!shouldInvite) return;
-
     const addrTexts = addrs.map(addr => addr.address);
     if (_isDmChat(addrTexts)) {
         const rooms = _getDirectMessageRooms(addrTexts[0]);
@@ -121,7 +121,14 @@ function _onStartChatFinished(shouldInvite, addrs) {
                 }
             ).close;
         } else {
-            // Start a new DM chat
+            const roomInvite = _getInviteDMRoom(addrTexts[0]);
+            if (roomInvite) {
+                return dis.dispatch({
+                    action: 'view_room',
+                    room_id: roomInvite,
+                });
+            } else {
+                // Start a new DM chat
             createRoom({ dmUserId: addrTexts[0] }).catch(err => {
                 const ErrorDialog = sdk.getComponent('dialogs.ErrorDialog');
                 Modal.createTrackedDialog(
@@ -137,6 +144,8 @@ function _onStartChatFinished(shouldInvite, addrs) {
                     }
                 );
             });
+            }
+
         }
     } else if (addrTexts.length === 1) {
         // Start a new DM chat
@@ -181,6 +190,48 @@ function _onStartChatFinished(shouldInvite, addrs) {
                             : _t('Operation failed')
                 });
             });
+    }
+}
+
+function _getInviteDMRoom(userId) {
+    window.roomUserInvite = window.roomUserInvite || {}
+    const room = window.roomUserInvite[userId]
+    if (room) {
+        return room
+    }
+    return false
+}
+
+export function createDMRoom(userId) {
+    const rooms = _getDirectMessageRooms(userId);
+    const roomInvite = _getInviteDMRoom(userId);
+    if (rooms.length === 1) {
+        return dis.dispatch({
+            action: 'view_room',
+            room_id: rooms[0]
+        });
+    } else if (roomInvite) {
+        return dis.dispatch({
+            action: 'view_room',
+            room_id: roomInvite,
+        });
+    } else {
+        // Start a new DM chat
+        createRoom({ dmUserId: userId }).catch(err => {
+            const ErrorDialog = sdk.getComponent('dialogs.ErrorDialog');
+            Modal.createTrackedDialog(
+                'Failed to invite user',
+                '',
+                ErrorDialog,
+                {
+                    title: _t('Failed to invite user'),
+                    description:
+                        err && err.message
+                            ? err.message
+                            : _t('Operation failed')
+                }
+            );
+        });
     }
 }
 

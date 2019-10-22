@@ -33,7 +33,7 @@ import dis from '../../../dispatcher';
 import Modal from '../../../Modal';
 import sdk from '../../../index';
 import { _t } from '../../../languageHandler';
-import createRoom from '../../../createRoom';
+import { createDMRoom } from '../../../RoomInvite';
 import DMRoomMap from '../../../utils/DMRoomMap';
 import Unread from '../../../Unread';
 import { findReadReceiptFromUserId } from '../../../utils/Receipt';
@@ -678,6 +678,10 @@ module.exports = withMatrixClient(React.createClass({
         });
     },
 
+    onCreateDMRoom: function(userId) {
+        return createDMRoom(userId)
+    },
+
     _renderUserOptions: function() {
         const cli = this.props.matrixClient;
         const member = this.props.member;
@@ -763,6 +767,17 @@ module.exports = withMatrixClient(React.createClass({
             </AccessibleButton>
         );
 
+        const canCreateDMRoom = () => (
+            !this._isDirectMessageRoom(this.props.member.roomId) &&
+            (this.props.member.userId !== this.props.matrixClient.credentials.userId)
+        );
+
+        const createDMRoomButton = canCreateDMRoom() ? (
+            <AccessibleButton onClick={() => {this.onCreateDMRoom(this.props.member.userId)}} className="mx_MemberInfo_field">
+                Direct Message
+            </AccessibleButton>
+        ) : null;
+
         return (
             <div>
                 <h3>{ _t("User Options") }</h3>
@@ -772,6 +787,7 @@ module.exports = withMatrixClient(React.createClass({
                     { insertPillButton }
                     { ignoreButton }
                     { inviteUserButton }
+                    { createDMRoomButton }
                 </div>
             </div>
         );
