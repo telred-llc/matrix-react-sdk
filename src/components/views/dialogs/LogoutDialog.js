@@ -176,8 +176,8 @@ export default class LogoutDialog extends React.Component {
             const QuestionDialog = sdk.getComponent('views.dialogs.QuestionDialog');
             return (<QuestionDialog
                 hasCancelButton={true}
-                title={_t("Sign out")}
-                description={_t(
+                title={this.props.warningBK ? "Missing passphrase" : _t("Sign out")}
+                description={this.props.warningBK ? "Please re-login to create backup key!\nIf you don't remember your passphrase, consider not logging out because your encrypted messages might be lost" : _t(
                     "Are you sure you want to sign out?",
                 )}
                 button={_t("Sign out")}
