@@ -18,6 +18,7 @@ import React from 'react';
 import sdk from '../../../../index';
 import MatrixClientPeg from '../../../../MatrixClientPeg';
 import { scorePassword } from '../../../../utils/PasswordScorer';
+import dis from '../../../../dispatcher'
 
 import FileSaver from 'file-saver';
 
@@ -134,6 +135,7 @@ export default React.createClass({
     },
 
     _onDone: function() {
+        dis.dispatch({action: 'logout'});
         this.props.onFinished(true);
     },
 
@@ -547,13 +549,9 @@ export default React.createClass({
         const DialogButtons = sdk.getComponent('views.elements.DialogButtons');
         return (
             <div>
-                <p>
-                    {_t(
-                        'Your keys are being backed up (the first backup could take a few minutes).'
-                    )}
-                </p>
+                <p>Your keys are being backed up (the first backup could take a few minutes).<br />Please signout to start using your new passphrase.</p>
                 <DialogButtons
-                    primaryButton={_t('Okay')}
+                    primaryButton={_t("Sign out")}
                     onPrimaryButtonClick={this._onDone}
                     hasCancel={false}
                 />
