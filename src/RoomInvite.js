@@ -86,7 +86,6 @@ export function isValid3pidInvite(event) {
 }
 
 function _onStartChatFinished(shouldInvite, addrs) {
-    debugger
     if (!shouldInvite) return;
     const addrTexts = addrs.map(addr => addr.address);
     if (_isDmChat(addrTexts)) {
