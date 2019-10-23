@@ -274,7 +274,9 @@ class RoomViewStore extends Store {
                         ErrorDialog,
                         {
                             title: _t('Failed to join room'),
-                            description: msg
+                            description: msg,
+                            isEmptyRoom: msg === "No known servers" ? true : false,
+                            roomId: this._state.roomAlias || this._state.roomId
                         }
                     );
                 }
