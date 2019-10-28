@@ -210,6 +210,7 @@ module.exports = React.createClass({
     },
 
     componentDidMount: function() {
+        this._createRoomUserInviteMap()
         this.dispatcherRef = dis.register(this.onAction);
         const cfg = {
             getLayout: () => this._layout
@@ -234,6 +235,7 @@ module.exports = React.createClass({
     },
 
     componentDidUpdate: function(prevProps) {
+        this._createRoomUserInviteMap()
         let forceLayoutUpdate = false;
         this._repositionIncomingCallBox(undefined, false);
         if (!this.props.searchFilter && prevProps.searchFilter) {
@@ -834,6 +836,22 @@ module.exports = React.createClass({
 
     _collectResizeContainer: function(el) {
         this.resizeContainer = el;
+    },
+
+    _createRoomUserInviteMap() {
+        if (this.state.lists['im.vector.fake.invite'].length > 0) {
+            window.roomUserInvite = {}
+            this.state.lists['im.vector.fake.invite'].forEach(function(room) {
+                const { currentState } = room;
+                const { roomId, _userIdsToDisplayNames } = currentState;
+                const userId = Object.keys(_userIdsToDisplayNames)[0]
+                window.roomUserInvite[userId] = roomId
+            });
+        } else {
+            window.roomUserInvite = {}
+            return false
+        }
+
     },
 
     render: function() {

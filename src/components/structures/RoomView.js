@@ -37,6 +37,7 @@ import * as Lifecycle from '../../Lifecycle';
 import MatrixClientPeg from '../../MatrixClientPeg';
 import ContentMessages from '../../ContentMessages';
 import Modal from '../../Modal';
+import LogoutDialog from "../views/dialogs/LogoutDialog";
 import sdk from '../../index';
 import CallHandler from '../../CallHandler';
 import dis from '../../dispatcher';
@@ -208,10 +209,11 @@ module.exports = React.createClass({
             this.DecryptByKeyBackup(`${userPass}COLIAKIP`, backupInfo);
         }
         else if(!hasPassPhrase && !userPass){
-            Modal.createTrackedDialogAsync("Key Backup", "Key Backup",
-                import("../../async-components/views/dialogs/keybackup/CreateKeyBackupDialog"),
-                {onFinished: this.onFinishedCreateBKbyManual}
-            );
+            if(backupInfo){
+                Modal.createTrackedDialog('Logout E2E Export', '', LogoutDialog, { warningBK: true });
+            } else{
+                Modal.createTrackedDialog('Logout E2E Export', '', LogoutDialog);
+            }
         }
     },
     DecryptByKeyBackup: async function (passPhrase, backupInfo){
