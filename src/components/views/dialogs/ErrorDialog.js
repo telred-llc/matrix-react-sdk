@@ -28,7 +28,10 @@ limitations under the License.
 import React from 'react';
 import PropTypes from 'prop-types';
 import sdk from '../../../index';
+import dis from '../../../dispatcher';
 import { _t } from '../../../languageHandler';
+import MatrixClientPeg from '../../../MatrixClientPeg';
+import Modal from '../../../Modal';
 
 export default React.createClass({
     displayName: 'ErrorDialog',
@@ -41,6 +44,31 @@ export default React.createClass({
         button: PropTypes.string,
         focus: PropTypes.bool,
         onFinished: PropTypes.func.isRequired,
+        // Check if the room is empty
+        isEmptyRoom: PropTypes.bool,
+        roomId: PropTypes.string
+    },
+
+    _leaveEmptyRoom() {
+        MatrixClientPeg.get().leave(this.props.roomId).done(function() {
+            dis.dispatch({ action: 'view_next_room' });
+        }, function(error) {
+            console.error("Failed to reject invite: %s", error);
+
+            const msg = error.message ? error.message : JSON.stringify(error);
+            const ErrorDialog = sdk.getComponent("dialogs.ErrorDialog");
+            Modal.createTrackedDialog('Failed to reject invite', '', ErrorDialog, {
+                title: _t("Failed to reject invite"),
+                description: msg,
+            });
+        })
+    },
+
+    _onFinished() {
+        if (this.props.isEmptyRoom) {
+            this._leaveEmptyRoom()
+        }
+        this.props.onFinished()
     },
 
     getDefaultProps: function() {
@@ -63,7 +91,7 @@ export default React.createClass({
                     { this.props.description || _t('An error has occurred.') }
                 </div>
                 <div className="mx_Dialog_buttons">
-                    <button className="mx_Dialog_primary" onClick={this.props.onFinished} autoFocus={this.props.focus}>
+                    <button className="mx_Dialog_primary" onClick={this._onFinished} autoFocus={this.props.focus}>
                         { this.props.button || _t('OK') }
                     </button>
                 </div>
