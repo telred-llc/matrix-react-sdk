@@ -107,6 +107,7 @@ class RoomListStore extends Store {
             ready: false,
             stickyRoomId: null,
             orderRoomsByImportance: true,
+            isCreatingDm: false
         };
 
         SettingsStore.monitorSetting('RoomList.orderByImportance', null);
@@ -132,6 +133,11 @@ class RoomListStore extends Store {
     __onDispatch(payload) {
         const logicallyReady = this._matrixClient && this._state.ready;
         switch (payload.action) {
+            case 'room_is_dm': {
+                this._setState({isCreatingDm: payload.isDirectMessageRoom})
+            }
+            break;
+
             case 'setting_updated': {
                 if (!logicallyReady) break;
 
@@ -320,7 +326,7 @@ class RoomListStore extends Store {
             const dmRoomMap = DMRoomMap.shared();
             if (myMembership === 'invite') {
                 tags.push("im.vector.fake.invite");
-            } else if (dmRoomMap.getUserIdForRoomId(room.roomId) && tags.length === 0) {
+            } else if ((dmRoomMap.getUserIdForRoomId(room.roomId) || this._state.isCreatingDm) && tags.length === 0) {
                 // We intentionally don't duplicate rooms in other tags into the people list
                 // as a feature.
                 tags.push("im.vector.fake.direct");

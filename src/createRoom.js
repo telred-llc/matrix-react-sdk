@@ -101,6 +101,13 @@ function createRoom(opts) {
     if (opts.spinner)
         modal = Modal.createDialog(Loader, null, 'mx_Dialog_spinner');
 
+    if(createOpts.is_direct) {
+        dis.dispatch({
+            action: 'room_is_dm',
+            isDirectMessageRoom: true
+        });
+    }
+
     let roomId;
     return client
         .createRoom(createOpts)
@@ -156,6 +163,12 @@ function createRoom(opts) {
                         // so we are expecting the room to come down the sync
                         // stream, if it hasn't already.
                         joining: true
+                    });
+                }
+                if(createOpts.is_direct) {
+                    dis.dispatch({
+                        action: 'room_is_dm',
+                        isDirectMessageRoom: false
                     });
                 }
                 return roomId;
