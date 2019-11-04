@@ -17,6 +17,7 @@ limitations under the License.
 */
 
 import React from 'react';
+import createReactClass from 'create-react-class';
 import PropTypes from 'prop-types';
 import Promise from 'bluebird';
 import MatrixClientPeg from '../../MatrixClientPeg';
@@ -35,7 +36,7 @@ import classnames from 'classnames';
 import GroupStore from '../../stores/GroupStore';
 import FlairStore from '../../stores/FlairStore';
 import { showGroupAddRoomDialog } from '../../GroupAddressPicker';
-import {makeGroupPermalink, makeUserPermalink} from "../../matrix-to";
+import {makeGroupPermalink, makeUserPermalink} from "../../utils/permalinks/Permalinks";
 import {Group} from "matrix-js-sdk";
 
 const LONG_DESC_PLACEHOLDER = _td(
@@ -67,7 +68,7 @@ const UserSummaryType = PropTypes.shape({
     }).isRequired,
 });
 
-const CategoryRoomList = React.createClass({
+const CategoryRoomList = createReactClass({
     displayName: 'CategoryRoomList',
 
     props: {
@@ -119,7 +120,7 @@ const CategoryRoomList = React.createClass({
                     });
                 });
             },
-        });
+        }, /*className=*/null, /*isPriority=*/false, /*isStatic=*/true);
     },
 
     render: function() {
@@ -156,7 +157,7 @@ const CategoryRoomList = React.createClass({
     },
 });
 
-const FeaturedRoom = React.createClass({
+const FeaturedRoom = createReactClass({
     displayName: 'FeaturedRoom',
 
     props: {
@@ -244,7 +245,7 @@ const FeaturedRoom = React.createClass({
     },
 });
 
-const RoleUserList = React.createClass({
+const RoleUserList = createReactClass({
     displayName: 'RoleUserList',
 
     props: {
@@ -296,7 +297,7 @@ const RoleUserList = React.createClass({
                     });
                 });
             },
-        });
+        }, /*className=*/null, /*isPriority=*/false, /*isStatic=*/true);
     },
 
     render: function() {
@@ -327,7 +328,7 @@ const RoleUserList = React.createClass({
     },
 });
 
-const FeaturedUser = React.createClass({
+const FeaturedUser = createReactClass({
     displayName: 'FeaturedUser',
 
     props: {
@@ -343,7 +344,6 @@ const FeaturedUser = React.createClass({
         dis.dispatch({
             action: 'view_start_chat_or_reuse',
             user_id: this.props.summaryInfo.user_id,
-            go_home_on_cancel: false,
         });
     },
 
@@ -400,17 +400,13 @@ const FeaturedUser = React.createClass({
 const GROUP_JOINPOLICY_OPEN = "open";
 const GROUP_JOINPOLICY_INVITE = "invite";
 
-export default React.createClass({
+export default createReactClass({
     displayName: 'GroupView',
 
     propTypes: {
         groupId: PropTypes.string.isRequired,
         // Whether this is the first time the group admin is viewing the group
         groupIsNew: PropTypes.bool,
-    },
-
-    childContextTypes: {
-        groupStore: PropTypes.instanceOf(GroupStore),
     },
 
     getInitialState: function() {
@@ -1227,7 +1223,7 @@ export default React.createClass({
                      blurToCancel={false}
                      initialValue={this.state.profileForm.name}
                      onValueChanged={this._onNameChange}
-                     tabIndex="1"
+                     tabIndex="0"
                      dir="auto" />;
 
                 shortDescNode = <EditableText ref="descriptionEditor"
@@ -1237,7 +1233,7 @@ export default React.createClass({
                      blurToCancel={false}
                      initialValue={this.state.profileForm.short_description}
                      onValueChanged={this._onShortDescChange}
-                     tabIndex="2"
+                     tabIndex="0"
                      dir="auto" />;
             } else {
                 const onGroupHeaderItemClick = this.state.isUserMember ? this._onEditClick : null;

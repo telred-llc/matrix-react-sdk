@@ -131,12 +131,8 @@ limitations under the License.
 }
 
 @keyframes visualbell {
-    from {
-        background-color: #faa;
-    }
-    to {
-        background-color: $primary-bg-color;
-    }
+    from { background-color: $visual-bell-bg-color; }
+    to { background-color: $primary-bg-color; }
 }
 
 .mx_MessageComposer_input_error {

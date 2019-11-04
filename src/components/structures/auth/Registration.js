@@ -20,6 +20,7 @@ limitations under the License.
 import Matrix from 'matrix-js-sdk';
 import Promise from 'bluebird';
 import React from 'react';
+import createReactClass from 'create-react-class';
 import PropTypes from 'prop-types';
 import sdk from '../../../index';
 import { _t, _td } from '../../../languageHandler';
@@ -42,7 +43,7 @@ const PHASE_REGISTRATION = 1;
 // Enable phases for registration
 const PHASES_ENABLED = true;
 
-module.exports = React.createClass({
+module.exports = createReactClass({
     displayName: 'Registration',
 
     propTypes: {
@@ -101,6 +102,9 @@ module.exports = React.createClass({
             // Our matrix client - part of state because we can't render the UI auth
             // component without it.
             matrixClient: null,
+
+            // whether the HS requires an ID server to register with a threepid
+            serverRequiresIdServer: null,
 
             // The user ID we've just registered
             registeredUsername: null,
@@ -214,14 +218,24 @@ module.exports = React.createClass({
             }
         }
 
-        const { hsUrl, isUrl } = serverConfig;
-        this.setState({
-            matrixClient: Matrix.createClient({
-                baseUrl: hsUrl,
-                idBaseUrl: isUrl
-            })
+        const {hsUrl, isUrl} = serverConfig;
+        const cli = Matrix.createClient({
+            baseUrl: hsUrl,
+            idBaseUrl: isUrl,
         });
-        this.setState({ busy: false });
+
+        let serverRequiresIdServer = true;
+        try {
+            serverRequiresIdServer = await cli.doesServerRequireIdServerParam();
+        } catch (e) {
+            console.log("Unable to determine is server needs id_server param", e);
+        }
+
+        this.setState({
+            matrixClient: cli,
+            serverRequiresIdServer,
+            busy: false,
+        });
         try {
             await this._makeRegisterRequest({});
             // This should never succeed since we specified an empty
@@ -234,9 +248,9 @@ module.exports = React.createClass({
                 });
             } else if (e.httpStatus === 403 && e.errcode === 'M_UNKNOWN') {
                 this.setState({
-                    errorText: _t(
-                        'Registration has been disabled on this homeserver.'
-                    )
+                    errorText: _t("Registration has been disabled on this homeserver."),
+                    // add empty flows array to get rid of spinner
+                    flows: [],
                 });
             } else {
                 console.log(
@@ -244,9 +258,9 @@ module.exports = React.createClass({
                     e
                 );
                 this.setState({
-                    errorText: _t(
-                        'Unable to query for supported registration methods.'
-                    )
+                    errorText: _t("Unable to query for supported registration methods."),
+                    // add empty flows array to get rid of spinner
+                    flows: [],
                 });
             }
         }
@@ -452,16 +466,9 @@ module.exports = React.createClass({
         // clicking the email link.
         let inhibitLogin = Boolean(this.state.formVals.email);
 
-        // Only send the bind params if we're sending username / pw params
+        // Only send inhibitLogin if we're sending username / pw params
         // (Since we need to send no params at all to use the ones saved in the
         // session).
-        const bindThreepids = this.state.formVals.password
-            ? {
-                  email: true,
-                  msisdn: true
-              }
-            : {};
-        // Likewise inhibitLogin
         if (!this.state.formVals.password) inhibitLogin = null;
 
         return this.state.matrixClient.register(
@@ -469,7 +476,7 @@ module.exports = React.createClass({
             this.state.formVals.password,
             undefined, // session id: included in the auth dict already
             auth,
-            bindThreepids,
+            null,
             null,
             inhibitLogin
         );
@@ -489,7 +496,7 @@ module.exports = React.createClass({
     _onLoginClickWithCheck: async function(ev) {
         ev.preventDefault();
 
-        const sessionLoaded = await Lifecycle.loadSession({});
+        const sessionLoaded = await Lifecycle.loadSession({ignoreGuest: true});
         if (!sessionLoaded) {
             // ok fine, there's still no session: really go to the login page
             this.props.onLoginClick();
@@ -548,14 +555,13 @@ module.exports = React.createClass({
                 );
                 break;
             case ServerType.ADVANCED:
-                serverDetails = (
-                    <ServerConfig
-                        serverConfig={this.props.serverConfig}
-                        onServerConfigChange={this.props.onServerConfigChange}
-                        delayTimeMs={250}
-                        {...serverDetailsProps}
-                    />
-                );
+                serverDetails = <ServerConfig
+                    serverConfig={this.props.serverConfig}
+                    onServerConfigChange={this.props.onServerConfigChange}
+                    delayTimeMs={250}
+                    showIdentityServerIfRequiredByHomeserver={true}
+                    {...serverDetailsProps}
+                />;
                 break;
         }
 
@@ -596,12 +602,10 @@ module.exports = React.createClass({
         } else if (!this.state.matrixClient && !this.state.busy) {
             return null;
         } else if (this.state.busy || !this.state.flows) {
-            return (
-                <div className='mx_AuthBody_spinner'>
-                    <Spinner />
-                </div>
-            );
-        } else {
+            return <div className="mx_AuthBody_spinner">
+                <Spinner />
+            </div>;
+        } else if (this.state.flows.length) {
             let onEditServerDetailsClick = null;
             // If custom URLs are allowed and we haven't selected the Free server type, wire
             // up the server details edit link.
@@ -613,20 +617,19 @@ module.exports = React.createClass({
                 onEditServerDetailsClick = this.onEditServerDetailsClick;
             }
 
-            return (
-                <RegistrationForm
-                    defaultUsername={this.state.formVals.username}
-                    defaultEmail={this.state.formVals.email}
-                    defaultPhoneCountry={this.state.formVals.phoneCountry}
-                    defaultPhoneNumber={this.state.formVals.phoneNumber}
-                    defaultPassword={this.state.formVals.password}
-                    onRegisterClick={this.onFormSubmit}
-                    onEditServerDetailsClick={onEditServerDetailsClick}
-                    flows={this.state.flows}
-                    serverConfig={this.props.serverConfig}
-                    canSubmit={!this.state.serverErrorIsFatal}
-                />
-            );
+            return <RegistrationForm
+                defaultUsername={this.state.formVals.username}
+                defaultEmail={this.state.formVals.email}
+                defaultPhoneCountry={this.state.formVals.phoneCountry}
+                defaultPhoneNumber={this.state.formVals.phoneNumber}
+                defaultPassword={this.state.formVals.password}
+                onRegisterClick={this.onFormSubmit}
+                onEditServerDetailsClick={onEditServerDetailsClick}
+                flows={this.state.flows}
+                serverConfig={this.props.serverConfig}
+                canSubmit={!this.state.serverErrorIsFatal}
+                serverRequiresIdServer={this.state.serverRequiresIdServer}
+            />;
         }
     },
 

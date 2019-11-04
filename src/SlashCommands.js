@@ -20,19 +20,19 @@ limitations under the License.
 import React from 'react';
 import MatrixClientPeg from './MatrixClientPeg';
 import dis from './dispatcher';
-import Tinter from './Tinter';
 import sdk from './index';
 import {_t, _td} from './languageHandler';
 import Modal from './Modal';
-import SettingsStore, {SettingLevel} from './settings/SettingsStore';
-import {MATRIXTO_URL_PATTERN} from "./linkify-matrix";
-import * as querystring from "querystring";
 import MultiInviter from './utils/MultiInviter';
 import { linkifyAndSanitizeHtml } from './HtmlUtils';
 import QuestionDialog from "./components/views/dialogs/QuestionDialog";
 import WidgetUtils from "./utils/WidgetUtils";
 import {textToHtmlRainbow} from "./utils/colour";
 import Promise from "bluebird";
+import { getAddressType } from './UserAddress';
+import { abbreviateUrl } from './utils/UrlUtils';
+import { getDefaultIdentityServerUrl, useDefaultIdentityServer } from './utils/IdentityServerUtils';
+import {isPermalinkHost, parsePermalink} from "./utils/permalinks/Permalinks";
 
 const singleMxcUpload = async () => {
     return new Promise((resolve) => {
@@ -54,12 +54,21 @@ const singleMxcUpload = async () => {
     });
 };
 
+export const CommandCategories = {
+    "messages": _td("Messages"),
+    "actions": _td("Actions"),
+    "admin": _td("Admin"),
+    "advanced": _td("Advanced"),
+    "other": _td("Other"),
+};
+
 class Command {
-    constructor({name, args='', description, runFn, hideCompletionAfterSpace=false}) {
+    constructor({name, args='', description, runFn, category=CommandCategories.other, hideCompletionAfterSpace=false}) {
         this.command = '/' + name;
         this.args = args;
         this.description = description;
         this.runFn = runFn;
+        this.category = category;
         this.hideCompletionAfterSpace = hideCompletionAfterSpace;
     }
 
@@ -106,8 +115,17 @@ export const CommandMap = {
             }
             return success(MatrixClientPeg.get().sendTextMessage(roomId, message));
         },
+        category: CommandCategories.messages,
     }),
-
+    plain: new Command({
+        name: 'plain',
+        args: '<message>',
+        description: _td('Sends a message as plain text, without interpreting it as markdown'),
+        runFn: function(roomId, messages) {
+            return success(MatrixClientPeg.get().sendTextMessage(roomId, messages));
+        },
+        category: CommandCategories.messages,
+    }),
     ddg: new Command({
         name: 'ddg',
         args: '<query>',
@@ -121,6 +139,7 @@ export const CommandMap = {
             });
             return success();
         },
+        category: CommandCategories.actions,
         hideCompletionAfterSpace: true,
     }),
 
@@ -130,8 +149,13 @@ export const CommandMap = {
         description: _td('Upgrades a room to a new version'),
         runFn: function(roomId, args) {
             if (args) {
-                const room = MatrixClientPeg.get().getRoom(roomId);
-                Modal.createTrackedDialog('Slash Commands', 'upgrade room confirmation',
+                const cli = MatrixClientPeg.get();
+                const room = cli.getRoom(roomId);
+                if (!room.currentState.mayClientSendStateEvent("m.room.tombstone", cli)) {
+                    return reject(_t("You do not have the required permissions to use this command."));
+                }
+
+                const {finished} = Modal.createTrackedDialog('Slash Commands', 'upgrade room confirmation',
                     QuestionDialog, {
                     title: _t('Room upgrade confirmation'),
                     description: (
@@ -189,16 +213,17 @@ export const CommandMap = {
                         </div>
                     ),
                     button: _t("Upgrade"),
-                    onFinished: (confirm) => {
-                        if (!confirm) return;
-
-                        MatrixClientPeg.get().upgradeRoom(roomId, args);
-                    },
                 });
-                return success();
+
+                return success(finished.then(([confirm]) => {
+                    if (!confirm) return;
+
+                    return cli.upgradeRoom(roomId, args);
+                }));
             }
             return reject(this.getUsage());
         },
+        category: CommandCategories.admin,
     }),
 
     nick: new Command({
@@ -211,6 +236,7 @@ export const CommandMap = {
             }
             return reject(this.getUsage());
         },
+        category: CommandCategories.actions,
     }),
 
     myroomnick: new Command({
@@ -229,6 +255,25 @@ export const CommandMap = {
             }
             return reject(this.getUsage());
         },
+        category: CommandCategories.actions,
+    }),
+
+    roomavatar: new Command({
+        name: 'roomavatar',
+        args: '[<mxc_url>]',
+        description: _td('Changes the avatar of the current room'),
+        runFn: function(roomId, args) {
+            let promise = Promise.resolve(args);
+            if (!args) {
+                promise = singleMxcUpload();
+            }
+
+            return success(promise.then((url) => {
+                if (!url) return;
+                return MatrixClientPeg.get().sendStateEvent(roomId, 'm.room.avatar', {url}, '');
+            }));
+        },
+        category: CommandCategories.actions,
     }),
 
     myroomavatar: new Command({
@@ -255,6 +300,7 @@ export const CommandMap = {
                 return cli.sendStateEvent(roomId, 'm.room.member', content, userId);
             }));
         },
+        category: CommandCategories.actions,
     }),
 
     myavatar: new Command({
@@ -272,31 +318,7 @@ export const CommandMap = {
                 return MatrixClientPeg.get().setAvatarUrl(url);
             }));
         },
-    }),
-
-    tint: new Command({
-        name: 'tint',
-        args: '<color1> [<color2>]',
-        description: _td('Changes colour scheme of current room'),
-        runFn: function(roomId, args) {
-            if (args) {
-                const matches = args.match(/^(#([\da-fA-F]{3}|[\da-fA-F]{6}))( +(#([\da-fA-F]{3}|[\da-fA-F]{6})))?$/);
-                if (matches) {
-                    Tinter.tint(matches[1], matches[4]);
-                    const colorScheme = {};
-                    colorScheme.primary_color = matches[1];
-                    if (matches[4]) {
-                        colorScheme.secondary_color = matches[4];
-                    } else {
-                        colorScheme.secondary_color = colorScheme.primary_color;
-                    }
-                    return success(
-                        SettingsStore.setValue('roomColor', roomId, SettingLevel.ROOM_ACCOUNT, colorScheme),
-                    );
-                }
-            }
-            return reject(this.getUsage());
-        },
+        category: CommandCategories.actions,
     }),
 
     topic: new Command({
@@ -322,6 +344,7 @@ export const CommandMap = {
             });
             return success();
         },
+        category: CommandCategories.admin,
     }),
 
     roomname: new Command({
@@ -334,6 +357,7 @@ export const CommandMap = {
             }
             return reject(this.getUsage());
         },
+        category: CommandCategories.admin,
     }),
 
     invite: new Command({
@@ -346,17 +370,53 @@ export const CommandMap = {
                 if (matches) {
                     // We use a MultiInviter to re-use the invite logic, even though
                     // we're only inviting one user.
-                    const userId = matches[1];
+                    const address = matches[1];
+                    // If we need an identity server but don't have one, things
+                    // get a bit more complex here, but we try to show something
+                    // meaningful.
+                    let finished = Promise.resolve();
+                    if (
+                        getAddressType(address) === 'email' &&
+                        !MatrixClientPeg.get().getIdentityServerUrl()
+                    ) {
+                        const defaultIdentityServerUrl = getDefaultIdentityServerUrl();
+                        if (defaultIdentityServerUrl) {
+                            ({ finished } = Modal.createTrackedDialog('Slash Commands', 'Identity server',
+                                QuestionDialog, {
+                                    title: _t("Use an identity server"),
+                                    description: <p>{_t(
+                                        "Use an identity server to invite by email. " +
+                                        "Click continue to use the default identity server " +
+                                        "(%(defaultIdentityServerName)s) or manage in Settings.",
+                                        {
+                                            defaultIdentityServerName: abbreviateUrl(defaultIdentityServerUrl),
+                                        },
+                                    )}</p>,
+                                    button: _t("Continue"),
+                                },
+                            ));
+                        } else {
+                            return reject(_t("Use an identity server to invite by email. Manage in Settings."));
+                        }
+                    }
                     const inviter = new MultiInviter(roomId);
-                    return success(inviter.invite([userId]).then(() => {
-                        if (inviter.getCompletionState(userId) !== "invited") {
-                            throw new Error(inviter.getErrorText(userId));
+                    return success(finished.then(([useDefault] = []) => {
+                        if (useDefault) {
+                            useDefaultIdentityServer();
+                        } else if (useDefault === false) {
+                            throw new Error(_t("Use an identity server to invite by email. Manage in Settings."));
+                        }
+                        return inviter.invite([address]);
+                    }).then(() => {
+                        if (inviter.getCompletionState(address) !== "invited") {
+                            throw new Error(inviter.getErrorText(address));
                         }
                     }));
                 }
             }
             return reject(this.getUsage());
         },
+        category: CommandCategories.actions,
     }),
 
     join: new Command({
@@ -380,7 +440,19 @@ export const CommandMap = {
                 const params = args.split(' ');
                 if (params.length < 1) return reject(this.getUsage());
 
-                const matrixToMatches = params[0].match(MATRIXTO_URL_PATTERN);
+                let isPermalink = false;
+                if (params[0].startsWith("http:") || params[0].startsWith("https:")) {
+                    // It's at least a URL - try and pull out a hostname to check against the
+                    // permalink handler
+                    const parsedUrl = new URL(params[0]);
+                    const hostname = parsedUrl.host || parsedUrl.hostname; // takes first non-falsey value
+
+                    // if we're using a Riot permalink handler, this will catch it before we get much further.
+                    // see below where we make assumptions about parsing the URL.
+                    if (isPermalinkHost(hostname)) {
+                        isPermalink = true;
+                    }
+                }
                 if (params[0][0] === '#') {
                     let roomAlias = params[0];
                     if (!roomAlias.includes(':')) {
@@ -408,28 +480,24 @@ export const CommandMap = {
                         auto_join: true,
                     });
                     return success();
-                } else if (matrixToMatches) {
-                    let entity = matrixToMatches[1];
-                    let eventId = null;
-                    let viaServers = [];
+                } else if (isPermalink) {
+                    const permalinkParts = parsePermalink(params[0]);
 
-                    if (entity[0] !== '!' && entity[0] !== '#') return reject(this.getUsage());
-
-                    if (entity.indexOf('?') !== -1) {
-                        const parts = entity.split('?');
-                        entity = parts[0];
-
-                        const parsed = querystring.parse(parts[1]);
-                        viaServers = parsed["via"];
-                        if (typeof viaServers === 'string') viaServers = [viaServers];
+                    // This check technically isn't needed because we already did our
+                    // safety checks up above. However, for good measure, let's be sure.
+                    if (!permalinkParts) {
+                        return reject(this.getUsage());
                     }
 
-                    // We quietly support event ID permalinks too
-                    if (entity.indexOf('/$') !== -1) {
-                        const parts = entity.split("/$");
-                        entity = parts[0];
-                        eventId = `$${parts[1]}`;
+                    // If for some reason someone wanted to join a group or user, we should
+                    // stop them now.
+                    if (!permalinkParts.roomIdOrAlias) {
+                        return reject(this.getUsage());
                     }
+
+                    const entity = permalinkParts.roomIdOrAlias;
+                    const viaServers = permalinkParts.viaServers;
+                    const eventId = permalinkParts.eventId;
 
                     const dispatch = {
                         action: 'view_room',
@@ -461,6 +529,7 @@ export const CommandMap = {
             }
             return reject(this.getUsage());
         },
+        category: CommandCategories.actions,
     }),
 
     part: new Command({
@@ -508,6 +577,7 @@ export const CommandMap = {
                 }),
             );
         },
+        category: CommandCategories.actions,
     }),
 
     kick: new Command({
@@ -523,6 +593,7 @@ export const CommandMap = {
             }
             return reject(this.getUsage());
         },
+        category: CommandCategories.admin,
     }),
 
     // Ban a user from the room with an optional reason
@@ -539,6 +610,7 @@ export const CommandMap = {
             }
             return reject(this.getUsage());
         },
+        category: CommandCategories.admin,
     }),
 
     // Unban a user from ythe room
@@ -556,6 +628,7 @@ export const CommandMap = {
             }
             return reject(this.getUsage());
         },
+        category: CommandCategories.admin,
     }),
 
     ignore: new Command({
@@ -586,6 +659,7 @@ export const CommandMap = {
             }
             return reject(this.getUsage());
         },
+        category: CommandCategories.actions,
     }),
 
     unignore: new Command({
@@ -617,6 +691,7 @@ export const CommandMap = {
             }
             return reject(this.getUsage());
         },
+        category: CommandCategories.actions,
     }),
 
     // Define the power level of a user
@@ -645,6 +720,7 @@ export const CommandMap = {
             }
             return reject(this.getUsage());
         },
+        category: CommandCategories.admin,
     }),
 
     // Reset the power level of a user
@@ -666,6 +742,7 @@ export const CommandMap = {
             }
             return reject(this.getUsage());
         },
+        category: CommandCategories.admin,
     }),
 
     devtools: new Command({
@@ -676,6 +753,7 @@ export const CommandMap = {
             Modal.createDialog(DevtoolsDialog, {roomId});
             return success();
         },
+        category: CommandCategories.advanced,
     }),
 
     addwidget: new Command({
@@ -696,6 +774,7 @@ export const CommandMap = {
                 return reject(_t("You cannot modify widgets in this room."));
             }
         },
+        category: CommandCategories.admin,
     }),
 
     // Verify a user, device, and pubkey tuple
@@ -765,6 +844,7 @@ export const CommandMap = {
             }
             return reject(this.getUsage());
         },
+        category: CommandCategories.advanced,
     }),
 
     // Command definitions for autocompletion ONLY:
@@ -774,6 +854,7 @@ export const CommandMap = {
         name: 'me',
         args: '<message>',
         description: _td('Displays action'),
+        category: CommandCategories.messages,
         hideCompletionAfterSpace: true,
     }),
 
@@ -788,6 +869,7 @@ export const CommandMap = {
             }
             return success();
         },
+        category: CommandCategories.advanced,
     }),
 
     rainbow: new Command({
@@ -798,6 +880,7 @@ export const CommandMap = {
             if (!args) return reject(this.getUserId());
             return success(MatrixClientPeg.get().sendHtmlMessage(roomId, args, textToHtmlRainbow(args)));
         },
+        category: CommandCategories.messages,
     }),
 
     rainbowme: new Command({
@@ -808,6 +891,19 @@ export const CommandMap = {
             if (!args) return reject(this.getUserId());
             return success(MatrixClientPeg.get().sendHtmlEmote(roomId, args, textToHtmlRainbow(args)));
         },
+        category: CommandCategories.messages,
+    }),
+
+    help: new Command({
+        name: "help",
+        description: _td("Displays list of commands with usages and descriptions"),
+        runFn: function() {
+            const SlashCommandHelpDialog = sdk.getComponent('dialogs.SlashCommandHelpDialog');
+
+            Modal.createTrackedDialog('Slash Commands', 'Help', SlashCommandHelpDialog);
+            return success();
+        },
+        category: CommandCategories.advanced,
     }),
 };
 /* eslint-enable babel/no-invalid-this */

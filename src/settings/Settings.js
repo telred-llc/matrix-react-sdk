@@ -129,7 +129,24 @@ export const SETTINGS = {
         supportedLevels: LEVELS_FEATURE,
         default: false
     },
-    'MessageComposerInput.suggestEmoji': {
+    "feature_many_integration_managers": {
+        isFeature: true,
+        displayName: _td("Multiple integration managers"),
+        supportedLevels: LEVELS_FEATURE,
+        default: false,
+    },
+    "feature_user_info_panel": {
+        isFeature: true,
+        displayName: _td("Use the new, consistent UserInfo panel for Room Members and Group Members"),
+        supportedLevels: LEVELS_FEATURE,
+        default: false,
+    },
+    "useCiderComposer": {
+        displayName: _td("Use the new, faster, composer for writing messages"),
+        supportedLevels: LEVELS_ACCOUNT_SETTINGS,
+        default: true,
+    },
+    "MessageComposerInput.suggestEmoji": {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,
         displayName: _td('Enable Emoji suggestions while typing'),
         default: true,
@@ -253,7 +270,11 @@ export const SETTINGS = {
         default: 'light',
         controller: new ThemeController()
     },
-    webRtcAllowPeerToPeer: {
+    "custom_themes": {
+        supportedLevels: LEVELS_ACCOUNT_SETTINGS,
+        default: [],
+    },
+    "webRtcAllowPeerToPeer": {
         supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS_WITH_CONFIG,
         displayName: _td('Allow Peer-to-Peer for 1:1 calls'),
         default: true,
@@ -292,7 +313,15 @@ export const SETTINGS = {
         supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS_WITH_CONFIG,
         default: 200
     },
-    blacklistUnverifiedDevices: {
+    "readMarkerInViewThresholdMs": {
+        supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS_WITH_CONFIG,
+        default: 3000,
+    },
+    "readMarkerOutOfViewThresholdMs": {
+        supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS_WITH_CONFIG,
+        default: 30000,
+    },
+    "blacklistUnverifiedDevices": {
         // We specifically want to have room-device > device so that users may set a device default
         // with a per-room override.
         supportedLevels: ['room-device', 'device'],
@@ -405,6 +434,27 @@ export const SETTINGS = {
         supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS_WITH_CONFIG,
         displayName: _td('Low bandwidth mode'),
         default: false,
-        controller: new LowBandwidthController()
-    }
+        controller: new LowBandwidthController(),
+    },
+    "fallbackICEServerAllowed": {
+        supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS,
+        displayName: _td(
+            "Allow fallback call assist server turn.matrix.org when your homeserver " +
+            "does not offer one (your IP address would be shared during a call)",
+        ),
+        // This is a tri-state value, where `null` means "prompt the user".
+        default: null,
+    },
+    "sendReadReceipts": {
+        supportedLevels: LEVELS_ROOM_SETTINGS,
+        displayName: _td(
+            "Send read receipts for messages (requires compatible homeserver to disable)",
+        ),
+        default: true,
+    },
+    "showImages": {
+        supportedLevels: LEVELS_ACCOUNT_SETTINGS,
+        displayName: _td("Show previews/thumbnails for images"),
+        default: true,
+    },
 };

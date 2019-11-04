@@ -14,7 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const React = require('react');
+import React from "react";
+import createReactClass from 'create-react-class';
 import PropTypes from 'prop-types';
 import Promise from 'bluebird';
 import { KeyCode } from '../../Keyboard';
@@ -84,7 +85,7 @@ if (DEBUG_SCROLL) {
  * offset as normal.
  */
 
-module.exports = React.createClass({
+module.exports = createReactClass({
     displayName: 'ScrollPanel',
 
     propTypes: {
@@ -716,6 +717,11 @@ module.exports = React.createClass({
             debuglog(
                 'updateHeight getting straight to business, no scrolling going on.'
             );
+        }
+
+        // We might have unmounted since the timer finished, so abort if so.
+        if (this.unmounted) {
+            return;
         }
 
         const sn = this._getScrollNode();

@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import Promise from 'bluebird';
+import classNames from 'classnames';
 
 import MatrixClientPeg from './MatrixClientPeg';
 import sdk from './';
@@ -40,17 +41,6 @@ export class Service {
 }
 
 /**
- * Present a popup to the user prompting them to agree to terms and conditions
- *
- * @param {Service[]} services Object with keys 'serviceType', 'baseUrl', 'accessToken'
- * @returns {Promise} resolves when the user agreed to all necessary terms or rejects
- *     if they cancel.
- */
-export function presentTermsForServices(services) {
-    return startTermsFlow(services, dialogTermsInteractionCallback);
-}
-
-/**
  * Start a flow where the user is presented with terms & conditions for some services
  *
  * @param {Service[]} services Object with keys 'serviceType', 'baseUrl', 'accessToken'
@@ -61,7 +51,10 @@ export function presentTermsForServices(services) {
  * @returns {Promise} resolves when the user agreed to all necessary terms or rejects
  *     if they cancel.
  */
-export async function startTermsFlow(services, interactionCallback) {
+export async function startTermsFlow(
+    services,
+    interactionCallback = dialogTermsInteractionCallback,
+) {
     const termsPromises = services.map(
         (s) => MatrixClientPeg.get().getTerms(s.serviceType, s.baseUrl),
     );
@@ -123,16 +116,21 @@ export async function startTermsFlow(services, interactionCallback) {
     }
 
     // if there's anything left to agree to, prompt the user
+    const numAcceptedBeforeAgreement = agreedUrlSet.size;
     if (unagreedPoliciesAndServicePairs.length > 0) {
         const newlyAgreedUrls = await interactionCallback(unagreedPoliciesAndServicePairs, [...agreedUrlSet]);
         console.log("User has agreed to URLs", newlyAgreedUrls);
-        agreedUrlSet = new Set(newlyAgreedUrls);
+        // Merge with previously agreed URLs
+        newlyAgreedUrls.forEach(url => agreedUrlSet.add(url));
     } else {
         console.log("User has already agreed to all required policies");
     }
 
-    const newAcceptedTerms = { accepted: Array.from(agreedUrlSet) };
-    await MatrixClientPeg.get().setAccountData('m.accepted_terms', newAcceptedTerms);
+    // We only ever add to the set of URLs, so if anything has changed then we'd see a different length
+    if (agreedUrlSet.size !== numAcceptedBeforeAgreement) {
+        const newAcceptedTerms = {accepted: Array.from(agreedUrlSet)};
+        await MatrixClientPeg.get().setAccountData('m.accepted_terms', newAcceptedTerms);
+    }
 
     const agreePromises = policiesAndServicePairs.map((policiesAndService) => {
         // filter the agreed URL list for ones that are actually for this service
@@ -160,7 +158,11 @@ export async function startTermsFlow(services, interactionCallback) {
     return Promise.all(agreePromises);
 }
 
-function dialogTermsInteractionCallback(policiesAndServicePairs, agreedUrls) {
+export function dialogTermsInteractionCallback(
+    policiesAndServicePairs,
+    agreedUrls,
+    extraClassNames,
+) {
     return new Promise((resolve, reject) => {
         console.log("Terms that need agreement", policiesAndServicePairs);
         const TermsDialog = sdk.getComponent("views.dialogs.TermsDialog");
@@ -175,6 +177,6 @@ function dialogTermsInteractionCallback(policiesAndServicePairs, agreedUrls) {
                 }
                 resolve(agreedUrls);
             },
-        });
+        }, classNames("mx_TermsDialog", extraClassNames));
     });
 }

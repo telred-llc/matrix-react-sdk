@@ -18,10 +18,11 @@ limitations under the License.
 
 const React = require('react');
 import PropTypes from 'prop-types';
+import createReactClass from 'create-react-class';
 import MatrixClientPeg from '../../../MatrixClientPeg';
 const sdk = require('../../../index');
 
-module.exports = React.createClass({
+module.exports = createReactClass({
     displayName: 'LocalSearchResult',
 
     propTypes: {

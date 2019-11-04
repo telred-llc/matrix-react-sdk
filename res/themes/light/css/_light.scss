@@ -167,6 +167,7 @@ $header-divider-color: #91A1C0;
 // ********************
 
 $roomtile-name-color: #61708b;
+$roomtile-badge-fg-color: $accent-fg-color;
 $roomtile-selected-color: #212121;
 $roomtile-notified-color: #212121;
 $roomtile-selected-bg-color: #fff;
@@ -234,7 +235,7 @@ $tab-label-active-fg-color: #ffffff;
 $tab-label-bg-color: transparent;
 $tab-label-active-bg-color: $accent-color;
 $tab-label-icon-bg-color: #454545;
-$tab-label-active-icon-bg-color: #ffffff;
+$tab-label-active-icon-bg-color: $tab-label-active-fg-color;
 
 // Buttons
 $button-primary-fg-color: #ffffff;
@@ -246,6 +247,8 @@ $button-danger-disabled-fg-color: #ffffff;
 $button-danger-disabled-bg-color: #f5b6bb; // TODO: Verify color
 $button-link-fg-color: $accent-color;
 $button-link-bg-color: transparent;
+
+$visual-bell-bg-color: #faa;
 
 // Toggle switch
 $togglesw-off-color: #c1c9d6;
@@ -286,6 +289,8 @@ $tooltip-timeline-fg-color: #ffffff;
 $interactive-tooltip-bg-color: #27303a;
 $interactive-tooltip-fg-color: #ffffff;
 
+$breadcrumb-placeholder-bg-color: #e8eef5;
+
 // ***** Mixins! *****
 
 @define-mixin mx_DialogButton {
@@ -325,4 +330,9 @@ $interactive-tooltip-fg-color: #ffffff;
     border: 1px solid $accent-color ! important;
     color: $accent-color;
     background-color: $button-secondary-bg-color;
+}
+
+@define-mixin mx_Dialog_link {
+    color: $accent-color;
+    text-decoration: none;
 }

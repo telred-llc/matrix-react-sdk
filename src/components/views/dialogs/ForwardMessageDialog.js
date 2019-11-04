@@ -1,4 +1,5 @@
 import React from 'react';
+import createReactClass from 'create-react-class';
 import PropTypes from 'prop-types';
 import sdk from '../../../index';
 import { _t } from '../../../languageHandler';
@@ -6,7 +7,7 @@ import RoomListStore from '../../../stores/RoomListStore';
 import classNames from 'classnames';
 import dis from '../../../dispatcher';
 
-export default React.createClass({
+export default createReactClass({
     displayName: 'ForwardMessageDialog',
     propTypes: {
         onFinished: PropTypes.func.isRequired,

@@ -48,20 +48,18 @@ import Markdown from '../../../Markdown';
 import MessageComposerStore from '../../../stores/MessageComposerStore';
 import ContentMessages from '../../../ContentMessages';
 
-import {MATRIXTO_URL_PATTERN} from '../../../linkify-matrix';
-
 import EMOJIBASE from 'emojibase-data/en/compact.json';
 import EMOTICON_REGEX from 'emojibase-regex/emoticon';
 
 import SettingsStore, {SettingLevel} from "../../../settings/SettingsStore";
-import {makeUserPermalink} from "../../../matrix-to";
+import {getPrimaryPermalinkEntity, makeUserPermalink} from "../../../utils/permalinks/Permalinks";
 import ReplyPreview from "./ReplyPreview";
 import RoomViewStore from '../../../stores/RoomViewStore';
 import ReplyThread from "../elements/ReplyThread";
 import {ContentHelpers} from 'matrix-js-sdk';
 import AccessibleButton from '../elements/AccessibleButton';
 import {findEditableEvent} from '../../../utils/EventUtils';
-import ComposerHistoryManager from "../../../ComposerHistoryManager";
+import SlateComposerHistoryManager from "../../../SlateComposerHistoryManager";
 import TypingStore from "../../../stores/TypingStore";
 
 const REGEX_EMOTICON_WHITESPACE = new RegExp('(?:^|\\s)(' + EMOTICON_REGEX.source + ')\\s$');
@@ -141,7 +139,7 @@ export default class MessageComposerInput extends React.Component {
 
     client: MatrixClient;
     autocomplete: Autocomplete;
-    historyManager: ComposerHistoryManager;
+    historyManager: SlateComposerHistoryManager;
 
     constructor(props, context) {
         super(props, context);
@@ -223,18 +221,15 @@ export default class MessageComposerInput extends React.Component {
                         // special case links
                         if (tag === 'a') {
                             const href = el.getAttribute('href');
-                            let m;
-                            if (href) {
-                                m = href.match(MATRIXTO_URL_PATTERN);
-                            }
-                            if (m) {
+                            const permalinkEntity = getPrimaryPermalinkEntity(href);
+                            if (permalinkEntity) {
                                 return {
                                     object: 'inline',
                                     type: 'pill',
                                     data: {
                                         href,
                                         completion: el.innerText,
-                                        completionId: m[1],
+                                        completionId: permalinkEntity,
                                     },
                                 };
                             } else {
@@ -349,13 +344,13 @@ export default class MessageComposerInput extends React.Component {
                   function(fn) { return window.setTimeout(fn, 20); };
               return function(fn) { return raf(fn); };
             })();
-            
+
             const cancelFrame = (function() {
               const cancel = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitCancelAnimationFrame ||
                      window.clearTimeout;
               return function(id) { return cancel(id); };
             })();
-            
+
             function resizeListener(e) {
               const win = e.target || e.srcElement;
               if (win.__resizeRAF__) cancelFrame(win.__resizeRAF__);
@@ -366,12 +361,12 @@ export default class MessageComposerInput extends React.Component {
                 });
               });
             }
-            
+
             function objectLoad(e) {
               this.contentDocument.defaultView.__resizeTrigger__ = this.__resizeElement__;
               this.contentDocument.defaultView.addEventListener('resize', resizeListener);
             }
-            
+
             window.addResizeListener = function(element, fn) {
               if (!element.__resizeListeners__) {
                 element.__resizeListeners__ = [];
@@ -381,7 +376,7 @@ export default class MessageComposerInput extends React.Component {
                 }
                 else {
                   if (getComputedStyle(element).position == 'static') element.style.position = 'relative';
-                  const obj = element.__resizeTrigger__ = document.createElement('object'); 
+                  const obj = element.__resizeTrigger__ = document.createElement('object');
                   obj.setAttribute('style', 'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1;');
                   obj.__resizeElement__ = element;
                   obj.onload = objectLoad;
@@ -393,7 +388,7 @@ export default class MessageComposerInput extends React.Component {
               }
               element.__resizeListeners__.push(fn);
             };
-            
+
             window.removeResizeListener = function(element, fn) {
               element.__resizeListeners__.splice(element.__resizeListeners__.indexOf(fn), 1);
               if (!element.__resizeListeners__.length) {
@@ -1057,27 +1052,39 @@ onVerticalArrow = (e, up) => {
         if (!selection.anchor.isAtEndOfNode(document)) return;
     }
 
-    const shouldSelectHistory = e.altKey;
-    const shouldEditLastMessage = !e.altKey && up && !RoomViewStore.getQuotingEvent();
+        const shouldSelectHistory = e.altKey;
+        const shouldEditLastMessage = !e.altKey && up && !RoomViewStore.getQuotingEvent();
 
-    if (shouldSelectHistory) {
-        // Try select composer history
-        const selected = this.selectHistory(up);
-        if (selected) {
-            // We're selecting history, so prevent the key event from doing anything else
-            e.preventDefault();
+        if (shouldSelectHistory) {
+            // Try select composer history
+            const selected = this.selectHistory(up);
+            if (selected) {
+                // We're selecting history, so prevent the key event from doing anything else
+                e.preventDefault();
+            }
+        } else if (shouldEditLastMessage) {
+            // selection must be collapsed
+            const selection = this.state.editorState.selection;
+            if (!selection.isCollapsed) return;
+            // and we must be at the edge of the document (up=start, down=end)
+            const document = this.state.editorState.document;
+            if (up) {
+                if (!selection.anchor.isAtStartOfNode(document)) return;
+            } else {
+                if (!selection.anchor.isAtEndOfNode(document)) return;
+            }
+
+            const editEvent = findEditableEvent(this.props.room, false);
+            if (editEvent) {
+                // We're selecting history, so prevent the key event from doing anything else
+                e.preventDefault();
+                dis.dispatch({
+                    action: 'edit_event',
+                    event: editEvent,
+                });
+            }
         }
-    } else if (shouldEditLastMessage) {
-        const editEvent = findEditableEvent(this.props.room, false);
-        if (editEvent) {
-            // We're selecting history, so prevent the key event from doing anything else
-            e.preventDefault();
-            dis.dispatch({
-                action: 'edit_event',
-                event: editEvent,
-            });
-        }
-    }
+
 };
 
 selectHistory = (up) => {
