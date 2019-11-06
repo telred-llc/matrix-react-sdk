@@ -486,7 +486,7 @@ module.exports = createReactClass({
             }, 50);
         }
         if (this.props.currentRoomId !== null) {
-            this.checkAutoBK();
+            // this.checkAutoBK();
         }
 
     },

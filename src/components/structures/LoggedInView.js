@@ -135,6 +135,7 @@ const LoggedInView = createReactClass({
         this._matrixClient.on('RoomState.events', this.onRoomStateEvents);
 
         fixupColorFonts();
+        this.checkAutoBK();
     },
 
     componentDidUpdate(prevProps) {
