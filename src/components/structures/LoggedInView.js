@@ -38,6 +38,10 @@ import TagOrderActions from '../../actions/TagOrderActions';
 import RoomListActions from '../../actions/RoomListActions';
 import ResizeHandle from '../views/elements/ResizeHandle';
 import { Resizer, CollapseDistributor } from '../../resizer';
+import * as Lifecycle from "../../Lifecycle";
+import * as CryptoPassPhrase from "../../utils/CryptoPassPharse";
+import Modal from "../../Modal";
+import LogoutDialog from "../views/dialogs/LogoutDialog";
 // We need to fetch each pinned message individually (if we don't already have it)
 // so each pinned message may trigger a request. Limit the number per room for sanity.
 // NB. this is just for server notices rather than pinned messages in general.
@@ -546,6 +550,61 @@ const LoggedInView = createReactClass({
 
     _setResizeContainerRef(div) {
         this.resizeContainer = div;
+    },
+    checkAutoBK: async function (){
+        const {accessToken, userId} = Lifecycle.getLocalStorageSessionVars();
+        const hasPassPhrase = await CryptoPassPhrase.getPassPhrase(accessToken);
+        const userPass = localStorage.getItem("mx_pass");
+        localStorage.removeItem("mx_pass")
+        this.setState({userPass: userPass})
+        const backupInfo = await MatrixClientPeg.get().getKeyBackupVersion();
+        // debugger
+        if(hasPassPhrase){
+            const backupSigStatus = await MatrixClientPeg.get().isKeyBackupTrusted(backupInfo);
+            let passPhrase = CryptoPassPhrase.DeCryptoPassPhrase(userId, hasPassPhrase);
+            console.log("recoverInfo", backupInfo)
+            this.setState({passPhrase: passPhrase})
+            if(!backupInfo){
+                this.createANewBK(passPhrase)
+            } else {
+                console.log("recoverInfo", backupInfo)
+                this.DecryptByKeyBackup(passPhrase, backupInfo);
+            }
+        }
+        else if(!hasPassPhrase && userPass && !backupInfo){
+
+            await CryptoPassPhrase.createPassPhrase(userPass, userId, accessToken);
+            this.createANewBK(`${userPass}COLIAKIP`)
+        }
+        else if(!hasPassPhrase && userPass && backupInfo){
+            await CryptoPassPhrase.createPassPhrase(this.state.userPass, userId, accessToken);
+            this.DecryptByKeyBackup(`${userPass}COLIAKIP`, backupInfo);
+        }
+        else if(!hasPassPhrase && !userPass){
+            if(backupInfo){
+                Modal.createTrackedDialog('Logout E2E Export', '', LogoutDialog, { warningBK: true });
+            } else{
+                Modal.createTrackedDialog('Logout E2E Export', '', LogoutDialog);
+            }
+        }
+    },
+    DecryptByKeyBackup: async function (passPhrase, backupInfo){
+        console.log("recoverInfo", passPhrase)
+        try {
+            const recoverInfo = await MatrixClientPeg.get().restoreKeyBackupWithPassword(
+                passPhrase,
+                undefined,
+                undefined,
+                backupInfo
+            );
+            console.log("recoverInfo" + recoverInfo.toString())
+            dis.dispatch({
+                action: 'key_backup_restored'
+            });
+        } catch (e) {
+            const RestoreKeyBackupDialog = sdk.getComponent('dialogs.keybackup.RestoreKeyBackupDialog');
+            Modal.createTrackedDialog('Restore Backup', '', RestoreKeyBackupDialog, { onFinished: this.onFinished, hasUserPass: true });
+        }
     },
 
     render: function() {

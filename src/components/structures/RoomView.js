@@ -33,7 +33,6 @@ import {Room} from "matrix-js-sdk";
 import { _t } from '../../languageHandler';
 import {RoomPermalinkCreator} from '../../utils/permalinks/Permalinks';
 
-import * as CryptoPassPhrase from '../../utils/CryptoPassPharse'
 import * as Lifecycle from '../../Lifecycle';
 import MatrixClientPeg from '../../MatrixClientPeg';
 import ContentMessages from '../../ContentMessages';
@@ -215,58 +214,7 @@ module.exports = createReactClass({
     _onCiderUpdated: function() {
         this.setState({useCider: SettingsStore.getValue("useCiderComposer")});
     },
-    checkAutoBK: async function (){
-        const {accessToken, userId} = Lifecycle.getLocalStorageSessionVars();
-        const hasPassPhrase = await CryptoPassPhrase.getPassPhrase(accessToken);
-        const userPass = localStorage.getItem("mx_pass");
-        localStorage.removeItem("mx_pass")
-        this.setState({userPass: userPass})
-        const backupInfo = await MatrixClientPeg.get().getKeyBackupVersion();
-        // debugger
-        if(hasPassPhrase && !MatrixClientPeg.get().getKeyBackupEnabled()){
-            const backupSigStatus = await MatrixClientPeg.get().isKeyBackupTrusted(backupInfo);
-            let passPhrase = CryptoPassPhrase.DeCryptoPassPhrase(userId, hasPassPhrase);
-            this.setState({passPhrase: passPhrase})
-            if(!backupInfo){
 
-                this.createANewBK(passPhrase)
-            } else if (!backupSigStatus.trusted_locally) {
-                this.DecryptByKeyBackup(passPhrase, backupInfo);
-            }
-        }
-        else if(!hasPassPhrase && userPass && !backupInfo){
-
-            await CryptoPassPhrase.createPassPhrase(userPass, userId, accessToken);
-            this.createANewBK(`${userPass}COLIAKIP`)
-        }
-        else if(!hasPassPhrase && userPass && backupInfo){
-            await CryptoPassPhrase.createPassPhrase(this.state.userPass, userId, accessToken);
-            this.DecryptByKeyBackup(`${userPass}COLIAKIP`, backupInfo);
-        }
-        else if(!hasPassPhrase && !userPass){
-            if(backupInfo){
-                Modal.createTrackedDialog('Logout E2E Export', '', LogoutDialog, { warningBK: true });
-            } else{
-                Modal.createTrackedDialog('Logout E2E Export', '', LogoutDialog);
-            }
-        }
-    },
-    DecryptByKeyBackup: async function (passPhrase, backupInfo){
-        try {
-            const recoverInfo = await MatrixClientPeg.get().restoreKeyBackupWithPassword(
-                passPhrase,
-                undefined,
-                undefined,
-                backupInfo
-            );
-            dis.dispatch({
-                action: 'key_backup_restored'
-            });
-        } catch (e) {
-            const RestoreKeyBackupDialog = sdk.getComponent('dialogs.keybackup.RestoreKeyBackupDialog');
-            Modal.createTrackedDialog('Restore Backup', '', RestoreKeyBackupDialog, { onFinished: this.onFinished, hasUserPass: true });
-        }
-    },
     onFinished: async function (hasComplete){
         if(!hasComplete) return;
         localStorage.removeItem("mx_pass");
