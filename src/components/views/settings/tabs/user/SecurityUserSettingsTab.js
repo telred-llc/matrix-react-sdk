@@ -312,7 +312,7 @@ export default class SecurityUserSettingsTab extends React.Component {
                     {_t('Key backup')}
                 </span>
                 <div className='mx_SettingsTab_subsectionText'>
-                    <KeyBackupPanel />
+                    <KeyBackupPanel closeSettingsFn={this.props.closeSettingsFn} />
                 </div>
             </div>
         );

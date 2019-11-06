@@ -137,7 +137,7 @@ export default createReactClass({
 
     _onDone: function() {
         dis.dispatch({action: 'logout'});
-        this.props.onFinished(true);
+        this.props.onFinished();
     },
 
     _onOptOutClick: function() {
