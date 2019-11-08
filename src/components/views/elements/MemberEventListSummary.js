@@ -407,14 +407,29 @@ module.exports = createReactClass({
             (seq1, seq2) => aggregate.indices[seq1] > aggregate.indices[seq2],
         );
 
+        let notOnlyNameOrAvatarChange = true;
+        for (const strOfChanges of orderedTransitionSequences) {
+            if (strOfChanges.includes('name')) {
+                notOnlyNameOrAvatarChange = false;
+                break;
+            }
+
+            if (strOfChanges.includes('avatar')) {
+                notOnlyNameOrAvatarChange = false;
+                break;
+            }
+        }
+
         const EventListSummary = sdk.getComponent("views.elements.EventListSummary");
-        return <EventListSummary
-            events={this.props.events}
-            threshold={this.props.threshold}
-            onToggle={this.props.onToggle}
-            startExpanded={this.props.startExpanded}
-            children={this.props.children}
-            summaryMembers={avatarMembers}
-            summaryText={this._generateSummary(aggregate.names, orderedTransitionSequences)} />;
+        return notOnlyNameOrAvatarChange ?
+            <EventListSummary
+                events={this.props.events}
+                threshold={this.props.threshold}
+                onToggle={this.props.onToggle}
+                startExpanded={this.props.startExpanded}
+                children={this.props.children}
+                summaryMembers={avatarMembers}
+                summaryText={this._generateSummary(aggregate.names, orderedTransitionSequences)} />
+            : null;
     },
 });
