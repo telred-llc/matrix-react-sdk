@@ -607,7 +607,38 @@ const LoggedInView = createReactClass({
             Modal.createTrackedDialog('Restore Backup', '', RestoreKeyBackupDialog, { onFinished: this.onFinished, hasUserPass: true });
         }
     },
-
+    onFinished: async function (hasComplete){
+        if(!hasComplete) return;
+        localStorage.removeItem("mx_pass");
+        const {accessToken, userId} = Lifecycle.getLocalStorageSessionVars();
+        const backupInfo = await MatrixClientPeg.get().getKeyBackupVersion();
+        MatrixClientPeg.get().deleteKeyBackupVersion(backupInfo.version);
+        if(!this.state.passPhrase)
+        {
+            await CryptoPassPhrase.createPassPhrase(this.state.userPass, userId, accessToken);
+        }
+        this.createANewBK(`${this.state.userPass}COLIAKIP`)
+    },
+    onFinishedCreateBKbyManual: function (hasCompleted){
+        if(hasCompleted) dis.dispatch({action: 'logout'});
+    },
+    createANewBK: async function (passPhrase){
+        let info;
+        let _keyBackupInfo;
+        try {
+            _keyBackupInfo = await MatrixClientPeg.get().prepareKeyBackupVersion(
+                passPhrase
+            );
+            info = await MatrixClientPeg.get().createKeyBackupVersion(
+                _keyBackupInfo
+            );
+            await MatrixClientPeg.get().scheduleAllGroupSessionsForBackup();
+        } catch (e) {
+            if (info) {
+                MatrixClientPeg.get().deleteKeyBackupVersion(info.version);
+            }
+        }
+    },
     render: function() {
         const LeftPanel = sdk.getComponent('structures.LeftPanel');
         const RoomView = sdk.getComponent('structures.RoomView');
