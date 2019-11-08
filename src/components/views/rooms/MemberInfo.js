@@ -879,7 +879,7 @@ module.exports = createReactClass({
 
         const canCreateDMRoom = () => (
             !this._isDirectMessageRoom(this.props.member.roomId) &&
-            (this.props.member.userId !== this.props.matrixClient.credentials.userId)
+            (this.props.member.userId !== this.props.userId)
         );
 
         const createDMRoomButton = canCreateDMRoom() ? (

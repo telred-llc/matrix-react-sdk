@@ -199,7 +199,7 @@ export default class RightPanel extends React.Component {
                     onClose={onClose}
                 />;
             } else {
-                panel = <MemberInfo member={this.state.member} key={this.props.roomId || this.state.member.userId} />;
+                panel = <MemberInfo member={this.state.member} key={this.props.roomId || this.state.member.userId} userId={this.context.matrixClient.credentials.userId} />;
             }
         } else if (this.state.phase === RightPanel.Phase.Room3pidMemberInfo) {
             panel = <ThirdPartyMemberInfo event={this.state.event} key={this.props.roomId} />;
