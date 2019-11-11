@@ -4,8 +4,8 @@ import MatrixClientPeg from "../MatrixClientPeg";
 
 const iterations = 10000;
 //environment: dev
-const serverApi = 'http://op.clearkeep.xyz';
-// const serverApi = 'https://op.clearkeep.me';
+// const serverApi = 'http://op.clearkeep.xyz';
+const serverApi = 'https://op.clearkeep.me';
 const str = 'AAAAAAAAAAAAAAAAAAAAAA==';
 
 function CryptoPassPhrase(pass, userID) {
