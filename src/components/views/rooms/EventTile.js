@@ -222,6 +222,10 @@ module.exports = createReactClass({
             return true;
         }
 
+        if (nextProps.mxEvent.hasOwnProperty('callData')) {
+            return true;
+        }
+
         return !this._propsEqual(this.props, nextProps);
     },
 
