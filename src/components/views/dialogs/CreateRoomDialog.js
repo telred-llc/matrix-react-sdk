@@ -28,7 +28,8 @@ export default createReactClass({
             joinRule: 'invite',
             guestAccess: 'can_join',
             history: 'shared',
-            encrypted: false
+            encrypted: false,
+            isRoomNameEmpty: true,
         };
     },
     componentWillMount: function() {
@@ -46,7 +47,7 @@ export default createReactClass({
         };
         this.props.onFinished(
             true,
-            this.refs.textinput.value,
+            this.refs.textinput.value.trim(),
             guestAccessState,
             joinRuleState
         );
@@ -117,6 +118,15 @@ export default createReactClass({
         this.props.onFinished(false);
     },
 
+    onChange: function(e) {
+        const {value} = e.target;
+        if (!value.replace(/\s/g, '').length || !value.length) {
+            this.setState({ isRoomNameEmpty: true })
+        } else {
+            this.setState({ isRoomNameEmpty: false })
+        }
+    },
+
     render: function() {
         const BaseDialog = sdk.getComponent('views.dialogs.BaseDialog');
         const DialogButtons = sdk.getComponent('views.elements.DialogButtons');
@@ -130,8 +140,7 @@ export default createReactClass({
                     <div className='mx_Dialog_content'>
                         <div className='mx_CreateRoomDialog_label'>
                             <label htmlFor='textinput'>
-                                {' '}
-                                {_t('Room name (optional)')}{' '}
+                                Room name (mandatory)
                             </label>
                         </div>
                         <div className='mx_CreateRoomDialog_input_container'>
@@ -140,7 +149,9 @@ export default createReactClass({
                                 ref='textinput'
                                 className='mx_CreateRoomDialog_input'
                                 autoFocus={true}
+                                onChange={this.onChange}
                             />
+                            {this.state.isRoomNameEmpty ? <p style={{color: "red", marginBottom: 0}}>Room name must not be empty or contain only spaces</p> : null}
                         </div>
                         <br />
 
@@ -165,6 +176,7 @@ export default createReactClass({
                     primaryButton={_t('Create Room')}
                     onPrimaryButtonClick={this.onOk}
                     onCancel={this.onCancel}
+                    primaryDisabled={this.state.isRoomNameEmpty}
                 />
             </BaseDialog>
         );
