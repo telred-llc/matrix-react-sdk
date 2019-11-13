@@ -946,5 +946,6 @@
     "New Key": "New Key",
     "Create new backup key": "Create new backup key",
     "You’ll lose access to your old encrypted messages.": "You’ll lose access to your old encrypted messages.",
-    "Try again or using new key (Old data will be lost)": "Try again or using new key (Old data will be lost)"
+    "Try again or using new key (Old data will be lost)": "Try again or using new key (Old data will be lost)",
+    "Advanced options": "Advanced options"
 }

@@ -37,10 +37,9 @@ function getOrCreateContainer() {
     return container;
 }
 
-function isInRect(x, y, rect, { buffer = 0 } = {}) {
+function isInRect(x, y, rect) {
     const { top, right, bottom, left } = rect;
-    return x >= (left - buffer) && x <= (right + buffer)
-        && y >= (top - buffer) && y <= (bottom + buffer);
+    return x >= left && x <= right && y >= top && y <= bottom;
 }
 
 /**
@@ -96,6 +95,8 @@ export default class InteractiveTooltip extends React.Component {
         content: PropTypes.node.isRequired,
         // Function to call when visibility of the tooltip changes
         onVisibilityChange: PropTypes.func,
+        // flag to forcefully hide this tooltip
+        forceHidden: PropTypes.bool,
     };
 
     constructor() {
@@ -163,14 +164,17 @@ export default class InteractiveTooltip extends React.Component {
         //
         // As long as the mouse remains inside the safe area, the tooltip will
         // stay open.
-        const buffer = 10;
-        if (
-            isInRect(x, y, contentRect, { buffer }) ||
-            isInRect(x, y, targetRect)
-        ) {
+        const buffer = 50;
+        if (isInRect(x, y, targetRect)) {
             return;
         }
         if (this.canTooltipFitAboveTarget()) {
+            const contentRectWithBuffer = {
+                top: contentRect.top - buffer,
+                right: contentRect.right + buffer,
+                bottom: contentRect.bottom,
+                left: contentRect.left - buffer,
+            };
             const trapezoidLeft = {
                 top: contentRect.bottom,
                 right: targetRect.left,
@@ -191,6 +195,7 @@ export default class InteractiveTooltip extends React.Component {
             };
 
             if (
+                isInRect(x, y, contentRectWithBuffer) ||
                 isInUpperRightHalf(x, y, trapezoidLeft) ||
                 isInRect(x, y, trapezoidCenter) ||
                 isInUpperLeftHalf(x, y, trapezoidRight)
@@ -198,6 +203,12 @@ export default class InteractiveTooltip extends React.Component {
                 return;
             }
         } else {
+            const contentRectWithBuffer = {
+                top: contentRect.top,
+                right: contentRect.right + buffer,
+                bottom: contentRect.bottom + buffer,
+                left: contentRect.left - buffer,
+            };
             const trapezoidLeft = {
                 top: targetRect.top,
                 right: targetRect.left,
@@ -218,6 +229,7 @@ export default class InteractiveTooltip extends React.Component {
             };
 
             if (
+                isInRect(x, y, contentRectWithBuffer) ||
                 isInLowerRightHalf(x, y, trapezoidLeft) ||
                 isInRect(x, y, trapezoidCenter) ||
                 isInLowerLeftHalf(x, y, trapezoidRight)
@@ -259,8 +271,8 @@ export default class InteractiveTooltip extends React.Component {
 
     renderTooltip() {
         const { contentRect, visible } = this.state;
-        if (!visible) {
-            ReactDOM.unmountComponentAtNode(getOrCreateContainer());
+        if (this.props.forceHidden === true || !visible) {
+            ReactDOM.render(null, getOrCreateContainer());
             return null;
         }
 

@@ -27,9 +27,9 @@ import QueryMatcher from './QueryMatcher';
 import _sortBy from 'lodash/sortBy';
 import MatrixClientPeg from '../MatrixClientPeg';
 
-import type { MatrixEvent, Room, RoomMember, RoomState } from 'matrix-js-sdk';
-import { makeUserPermalink } from '../matrix-to';
-import type { Completion, SelectionRange } from './Autocompleter';
+import type {MatrixEvent, Room, RoomMember, RoomState} from 'matrix-js-sdk';
+import {makeUserPermalink} from "../utils/permalinks/Permalinks";
+import type {Completion, SelectionRange} from "./Autocompleter";
 
 const USER_REGEX = /\B@\S*/g;
 
@@ -144,8 +144,8 @@ export default class UserProvider extends AutocompleteProvider {
                     // relies on the length of the entity === length of the text in the decoration.
                     completion: user.rawDisplayName,
                     completionId: user.userId,
-                    suffix:
-                        selection.beginning && range.start === 0 ? ': ' : ' ',
+                    type: "user",
+                    suffix: (selection.beginning && range.start === 0) ? ': ' : ' ',
                     href: makeUserPermalink(user.userId),
                     component: (
                         <PillCompletion
@@ -209,8 +209,8 @@ export default class UserProvider extends AutocompleteProvider {
 
     renderCompletions(completions: [React.Component]): ?React.Component {
         return (
-            <div className='mx_Autocomplete_Completion_container_pill'>
-                {completions}
+            <div className="mx_Autocomplete_Completion_container_pill" role="listbox" aria-label={_t("User Autocomplete")}>
+                { completions }
             </div>
         );
     }

@@ -1,6 +1,7 @@
 /*
 Copyright 2017 OpenMarket Ltd
 Copyright 2018 New Vector Ltd
+Copyright 2019 The Matrix.org Foundation C.I.C.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -76,8 +77,22 @@ class ConsoleLogger {
         args = args.map(arg => {
             if (arg instanceof Error) {
                 return arg.message + (arg.stack ? `\n${arg.stack}` : '');
-            } else if (typeof arg === 'object') {
-                return JSON.stringify(arg);
+            } else if (typeof (arg) === 'object') {
+                try {
+                    return JSON.stringify(arg);
+                } catch (e) {
+                    // In development, it can be useful to log complex cyclic
+                    // objects to the console for inspection. This is fine for
+                    // the console, but default `stringify` can't handle that.
+                    // We workaround this by using a special replacer function
+                    // to only log values of the root object and avoid cycles.
+                    return JSON.stringify(arg, (key, value) => {
+                        if (key && typeof value === "object") {
+                            return "<object>";
+                        }
+                        return value;
+                    });
+                }
             } else {
                 return arg;
             }
@@ -88,7 +103,9 @@ class ConsoleLogger {
         // run.
         // Example line:
         // 2017-01-18T11:23:53.214Z W Failed to set badge count
-        const line = `${ts} ${level} ${args.join(' ')}\n`;
+        let line = `${ts} ${level} ${args.join(' ')}\n`;
+        // Do some cleanup
+        line = line.replace(/token=[a-zA-Z0-9-]+/gm, 'token=xxxxx');
         // Using + really is the quickest way in JS
         // http://jsperf.com/concat-vs-plus-vs-join
         this.logs += line;
@@ -273,8 +290,8 @@ class IndexedDBLogStore {
                         resolve(lines);
                         return; // end of results
                     }
-                    lines += cursor.value.lines;
-                    if (lines.length >= MAX_LOG_SIZE) {
+                    lines = cursor.value.lines + lines;
+                    if (lines.length >= maxSize) {
                         resolve(lines);
                     } else {
                         cursor.continue();
@@ -343,11 +360,19 @@ class IndexedDBLogStore {
         const logs = [];
         let size = 0;
         for (let i = 0; i < allLogIds.length; i++) {
-            const lines = await fetchLogs(allLogIds[i]);
+            const lines = await fetchLogs(allLogIds[i], MAX_LOG_SIZE - size);
 
-            // always include at least one log file, but only include
-            // subsequent ones if they won't take us over the MAX_LOG_SIZE
-            if (i > 0 && size + lines.length > MAX_LOG_SIZE) {
+            // always add the log file: fetchLogs will truncate once the maxSize we give it is
+            // exceeded, so we'll go over the max but only by one fragment's worth.
+            logs.push({
+                lines: lines,
+                id: allLogIds[i],
+            });
+            size += lines.length;
+
+            // If fetchLogs truncated we'll now be at or over the size limit,
+            // in which case we should stop and remove the rest of the log files.
+            if (size >= MAX_LOG_SIZE) {
                 // the remaining log IDs should be removed. If we go out of
                 // bounds this is just []
                 removeLogIds = allLogIds.slice(i + 1);

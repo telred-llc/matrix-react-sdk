@@ -17,22 +17,24 @@ limitations under the License.
 
 import React from 'react';
 import ReactDOM from 'react-dom';
+import createReactClass from 'create-react-class';
+import PropTypes from 'prop-types';
 import dis from '../../../dispatcher';
 import classNames from 'classnames';
 
 const MIN_TOOLTIP_HEIGHT = 25;
 
-module.exports = React.createClass({
+module.exports = createReactClass({
     displayName: 'RoomTooltip',
 
     propTypes: {
         // Class applied to the element used to position the tooltip
-        className: React.PropTypes.string.isRequired,
+        className: PropTypes.string.isRequired,
         // Class applied to the tooltip itself
-        tooltipClassName: React.PropTypes.string,
+        tooltipClassName: PropTypes.string,
         // The tooltip is derived from either the room name or a label
-        room: React.PropTypes.object,
-        label: React.PropTypes.node,
+        room: PropTypes.object,
+        label: PropTypes.node,
     },
 
     // Create a wrapper for the tooltip outside the parent and attach it to the body element

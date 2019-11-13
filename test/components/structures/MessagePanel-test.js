@@ -16,9 +16,11 @@ limitations under the License.
 
 import SettingsStore from "../../../src/settings/SettingsStore";
 
-const React = require('react');
-const ReactDOM = require("react-dom");
-const TestUtils = require('react-addons-test-utils');
+import React from 'react';
+import createReactClass from 'create-react-class';
+import ReactDOM from "react-dom";
+import PropTypes from "prop-types";
+const TestUtils = require('react-dom/test-utils');
 const expect = require('expect');
 import sinon from 'sinon';
 import { EventEmitter } from "events";
@@ -38,14 +40,19 @@ let client;
 const room = new Matrix.Room();
 
 // wrap MessagePanel with a component which provides the MatrixClient in the context.
-const WrappedMessagePanel = React.createClass({
+const WrappedMessagePanel = createReactClass({
     childContextTypes: {
-        matrixClient: React.PropTypes.object,
+        matrixClient: PropTypes.object,
+        room: PropTypes.object,
     },
 
     getChildContext: function() {
         return {
             matrixClient: client,
+            room: {
+                canReact: true,
+                canReply: true,
+            },
         };
     },
 

@@ -16,12 +16,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import * as Matrix from 'matrix-js-sdk';
+import { MatrixClient } from 'matrix-js-sdk';
 import React from 'react';
+import createReactClass from 'create-react-class';
 import PropTypes from 'prop-types';
 import { DragDropContext } from 'react-beautiful-dnd';
 
-import { KeyCode, isOnlyCtrlOrCmdKeyEvent } from '../../Keyboard';
+import { Key, isOnlyCtrlOrCmdKeyEvent } from '../../Keyboard';
 import PageTypes from '../../PageTypes';
 import CallMediaHandler from '../../CallMediaHandler';
 import { fixupColorFonts } from '../../utils/FontManager';
@@ -37,6 +38,10 @@ import TagOrderActions from '../../actions/TagOrderActions';
 import RoomListActions from '../../actions/RoomListActions';
 import ResizeHandle from '../views/elements/ResizeHandle';
 import { Resizer, CollapseDistributor } from '../../resizer';
+import * as Lifecycle from "../../Lifecycle";
+import * as CryptoPassPhrase from "../../utils/CryptoPassPharse";
+import Modal from "../../Modal";
+import LogoutDialog from "../views/dialogs/LogoutDialog";
 // We need to fetch each pinned message individually (if we don't already have it)
 // so each pinned message may trigger a request. Limit the number per room for sanity.
 // NB. this is just for server notices rather than pinned messages in general.
@@ -60,11 +65,11 @@ function canElementReceiveInput(el) {
  *
  * Components mounted below us can access the matrix client via the react context.
  */
-const LoggedInView = React.createClass({
+const LoggedInView = createReactClass({
     displayName: 'LoggedInView',
 
     propTypes: {
-        matrixClient: PropTypes.instanceOf(Matrix.MatrixClient).isRequired,
+        matrixClient: PropTypes.instanceOf(MatrixClient).isRequired,
         page_type: PropTypes.string.isRequired,
         onRoomCreated: PropTypes.func,
 
@@ -80,8 +85,8 @@ const LoggedInView = React.createClass({
     },
 
     childContextTypes: {
-        matrixClient: PropTypes.instanceOf(Matrix.MatrixClient),
-        authCache: PropTypes.object
+        matrixClient: PropTypes.instanceOf(MatrixClient),
+        authCache: PropTypes.object,
     },
 
     getChildContext: function() {
@@ -130,6 +135,7 @@ const LoggedInView = React.createClass({
         this._matrixClient.on('RoomState.events', this.onRoomStateEvents);
 
         fixupColorFonts();
+        this.checkAutoBK();
     },
 
     componentDidUpdate(prevProps) {
@@ -371,26 +377,26 @@ const LoggedInView = React.createClass({
 
         let handled = false;
         const ctrlCmdOnly = isOnlyCtrlOrCmdKeyEvent(ev);
-        const hasModifier =
-            ev.altKey || ev.ctrlKey || ev.metaKey || ev.shiftKey;
+        const hasModifier = ev.altKey || ev.ctrlKey || ev.metaKey || ev.shiftKey ||
+            ev.key === Key.ALT || ev.key === Key.CONTROL || ev.key === Key.META || ev.key === Key.SHIFT;
 
-        switch (ev.keyCode) {
-            case KeyCode.PAGE_UP:
-            case KeyCode.PAGE_DOWN:
+        switch (ev.key) {
+            case Key.PAGE_UP:
+            case Key.PAGE_DOWN:
                 if (!hasModifier) {
                     this._onScrollKeyPressed(ev);
                     handled = true;
                 }
                 break;
 
-            case KeyCode.HOME:
-            case KeyCode.END:
+            case Key.HOME:
+            case Key.END:
                 if (ev.ctrlKey && !ev.shiftKey && !ev.altKey && !ev.metaKey) {
                     this._onScrollKeyPressed(ev);
                     handled = true;
                 }
                 break;
-            case KeyCode.KEY_K:
+            case Key.K:
                 if (ctrlCmdOnly) {
                     dis.dispatch({
                         action: 'focus_room_filter'
@@ -398,7 +404,9 @@ const LoggedInView = React.createClass({
                     handled = true;
                 }
                 break;
-            case KeyCode.KEY_BACKTICK:
+            case Key.BACKTICK:
+                if (ev.key !== "`") break;
+
                 // Ideally this would be CTRL+P for "Profile", but that's
                 // taken by the print dialog. CTRL+I for "Information"
                 // was previously chosen but conflicted with italics in
@@ -417,11 +425,17 @@ const LoggedInView = React.createClass({
             ev.stopPropagation();
             ev.preventDefault();
         } else if (!hasModifier) {
-            const isClickShortcut =
-                ev.target !== document.body &&
-                (ev.key === 'Space' || ev.key === 'Enter');
+            const isClickShortcut = ev.target !== document.body &&
+                (ev.key === Key.SPACE || ev.key === Key.ENTER);
 
-            if (!isClickShortcut && !canElementReceiveInput(ev.target)) {
+            // XXX: Remove after CIDER replaces Slate completely: https://github.com/vector-im/riot-web/issues/11036
+            // If using Slate, consume the Backspace without first focusing as it causes an implosion
+            if (ev.key === Key.BACKSPACE && !SettingsStore.getValue("useCiderComposer")) {
+                ev.stopPropagation();
+                return;
+            }
+
+            if (!isClickShortcut && ev.key !== Key.TAB && !canElementReceiveInput(ev.target)) {
                 // synchronous dispatch so we focus before key generates input
                 dis.dispatch({ action: 'focus_composer' }, true);
                 ev.stopPropagation();
@@ -538,7 +552,93 @@ const LoggedInView = React.createClass({
     _setResizeContainerRef(div) {
         this.resizeContainer = div;
     },
+    checkAutoBK: async function (){
+        const {accessToken, userId} = Lifecycle.getLocalStorageSessionVars();
+        const hasPassPhrase = await CryptoPassPhrase.getPassPhrase(accessToken);
+        const userPass = localStorage.getItem("mx_pass");
+        localStorage.removeItem("mx_pass")
+        this.setState({userPass: userPass})
+        const backupInfo = await MatrixClientPeg.get().getKeyBackupVersion();
+        // debugger
+        if(hasPassPhrase){
+            const backupSigStatus = await MatrixClientPeg.get().isKeyBackupTrusted(backupInfo);
+            let passPhrase = CryptoPassPhrase.DeCryptoPassPhrase(userId, hasPassPhrase);
+            console.log("recoverInfo", backupInfo)
+            this.setState({passPhrase: passPhrase})
+            if(!backupInfo){
+                this.createANewBK(passPhrase)
+            } else {
+                console.log("recoverInfo", backupInfo)
+                this.DecryptByKeyBackup(passPhrase, backupInfo);
+            }
+        }
+        else if(!hasPassPhrase && userPass && !backupInfo){
 
+            await CryptoPassPhrase.createPassPhrase(userPass, userId, accessToken);
+            this.createANewBK(`${userPass}COLIAKIP`)
+        }
+        else if(!hasPassPhrase && userPass && backupInfo){
+            await CryptoPassPhrase.createPassPhrase(this.state.userPass, userId, accessToken);
+            this.DecryptByKeyBackup(`${userPass}COLIAKIP`, backupInfo);
+        }
+        else if(!hasPassPhrase && !userPass){
+            if(backupInfo){
+                Modal.createTrackedDialog('Logout E2E Export', '', LogoutDialog, { warningBK: true });
+            } else{
+                Modal.createTrackedDialog('Logout E2E Export', '', LogoutDialog);
+            }
+        }
+    },
+    DecryptByKeyBackup: async function (passPhrase, backupInfo){
+        console.log("recoverInfo", passPhrase)
+        try {
+            const recoverInfo = await MatrixClientPeg.get().restoreKeyBackupWithPassword(
+                passPhrase,
+                undefined,
+                undefined,
+                backupInfo
+            );
+            console.log("recoverInfo" + recoverInfo.toString())
+            dis.dispatch({
+                action: 'key_backup_restored'
+            });
+        } catch (e) {
+            const RestoreKeyBackupDialog = sdk.getComponent('dialogs.keybackup.RestoreKeyBackupDialog');
+            Modal.createTrackedDialog('Restore Backup', '', RestoreKeyBackupDialog, { onFinished: this.onFinished, hasUserPass: true });
+        }
+    },
+    onFinished: async function (hasComplete){
+        if(!hasComplete) return;
+        localStorage.removeItem("mx_pass");
+        const {accessToken, userId} = Lifecycle.getLocalStorageSessionVars();
+        const backupInfo = await MatrixClientPeg.get().getKeyBackupVersion();
+        MatrixClientPeg.get().deleteKeyBackupVersion(backupInfo.version);
+        if(!this.state.passPhrase)
+        {
+            await CryptoPassPhrase.createPassPhrase(this.state.userPass, userId, accessToken);
+        }
+        this.createANewBK(`${this.state.userPass}COLIAKIP`)
+    },
+    onFinishedCreateBKbyManual: function (hasCompleted){
+        if(hasCompleted) dis.dispatch({action: 'logout'});
+    },
+    createANewBK: async function (passPhrase){
+        let info;
+        let _keyBackupInfo;
+        try {
+            _keyBackupInfo = await MatrixClientPeg.get().prepareKeyBackupVersion(
+                passPhrase
+            );
+            info = await MatrixClientPeg.get().createKeyBackupVersion(
+                _keyBackupInfo
+            );
+            await MatrixClientPeg.get().scheduleAllGroupSessionsForBackup();
+        } catch (e) {
+            if (info) {
+                MatrixClientPeg.get().deleteKeyBackupVersion(info.version);
+            }
+        }
+    },
     render: function() {
         const LeftPanel = sdk.getComponent('structures.LeftPanel');
         const RoomView = sdk.getComponent('structures.RoomView');

@@ -18,11 +18,12 @@ limitations under the License.
 'use strict';
 
 const React = require('react');
+import createReactClass from 'create-react-class';
 import { _t } from '../../../languageHandler';
 const dis = require('../../../dispatcher');
 const AccessibleButton = require('../elements/AccessibleButton');
 
-module.exports = React.createClass({
+module.exports = createReactClass({
     displayName: 'AuthButtons',
 
     propTypes: {

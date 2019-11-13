@@ -20,8 +20,12 @@ limitations under the License.
 import Promise from 'bluebird';
 
 import React from 'react';
+import createReactClass from 'create-react-class';
 import PropTypes from 'prop-types';
 import Matrix from "matrix-js-sdk";
+
+// focus-visible is a Polyfill for the :focus-visible CSS pseudo-attribute used by _AccessibleButton.scss
+import 'focus-visible';
 
 import Analytics from "../../Analytics";
 import { DecryptionFailureTracker } from "../../DecryptionFailureTracker";
@@ -41,7 +45,7 @@ import * as Rooms from '../../Rooms';
 import linkifyMatrix from "../../linkify-matrix";
 import * as Lifecycle from '../../Lifecycle';
 // LifecycleStore is not used but does listen to and dispatch actions
-require('../../stores/LifecycleStore');
+import '../../stores/LifecycleStore';
 import PageTypes from '../../PageTypes';
 import { getHomePageUrl } from '../../utils/pages';
 // const MatrixEvent = require('../../../../matrix-js-sdk/src/models/event').MatrixEvent;
@@ -58,6 +62,7 @@ import { ValidatedServerConfig } from "../../utils/AutoDiscoveryUtils";
 import AutoDiscoveryUtils from "../../utils/AutoDiscoveryUtils";
 import DMRoomMap from '../../utils/DMRoomMap';
 import { countRoomsWithNotif } from '../../RoomNotifs';
+import { setTheme } from "../../theme";
 
 // Disable warnings for now: we use deprecated bluebird functions
 // and need to migrate, but they spam the console with warnings.
@@ -109,7 +114,7 @@ const ONBOARDING_FLOW_STARTERS = [
     'view_create_group',
 ];
 
-export default React.createClass({
+export default createReactClass({
     // we export this so that the integration tests can use it :-S
     statics: {
         VIEWS: VIEWS,
@@ -272,6 +277,10 @@ export default React.createClass({
 
         this.focusComposer = false;
 
+        // object field used for tracking the status info appended to the title tag.
+        // we don't do it as react state as i'm scared about triggering needless react refreshes.
+        this.subTitleStatus = '';
+
         // this can technically be done anywhere but doing this here keeps all
         // the routing url path logic together.
         if (this.onAliasClick) {
@@ -287,7 +296,10 @@ export default React.createClass({
         // the first thing to do is to try the token params in the query-string
         // if the session isn't soft logged out (ie: is a clean session being logged in)
         if (!Lifecycle.isSoftLogout()) {
-            Lifecycle.attemptTokenLogin(this.props.realQueryParams).then((loggedIn) => {
+            Lifecycle.attemptTokenLogin(
+                this.props.realQueryParams,
+                this.props.defaultDeviceDisplayName,
+            ).then((loggedIn) => {
                 if (loggedIn) {
                     this.props.onTokenLoginCompleted();
 
@@ -448,8 +460,28 @@ export default React.createClass({
         }
 
         switch (payload.action) {
-            case 'key_backup_restored':
-                this.saveChatForSearch();
+            case 'MatrixActions.accountData':
+                // XXX: This is a collection of several hacks to solve a minor problem. We want to
+                // update our local state when the ID server changes, but don't want to put that in
+                // the js-sdk as we'd be then dictating how all consumers need to behave. However,
+                // this component is already bloated and we probably don't want this tiny logic in
+                // here, but there's no better place in the react-sdk for it. Additionally, we're
+                // abusing the MatrixActionCreator stuff to avoid errors on dispatches.
+                if (payload.event_type === 'm.identity_server') {
+                    const fullUrl = payload.event_content ? payload.event_content['base_url'] : null;
+                    if (!fullUrl) {
+                        MatrixClientPeg.get().setIdentityServerUrl(null);
+                        localStorage.removeItem("mx_is_access_token");
+                        localStorage.removeItem("mx_is_url");
+                    } else {
+                        MatrixClientPeg.get().setIdentityServerUrl(fullUrl);
+                        localStorage.removeItem("mx_is_access_token"); // clear token
+                        localStorage.setItem("mx_is_url", fullUrl); // XXX: Do we still need this?
+                    }
+
+                    // redispatch the change with a more specific action
+                    dis.dispatch({action: 'id_server_changed'});
+                }
                 break;
             case 'logout':
                 Lifecycle.logout();
@@ -589,7 +621,7 @@ export default React.createClass({
                 this._setMxId(payload);
                 break;
             case 'view_start_chat_or_reuse':
-                this._chatCreateOrReuse(payload.user_id, payload.go_home_on_cancel);
+                this._chatCreateOrReuse(payload.user_id);
                 break;
             case 'view_create_chat':
                 showStartChatInviteDialog();
@@ -632,7 +664,7 @@ export default React.createClass({
                 break;
             }
             case 'set_theme':
-                this._onSetTheme(payload.value);
+                setTheme(payload.value);
                 break;
             case 'on_logging_in':
                 // We are now logging in, so set the state to reflect that
@@ -854,9 +886,10 @@ export default React.createClass({
             if (roomInfo.event_id && roomInfo.highlighted) {
                 presentedId += "/" + roomInfo.event_id;
             }
-            this.notifyNewScreen('room/' + presentedId);
             newState.ready = true;
-            this.setState(newState);
+            this.setState(newState, ()=>{
+                this.notifyNewScreen('room/' + presentedId);
+            });
         });
     },
 
@@ -942,7 +975,7 @@ export default React.createClass({
         }).close;
     },
 
-    _createRoom: function() {
+    _createRoom: async function() {
         const CreateRoomDialog = sdk.getComponent('dialogs.CreateRoomDialog');
         Modal.createTrackedDialog('Create Room', '', CreateRoomDialog, {
             onFinished: (shouldCreate, name, guestAccessState, joinRuleState) => {
@@ -957,12 +990,7 @@ export default React.createClass({
         });
     },
 
-    _chatCreateOrReuse: function(userId, goHomeOnCancel) {
-        if (goHomeOnCancel === undefined) goHomeOnCancel = true;
-
-        const ChatCreateOrReuseDialog = sdk.getComponent(
-            'views.dialogs.ChatCreateOrReuseDialog',
-        );
+    _chatCreateOrReuse: function(userId) {
         // Use a deferred action to reshow the dialog once the user has registered
         if (MatrixClientPeg.get().isGuest()) {
             // No point in making 2 DMs with welcome bot. This assumes view_set_mxid will
@@ -987,30 +1015,23 @@ export default React.createClass({
             return;
         }
 
-        const close = Modal.createTrackedDialog('Chat create or reuse', '', ChatCreateOrReuseDialog, {
-            userId: userId,
-            onFinished: (success) => {
-                if (!success && goHomeOnCancel) {
-                    // Dialog cancelled, default to home
-                    dis.dispatch({ action: 'view_home_page' });
-                }
-            },
-            onNewDMClick: () => {
-                dis.dispatch({
-                    action: 'start_chat',
-                    user_id: userId,
-                });
-                // Close the dialog, indicate success (calls onFinished(true))
-                close(true);
-            },
-            onExistingRoomSelected: (roomId) => {
-                dis.dispatch({
-                    action: 'view_room',
-                    room_id: roomId,
-                });
-                close(true);
-            },
-        }).close;
+        // TODO: Immutable DMs replaces this
+
+        const client = MatrixClientPeg.get();
+        const dmRoomMap = new DMRoomMap(client);
+        const dmRooms = dmRoomMap.getDMRoomsForUserId(userId);
+
+        if (dmRooms.length > 0) {
+            dis.dispatch({
+                action: 'view_room',
+                room_id: dmRooms[0],
+            });
+        } else {
+            dis.dispatch({
+                action: 'start_chat',
+                user_id: userId,
+            });
+        }
     },
 
     _leaveRoomWarnings: function(roomId) {
@@ -1096,82 +1117,6 @@ export default React.createClass({
                 }
             },
         });
-    },
-
-    /**
-     * Called whenever someone changes the theme
-     *
-     * @param {string} theme new theme
-     */
-    _onSetTheme: function(theme) {
-        if (!theme) {
-            theme = SettingsStore.getValue("theme");
-        }
-
-        // look for the stylesheet elements.
-        // styleElements is a map from style name to HTMLLinkElement.
-        const styleElements = Object.create(null);
-        let a;
-        for (let i = 0; (a = document.getElementsByTagName("link")[i]); i++) {
-            const href = a.getAttribute("href");
-            // shouldn't we be using the 'title' tag rather than the href?
-            const match = href.match(/^bundles\/.*\/theme-(.*)\.css$/);
-            if (match) {
-                styleElements[match[1]] = a;
-            }
-        }
-
-        if (!(theme in styleElements)) {
-            throw new Error("Unknown theme " + theme);
-        }
-
-        // disable all of them first, then enable the one we want. Chrome only
-        // bothers to do an update on a true->false transition, so this ensures
-        // that we get exactly one update, at the right time.
-        //
-        // ^ This comment was true when we used to use alternative stylesheets
-        // for the CSS.  Nowadays we just set them all as disabled in index.html
-        // and enable them as needed.  It might be cleaner to disable them all
-        // at the same time to prevent loading two themes simultaneously and
-        // having them interact badly... but this causes a flash of unstyled app
-        // which is even uglier.  So we don't.
-
-        styleElements[theme].disabled = false;
-
-        const switchTheme = function() {
-            // we re-enable our theme here just in case we raced with another
-            // theme set request as per https://github.com/vector-im/riot-web/issues/5601.
-            // We could alternatively lock or similar to stop the race, but
-            // this is probably good enough for now.
-            styleElements[theme].disabled = false;
-            Object.values(styleElements).forEach((a) => {
-                if (a == styleElements[theme]) return;
-                a.disabled = true;
-            });
-            Tinter.setTheme(theme);
-        };
-
-        // turns out that Firefox preloads the CSS for link elements with
-        // the disabled attribute, but Chrome doesn't.
-
-        let cssLoaded = false;
-
-        styleElements[theme].onload = () => {
-            switchTheme();
-        };
-
-        for (let i = 0; i < document.styleSheets.length; i++) {
-            const ss = document.styleSheets[i];
-            if (ss && ss.href === styleElements[theme].href) {
-                cssLoaded = true;
-                break;
-            }
-        }
-
-        if (cssLoaded) {
-            styleElements[theme].onload = undefined;
-            switchTheme();
-        }
     },
 
     /**
@@ -1298,6 +1243,7 @@ export default React.createClass({
             collapsedRhs: false,
             currentRoomId: null,
         });
+        this.subTitleStatus = '';
         this._setPageSubtitle();
     },
 
@@ -1313,6 +1259,7 @@ export default React.createClass({
             collapsedRhs: false,
             currentRoomId: null,
         });
+        this.subTitleStatus = '';
         this._setPageSubtitle();
     },
 
@@ -1732,6 +1679,7 @@ export default React.createClass({
         if (this.props.onNewScreen) {
             this.props.onNewScreen(screen);
         }
+        this._setPageSubtitle();
     },
 
     onAliasClick: function(event, alias) {
@@ -1847,7 +1795,14 @@ export default React.createClass({
     },
 
     _setPageSubtitle: function(subtitle='') {
-        document.title = `${SdkConfig.get().brand || 'ClearKeep'} ${subtitle}`;
+        if (this.state.currentRoomId) {
+            const client = MatrixClientPeg.get();
+            const room = client && client.getRoom(this.state.currentRoomId);
+            if (room) {
+                subtitle = `| ${ room.name } ${subtitle}`;
+            }
+        }
+        document.title = `${SdkConfig.get().brand || 'ClearKeep'} ${subtitle} ${this.subTitleStatus}`;
     },
 
     updateStatusIndicator: function(state, prevState) {
@@ -1858,15 +1813,15 @@ export default React.createClass({
             PlatformPeg.get().setNotificationCount(notifCount);
         }
 
-        let subtitle = '';
+        this.subTitleStatus = '';
         if (state === "ERROR") {
-            subtitle += `[${_t("Offline")}] `;
+            this.subTitleStatus += `[${_t("Offline")}] `;
         }
         if (notifCount > 0) {
-            subtitle += `[${notifCount}]`;
+            this.subTitleStatus += `[${notifCount}]`;
         }
 
-        this._setPageSubtitle(subtitle);
+        this._setPageSubtitle();
     },
 
     onCloseAllSettings() {
@@ -1891,28 +1846,26 @@ export default React.createClass({
     render: function() {
         // console.log(`Rendering MatrixChat with view ${this.state.view}`);
 
+        let view;
+
         if (
             this.state.view === VIEWS.LOADING ||
             this.state.view === VIEWS.LOGGING_IN
         ) {
             const Spinner = sdk.getComponent('elements.Spinner');
-            return (
+            view = (
                 <div className="mx_MatrixChat_splash">
                     <Spinner />
                 </div>
             );
-        }
-
-        // needs to be before normal PageTypes as you are logged in technically
-        if (this.state.view === VIEWS.POST_REGISTRATION) {
+        } else if (this.state.view === VIEWS.POST_REGISTRATION) {
+            // needs to be before normal PageTypes as you are logged in technically
             const PostRegistration = sdk.getComponent('structures.auth.PostRegistration');
-            return (
+            view = (
                 <PostRegistration
                     onComplete={this.onFinishPostRegistration} />
             );
-        }
-
-        if (this.state.view === VIEWS.LOGGED_IN) {
+        } else if (this.state.view === VIEWS.LOGGED_IN) {
             // store errors stop the client syncing and require user intervention, so we'll
             // be showing a dialog. Don't show anything else.
             const isStoreError = this.state.syncError && this.state.syncError instanceof Matrix.InvalidStoreError;
@@ -1926,8 +1879,8 @@ export default React.createClass({
                  * as using something like redux to avoid having a billion bits of state kicking around.
                  */
                 const LoggedInView = sdk.getComponent('structures.LoggedInView');
-                return (
-                   <LoggedInView ref={this._collectLoggedInView} matrixClient={MatrixClientPeg.get()}
+                view = (
+                    <LoggedInView ref={this._collectLoggedInView} matrixClient={MatrixClientPeg.get()}
                         onRoomCreated={this.onRoomCreated}
                         onCloseAllSettings={this.onCloseAllSettings}
                         onRegistered={this.onRegistered}
@@ -1946,26 +1899,22 @@ export default React.createClass({
                         {messageForSyncError(this.state.syncError)}
                     </div>;
                 }
-                return (
+                view = (
                     <div className="mx_MatrixChat_splash">
                         {errorBox}
                         <Spinner />
                         <a href="#" className="mx_MatrixChat_splashButtons" onClick={this.onLogoutClick}>
-                        { _t('Logout') }
+                            {_t('Logout')}
                         </a>
                     </div>
                 );
             }
-        }
-
-        if (this.state.view === VIEWS.WELCOME) {
+        } else if (this.state.view === VIEWS.WELCOME) {
             const Welcome = sdk.getComponent('auth.Welcome');
-            return <Welcome />;
-        }
-
-        if (this.state.view === VIEWS.REGISTER) {
+            view = <Welcome />;
+        } else if (this.state.view === VIEWS.REGISTER) {
             const Registration = sdk.getComponent('structures.auth.Registration');
-            return (
+            view = (
                 <Registration
                     clientSecret={this.state.register_client_secret}
                     sessionId={this.state.register_session_id}
@@ -1979,12 +1928,9 @@ export default React.createClass({
                     {...this.getServerProperties()}
                 />
             );
-        }
-
-
-        if (this.state.view === VIEWS.FORGOT_PASSWORD) {
+        } else if (this.state.view === VIEWS.FORGOT_PASSWORD) {
             const ForgotPassword = sdk.getComponent('structures.auth.ForgotPassword');
-            return (
+            view = (
                 <ForgotPassword
                     onComplete={this.onLoginClick}
                     onLoginClick={this.onLoginClick}
@@ -1992,11 +1938,9 @@ export default React.createClass({
                     {...this.getServerProperties()}
                 />
             );
-        }
-
-        if (this.state.view === VIEWS.LOGIN) {
+        } else if (this.state.view === VIEWS.LOGIN) {
             const Login = sdk.getComponent('structures.auth.Login');
-            return (
+            view = (
                 <Login
                     onLoggedIn={Lifecycle.setLoggedIn}
                     onRegisterClick={this.onRegisterClick}
@@ -2007,18 +1951,21 @@ export default React.createClass({
                     {...this.getServerProperties()}
                 />
             );
-        }
-
-        if (this.state.view === VIEWS.SOFT_LOGOUT) {
+        } else if (this.state.view === VIEWS.SOFT_LOGOUT) {
             const SoftLogout = sdk.getComponent('structures.auth.SoftLogout');
-            return (
+            view = (
                 <SoftLogout
                     realQueryParams={this.props.realQueryParams}
                     onTokenLoginCompleted={this.props.onTokenLoginCompleted}
                 />
             );
+        } else {
+            console.error(`Unknown view ${this.state.view}`);
         }
 
-        console.error(`Unknown view ${this.state.view}`);
+        const ErrorBoundary = sdk.getComponent('elements.ErrorBoundary');
+        return <ErrorBoundary>
+            {view}
+        </ErrorBoundary>;
     },
 });

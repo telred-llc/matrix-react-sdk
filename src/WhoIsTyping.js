@@ -34,6 +34,9 @@ module.exports = {
     /**
      * Given a Room object and, optionally, a list of userID strings
      * to exclude, return a list of user objects who are typing.
+     * @param {Room} room: room object to get users from.
+     * @param {string[]} exclude: list of user mxids to exclude.
+     * @returns {string[]} list of user objects who are typing.
      */
     usersTyping: function(room, exclude) {
         const whoIsTyping = [];
@@ -47,7 +50,7 @@ module.exports = {
             const userId = memberKeys[i];
 
             if (room.currentState.members[userId].typing) {
-                if (exclude.indexOf(userId) == -1) {
+                if (exclude.indexOf(userId) === -1) {
                     whoIsTyping.push(room.currentState.members[userId]);
                 }
             }
@@ -61,7 +64,7 @@ module.exports = {
         if (whoIsTyping.length > limit) {
             othersCount = whoIsTyping.length - limit + 1;
         }
-        if (whoIsTyping.length == 0) {
+        if (whoIsTyping.length === 0) {
             return '';
         } else if (whoIsTyping.length == 1) {
             return _t('%(displayName)s is typing …', {

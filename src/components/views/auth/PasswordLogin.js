@@ -31,6 +31,7 @@ export default class PasswordLogin extends React.Component {
     static propTypes = {
         onSubmit: PropTypes.func.isRequired, // fn(username, password)
         onError: PropTypes.func,
+        onEditServerDetailsClick: PropTypes.func,
         onForgotPasswordClick: PropTypes.func, // fn()
         initialUsername: PropTypes.string,
         initialPassword: PropTypes.string,
@@ -176,6 +177,7 @@ export default class PasswordLogin extends React.Component {
 
     render() {
         const Field = sdk.getComponent('elements.Field');
+        // const SignInToText = sdk.getComponent('views.auth.SignInToText');
 
         let forgotPasswordJsx;
 
@@ -214,6 +216,8 @@ export default class PasswordLogin extends React.Component {
 
         return (
             <div>
+                {/* <SignInToText serverConfig={this.props.serverConfig}
+                    onEditServerDetailsClick={this.props.onEditServerDetailsClick} /> */}
                 <form onSubmit={this.onSubmitForm}>
                     {loginField}
                     <Field

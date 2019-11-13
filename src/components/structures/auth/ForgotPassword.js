@@ -1,6 +1,7 @@
 /*
 Copyright 2015, 2016 OpenMarket Ltd
 Copyright 2017, 2018, 2019 New Vector Ltd
+Copyright 2019 The Matrix.org Foundation C.I.C.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,6 +17,7 @@ limitations under the License.
 */
 
 import React from 'react';
+import createReactClass from 'create-react-class';
 import PropTypes from 'prop-types';
 import { _t } from '../../../languageHandler';
 import sdk from '../../../index';
@@ -39,7 +41,7 @@ const PHASE_EMAIL_SENT = 3;
 // User has clicked the link in email and completed reset
 const PHASE_DONE = 4;
 
-module.exports = React.createClass({
+module.exports = createReactClass({
     displayName: 'ForgotPassword',
 
     propTypes: {
@@ -63,11 +65,13 @@ module.exports = React.createClass({
             // be seeing.
             serverIsAlive: true,
             serverErrorIsFatal: false,
-            serverDeadError: ''
+            serverDeadError: "",
+            serverRequiresIdServer: null,
         };
     },
 
     componentWillMount: function() {
+        this.reset = null;
         this._checkServerLiveliness(this.props.serverConfig);
     },
 
@@ -88,7 +92,14 @@ module.exports = React.createClass({
                 serverConfig.hsUrl,
                 serverConfig.isUrl
             );
-            this.setState({ serverIsAlive: true });
+
+            const pwReset = new PasswordReset(serverConfig.hsUrl, serverConfig.isUrl);
+            const serverRequiresIdServer = await pwReset.doesServerRequireIdServerParam();
+
+            this.setState({
+                serverIsAlive: true,
+                serverRequiresIdServer,
+            });
         } catch (e) {
             this.setState(
                 AutoDiscoveryUtils.authComponentStateForError(
@@ -124,20 +135,18 @@ module.exports = React.createClass({
         );
     },
 
-    onVerify: function(ev) {
+    onVerify: async function(ev) {
         ev.preventDefault();
         if (!this.reset) {
             console.error('onVerify called before submitPasswordReset!');
             return;
         }
-        this.reset.checkEmailLinkClicked().done(
-            res => {
-                this.setState({ phase: PHASE_DONE });
-            },
-            err => {
-                this.showErrorDialog(err.message);
-            }
-        );
+        try {
+            await this.reset.checkEmailLinkClicked();
+            this.setState({ phase: PHASE_DONE });
+        } catch (err) {
+            this.showErrorDialog(err.message);
+        }
     },
 
     onSubmitForm: async function(ev) {
@@ -227,16 +236,15 @@ module.exports = React.createClass({
             return null;
         }
 
-        return (
-            <ServerConfig
-                serverConfig={this.props.serverConfig}
-                onServerConfigChange={this.props.onServerConfigChange}
-                delayTimeMs={0}
-                onAfterSubmit={this.onServerDetailsNextPhaseClick}
-                submitText={_t('Next')}
-                submitClass='mx_Login_submit'
-            />
-        );
+        return <ServerConfig
+            serverConfig={this.props.serverConfig}
+            onServerConfigChange={this.props.onServerConfigChange}
+            delayTimeMs={0}
+            showIdentityServerIfRequiredByHomeserver={true}
+            onAfterSubmit={this.onServerDetailsNextPhaseClick}
+            submitText={_t("Next")}
+            submitClass="mx_Login_submit"
+        />;
     },
 
     renderForgot() {
@@ -303,58 +311,60 @@ module.exports = React.createClass({
             );
         }
 
-        return (
-            <div>
-                {errorText}
-                {serverDeadSection}
-                <form onSubmit={this.onSubmitForm}>
-                    <div className='mx_AuthBody_fieldRow'>
-                        <Field
-                            id='mx_ForgotPassword_email'
-                            name='reset_email' // define a name so browser's password autofill gets less confused
-                            type='text'
-                            label={_t('Email')}
-                            value={this.state.email}
-                            onChange={this.onInputChanged.bind(this, 'email')}
-                            autoFocus
-                        />
-                    </div>
-                    <div className='mx_AuthBody_fieldRow'>
-                        <Field
-                            id='mx_ForgotPassword_password'
-                            name='reset_password'
-                            type='password'
-                            label={_t('New Password')}
-                            value={this.state.password}
-                            onChange={this.onInputChanged.bind(
-                                this,
-                                'password'
-                            )}
-                        />
-                        <Field
-                            id='mx_ForgotPassword_passwordConfirm'
-                            name='reset_password_confirm'
-                            type='password'
-                            label={_t('Confirm')}
-                            value={this.state.password2}
-                            onChange={this.onInputChanged.bind(
-                                this,
-                                'password2'
-                            )}
-                        />
-                    </div>
-                    <span>
-                        {_t(
-                            'A verification email will be sent to your inbox to confirm ' +
-                                'setting your new password.'
-                        )}
-                    </span>
-                    <input
-                        className='mx_Login_submit'
-                        type='submit'
-                        value={_t('Send Reset Email')}
+        if (!this.props.serverConfig.isUrl && this.state.serverRequiresIdServer) {
+            return <div>
+                <h3>
+                    {yourMatrixAccountText}
+                    {editLink}
+                </h3>
+                {_t(
+                    "No identity server is configured: " +
+                    "add one in server settings to reset your password.",
+                )}
+                <a className="mx_AuthBody_changeFlow" onClick={this.onLoginClick} href="#">
+                    {_t('Sign in instead')}
+                </a>
+            </div>;
+        }
+
+        return <div>
+            {errorText}
+            {serverDeadSection}
+            <h3>
+                {yourMatrixAccountText}
+                {editLink}
+            </h3>
+            <form onSubmit={this.onSubmitForm}>
+                <div className="mx_AuthBody_fieldRow">
+                    <Field
+                        id="mx_ForgotPassword_email"
+                        name="reset_email" // define a name so browser's password autofill gets less confused
+                        type="text"
+                        label={_t('Email')}
+                        value={this.state.email}
+                        onChange={this.onInputChanged.bind(this, "email")}
+                        autoFocus
                     />
-                </form>
+                </div>
+                <div className="mx_AuthBody_fieldRow">
+                    <Field
+                        id="mx_ForgotPassword_password"
+                        name="reset_password"
+                        type="password"
+                        label={_t('Password')}
+                        value={this.state.password}
+                        onChange={this.onInputChanged.bind(this, "password")}
+                    />
+                    <Field
+                        id="mx_ForgotPassword_passwordConfirm"
+                        name="reset_password_confirm"
+                        type="password"
+                        label={_t('Confirm')}
+                        value={this.state.password2}
+                        onChange={this.onInputChanged.bind(this, "password2")}
+                    />
+                  </div>
+            </form>
                 <a
                     className='mx_AuthBody_changeFlow'
                     onClick={this.onLoginClick}
@@ -363,7 +373,7 @@ module.exports = React.createClass({
                     {_t('Sign in instead')}
                 </a>
             </div>
-        );
+
     },
 
     renderSendingEmail() {

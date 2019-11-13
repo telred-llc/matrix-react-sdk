@@ -14,11 +14,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
 'use strict';
-import SettingsStore from '../../../settings/SettingsStore';
-import Timer from '../../../utils/Timer';
-
+import SettingsStore from "../../../settings/SettingsStore";
+import Timer from "../../../utils/Timer";
+import createReactClass from 'create-react-class';
 const React = require('react');
 const ReactDOM = require('react-dom');
 import PropTypes from 'prop-types';
@@ -67,7 +66,7 @@ function phraseForSection(section) {
     }
 }
 
-module.exports = React.createClass({
+module.exports = createReactClass({
     displayName: 'RoomList',
 
     propTypes: {
@@ -217,9 +216,9 @@ module.exports = React.createClass({
         };
         this.resizer = new Resizer(this.resizeContainer, Distributor, cfg);
         this.resizer.setClassNames({
-            handle: 'mx_ResizeHandle',
-            vertical: 'mx_ResizeHandle_vertical',
-            reverse: 'mx_ResizeHandle_reverse'
+            handle: "mx_ResizeHandle",
+            vertical: "mx_ResizeHandle_vertical",
+            reverse: "mx_ResizeHandle_reverse",
         });
         this._layout.update(
             this._layoutSections,
@@ -903,8 +902,8 @@ module.exports = React.createClass({
                 incomingCall: incomingCallIfTaggedAs('im.vector.fake.recent'),
                 onAddRoom: () => {
                     dis.dispatch({ action: 'view_create_room' });
-                }
-            }
+                },
+            },
         ];
         const tagSubLists = Object.keys(this.state.lists)
             .filter(tagName => {
@@ -939,7 +938,7 @@ module.exports = React.createClass({
                 tagName: 'm.lowpriority',
                 order: 'recent',
                 incomingCall: incomingCallIfTaggedAs('m.server_notice')
-            }
+            },
         ]);
 
         const subListComponents = this._mapSubListProps(subLists);

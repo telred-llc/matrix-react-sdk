@@ -58,7 +58,6 @@ export function showRoomInviteDialog(roomId) {
     const AddressPickerDialog = sdk.getComponent('dialogs.AddressPickerDialog');
     Modal.createTrackedDialog('Chat Invite', '', AddressPickerDialog, {
         title: _t('Invite new room members'),
-        description: _t('Who would you like to add to this room?'),
         button: _t('Send Invites'),
         placeholder: _t('Email, name or Matrix ID'),
         onFinished: (shouldInvite, addrs) => {
@@ -256,6 +255,7 @@ function _onRoomInviteFinished(roomId, shouldInvite, addrs) {
         });
 }
 
+// TODO: Immutable DMs replaces this
 function _isDmChat(addrTexts) {
     if (
         addrTexts.length === 1 &&

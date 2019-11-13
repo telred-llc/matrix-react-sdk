@@ -126,6 +126,7 @@ export default class KeyBackupPanel extends React.PureComponent {
             {
                 onFinished: () => {
                     this._loadBackupStatus();
+                    this.props.closeSettingsFn(false)
                 },
             },
         );

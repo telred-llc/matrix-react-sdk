@@ -1,3 +1,711 @@
+Changes in [1.7.0](https://github.com/matrix-org/matrix-react-sdk/releases/tag/v1.7.0) (2019-10-18)
+===================================================================================================
+[Full Changelog](https://github.com/matrix-org/matrix-react-sdk/compare/v1.7.0-rc.1...v1.7.0)
+
+ * Upgrade to JS SDK v2.4.2
+ * Fix: edit unmount when no selection
+   [\#3545](https://github.com/matrix-org/matrix-react-sdk/pull/3545)
+ * "SettingsFlag always run ToggleSwitch fully controlled" to release
+   [\#3542](https://github.com/matrix-org/matrix-react-sdk/pull/3542)
+
+Changes in [1.7.0-rc.1](https://github.com/matrix-org/matrix-react-sdk/releases/tag/v1.7.0-rc.1) (2019-10-09)
+=============================================================================================================
+[Full Changelog](https://github.com/matrix-org/matrix-react-sdk/compare/v1.6.2...v1.7.0-rc.1)
+
+ * Update from Weblate
+   [\#3539](https://github.com/matrix-org/matrix-react-sdk/pull/3539)
+ * React error/warning cleanup
+   [\#3529](https://github.com/matrix-org/matrix-react-sdk/pull/3529)
+ * Add label to rageshakes for React soft crashes
+   [\#3535](https://github.com/matrix-org/matrix-react-sdk/pull/3535)
+ * Support UI Auth on adding email addresses & phone numbers
+   [\#3534](https://github.com/matrix-org/matrix-react-sdk/pull/3534)
+ * Unmount React components before stopping the client
+   [\#3533](https://github.com/matrix-org/matrix-react-sdk/pull/3533)
+ * Fix soft crash on room join
+   [\#3532](https://github.com/matrix-org/matrix-react-sdk/pull/3532)
+ * Fix:  Unable to verify email address error
+   [\#3528](https://github.com/matrix-org/matrix-react-sdk/pull/3528)
+ * Fix: submit create room dialog when pressing enter
+   [\#3509](https://github.com/matrix-org/matrix-react-sdk/pull/3509)
+ * Allow cyclic objects in console logs
+   [\#3531](https://github.com/matrix-org/matrix-react-sdk/pull/3531)
+ * Fix: watch emoticon autoreplace setting
+   [\#3530](https://github.com/matrix-org/matrix-react-sdk/pull/3530)
+ * Make "remove recent messages" more robust
+   [\#3508](https://github.com/matrix-org/matrix-react-sdk/pull/3508)
+ * Label submit button in UI auth password prompt
+   [\#3527](https://github.com/matrix-org/matrix-react-sdk/pull/3527)
+ * Null-guard the recaptcha setup
+   [\#3526](https://github.com/matrix-org/matrix-react-sdk/pull/3526)
+ * Use a mask instead of an img for "Show image" eye
+   [\#3513](https://github.com/matrix-org/matrix-react-sdk/pull/3513)
+ * Only limit the rageshake log size in one place
+   [\#3523](https://github.com/matrix-org/matrix-react-sdk/pull/3523)
+ * Rename UPPER_CAMEL_CASE to UPPER_SNAKE_CASE in Coding Style
+   [\#3525](https://github.com/matrix-org/matrix-react-sdk/pull/3525)
+ * Revert "Run yarn upgrade"
+   [\#3524](https://github.com/matrix-org/matrix-react-sdk/pull/3524)
+ * Run yarn upgrade
+   [\#3521](https://github.com/matrix-org/matrix-react-sdk/pull/3521)
+ * Limit Backspace-consuming workaround to just Slate, tidy Keyboard :)
+   [\#3522](https://github.com/matrix-org/matrix-react-sdk/pull/3522)
+ * Enable CIDER composer by default
+   [\#3519](https://github.com/matrix-org/matrix-react-sdk/pull/3519)
+ * Update from Weblate
+   [\#3520](https://github.com/matrix-org/matrix-react-sdk/pull/3520)
+ * Cull some easily fixable errors which make the console a mess
+   [\#3516](https://github.com/matrix-org/matrix-react-sdk/pull/3516)
+
+Changes in [1.6.2](https://github.com/matrix-org/matrix-react-sdk/releases/tag/v1.6.2) (2019-10-04)
+===================================================================================================
+[Full Changelog](https://github.com/matrix-org/matrix-react-sdk/compare/v1.6.2-rc.1...v1.6.2)
+
+ * Handle null from TimelinePanel.getScrollState in RoomView _getScrollState
+   [\#3518](https://github.com/matrix-org/matrix-react-sdk/pull/3518)
+ * Fix Community Panel preference not taking effect until some refreshing
+   [\#3517](https://github.com/matrix-org/matrix-react-sdk/pull/3517)
+ * Fix backspace without slate focus killing everything
+   [\#3515](https://github.com/matrix-org/matrix-react-sdk/pull/3515)
+ * Fix integration manager not updating when set
+   [\#3510](https://github.com/matrix-org/matrix-react-sdk/pull/3510)
+ * Various ARIA a11y fixes.
+   [\#3514](https://github.com/matrix-org/matrix-react-sdk/pull/3514)
+ * Add a bit of debugging for where MatrixClient stops
+   [\#3511](https://github.com/matrix-org/matrix-react-sdk/pull/3511)
+ * Add error boundaries to catch rendering errors
+   [\#3512](https://github.com/matrix-org/matrix-react-sdk/pull/3512)
+ * Add an option to hide image previews
+   [\#3492](https://github.com/matrix-org/matrix-react-sdk/pull/3492)
+ * Fix:  stuck tooltip with composer formatting bar
+   [\#3507](https://github.com/matrix-org/matrix-react-sdk/pull/3507)
+ * Fix: don't let composer placeholder show horizontal scrollbar when too
+   narrow
+   [\#3506](https://github.com/matrix-org/matrix-react-sdk/pull/3506)
+
+Changes in [1.6.2-rc.1](https://github.com/matrix-org/matrix-react-sdk/releases/tag/v1.6.2-rc.1) (2019-10-02)
+=============================================================================================================
+[Full Changelog](https://github.com/matrix-org/matrix-react-sdk/compare/v1.6.1...v1.6.2-rc.1)
+
+ * Custom theming MVP
+   [\#3503](https://github.com/matrix-org/matrix-react-sdk/pull/3503)
+ * Don't mark a room as unread when someone adds an alias
+   [\#3505](https://github.com/matrix-org/matrix-react-sdk/pull/3505)
+ * Fix upgraderoom slashcommand
+   [\#3504](https://github.com/matrix-org/matrix-react-sdk/pull/3504)
+ * Update stripped emoji and bump emojidata to 4.0.2
+   [\#3501](https://github.com/matrix-org/matrix-react-sdk/pull/3501)
+ * Support local permalinks for unfederated instances
+   [\#3500](https://github.com/matrix-org/matrix-react-sdk/pull/3500)
+ * Accessibility fixes to the LeftPanel
+   [\#3499](https://github.com/matrix-org/matrix-react-sdk/pull/3499)
+ * Make Autocomplete more accessible to screen reader users
+   [\#3497](https://github.com/matrix-org/matrix-react-sdk/pull/3497)
+ * Fix: even more resilience to detect slash commands
+   [\#3496](https://github.com/matrix-org/matrix-react-sdk/pull/3496)
+ * Fix PropTypes usage, sdk import path and GroupMemberTile letter-avatar
+   [\#3486](https://github.com/matrix-org/matrix-react-sdk/pull/3486)
+
+Changes in [1.6.1](https://github.com/matrix-org/matrix-react-sdk/releases/tag/v1.6.1) (2019-10-01)
+===================================================================================================
+[Full Changelog](https://github.com/matrix-org/matrix-react-sdk/compare/v1.6.0...v1.6.1)
+
+ * Upgrade to JS SDK 2.4.1 to ignore crypto events with empty content
+ * Update from Weblate
+   [\#3502](https://github.com/matrix-org/matrix-react-sdk/pull/3502)
+ * Adjust details of terms dialog
+   [\#3489](https://github.com/matrix-org/matrix-react-sdk/pull/3489)
+ * Okay -> OK
+   [\#3491](https://github.com/matrix-org/matrix-react-sdk/pull/3491)
+ * Guard against falsy names in getInitialLetter
+   [\#3498](https://github.com/matrix-org/matrix-react-sdk/pull/3498)
+ * Update from Weblate
+   [\#3495](https://github.com/matrix-org/matrix-react-sdk/pull/3495)
+ * Upgrade deps
+   [\#3488](https://github.com/matrix-org/matrix-react-sdk/pull/3488)
+ * Fix: allow mass redaction for members with same or larger power level
+   [\#3487](https://github.com/matrix-org/matrix-react-sdk/pull/3487)
+ * Truncate debug logs at the start, not the end
+   [\#3484](https://github.com/matrix-org/matrix-react-sdk/pull/3484)
+ * Fix: don't block Shift+Tab in CIDER autocomplete
+   [\#3481](https://github.com/matrix-org/matrix-react-sdk/pull/3481)
+ * Fix: make command detection more resilient
+   [\#3479](https://github.com/matrix-org/matrix-react-sdk/pull/3479)
+
+Changes in [1.6.0](https://github.com/matrix-org/matrix-react-sdk/releases/tag/v1.6.0) (2019-09-27)
+===================================================================================================
+[Full Changelog](https://github.com/matrix-org/matrix-react-sdk/compare/v1.6.0-rc.2...v1.6.0)
+
+ * Upgrade to JS SDK 2.4.0
+ * Improve keyboard/screen reader accesibility some more
+   [\#3483](https://github.com/matrix-org/matrix-react-sdk/pull/3483)
+
+Changes in [1.6.0-rc.2](https://github.com/matrix-org/matrix-react-sdk/releases/tag/v1.6.0-rc.2) (2019-09-26)
+=============================================================================================================
+[Full Changelog](https://github.com/matrix-org/matrix-react-sdk/compare/v1.6.0-rc.1...v1.6.0-rc.2)
+
+ * Settings a11y tweaks
+   [\#3475](https://github.com/matrix-org/matrix-react-sdk/pull/3475)
+
+Changes in [1.6.0-rc.1](https://github.com/matrix-org/matrix-react-sdk/releases/tag/v1.6.0-rc.1) (2019-09-25)
+=============================================================================================================
+[Full Changelog](https://github.com/matrix-org/matrix-react-sdk/compare/v1.5.3...v1.6.0-rc.1)
+
+ * Upgrade to JS SDK 2.4.0-rc.1
+ * Update from Weblate
+   [\#3480](https://github.com/matrix-org/matrix-react-sdk/pull/3480)
+ * Fix: latin input through Chinese IME
+   [\#3477](https://github.com/matrix-org/matrix-react-sdk/pull/3477)
+ * Move focus to first field in create room dialog when showing
+   [\#3478](https://github.com/matrix-org/matrix-react-sdk/pull/3478)
+ * Send MSISDN validation token to submit_url during registration
+   [\#3476](https://github.com/matrix-org/matrix-react-sdk/pull/3476)
+ * Hide browser a11y outline on context menus
+   [\#3474](https://github.com/matrix-org/matrix-react-sdk/pull/3474)
+ * Remove id_server param from threepid_creds
+   [\#3473](https://github.com/matrix-org/matrix-react-sdk/pull/3473)
+ * Fix: make sure client exists while logging out
+   [\#3472](https://github.com/matrix-org/matrix-react-sdk/pull/3472)
+ * Fix: hide details summary arrow in create room dialog on webkit too
+   [\#3470](https://github.com/matrix-org/matrix-react-sdk/pull/3470)
+ * put the room name in the title tag
+   [\#3471](https://github.com/matrix-org/matrix-react-sdk/pull/3471)
+ * Fix: when using autocomplete, ensure command is not sent as text, and @room
+   notifs gets needed suffix
+   [\#3468](https://github.com/matrix-org/matrix-react-sdk/pull/3468)
+ * Fix: paragraphs not being preserved when editing in CIDER
+   [\#3469](https://github.com/matrix-org/matrix-react-sdk/pull/3469)
+ * Fix: formatbar appearing below other elements
+   [\#3467](https://github.com/matrix-org/matrix-react-sdk/pull/3467)
+ * Use alternate MSISDN submit URL when returned by HS
+   [\#3466](https://github.com/matrix-org/matrix-react-sdk/pull/3466)
+ * FTUE: Create Room Dialog update
+   [\#3464](https://github.com/matrix-org/matrix-react-sdk/pull/3464)
+ * Use separate 3PID add and bind flow for supporting HSes
+   [\#3462](https://github.com/matrix-org/matrix-react-sdk/pull/3462)
+ * Add roomavatar slash command to set avatar of the current room
+   [\#3460](https://github.com/matrix-org/matrix-react-sdk/pull/3460)
+ * Don't show spinner if registration is disabled
+   [\#3458](https://github.com/matrix-org/matrix-react-sdk/pull/3458)
+ * Use same initial device name rules for SSO login as password login
+   [\#3457](https://github.com/matrix-org/matrix-react-sdk/pull/3457)
+ * Fix disabled save button on message editor when pasting
+   [\#3459](https://github.com/matrix-org/matrix-react-sdk/pull/3459)
+ * Some delinting
+   [\#3456](https://github.com/matrix-org/matrix-react-sdk/pull/3456)
+ * Fix failure to render newly verified phone number and nested forms
+   [\#3455](https://github.com/matrix-org/matrix-react-sdk/pull/3455)
+ * Focus context menus so screen readers can find them
+   [\#3454](https://github.com/matrix-org/matrix-react-sdk/pull/3454)
+ * Fix unit tests: Use correct ShallowRenderer and updated lolex
+   [\#3453](https://github.com/matrix-org/matrix-react-sdk/pull/3453)
+ * make the lifetimes of the RM configurable
+   [\#3450](https://github.com/matrix-org/matrix-react-sdk/pull/3450)
+ * Point to develop dependencies and fixed react-gemini-scrollbar
+   [\#3451](https://github.com/matrix-org/matrix-react-sdk/pull/3451)
+ * Fix address type props to state conversion
+   [\#3449](https://github.com/matrix-org/matrix-react-sdk/pull/3449)
+ * Only put a room in Historical if === 'leave' not peeked
+   [\#3445](https://github.com/matrix-org/matrix-react-sdk/pull/3445)
+ * Reuse showRoom for onJoinClick so we join using alias if its available
+   [\#3444](https://github.com/matrix-org/matrix-react-sdk/pull/3444)
+ * Fix: make sure scalarUrls is never undefined
+   [\#3446](https://github.com/matrix-org/matrix-react-sdk/pull/3446)
+ * Tweak lock file to pull in only one React version
+   [\#3447](https://github.com/matrix-org/matrix-react-sdk/pull/3447)
+ * Wrap deactivation check with sanity conditions
+   [\#3437](https://github.com/matrix-org/matrix-react-sdk/pull/3437)
+ * Fix identity server text in AddressPickerDialog
+   [\#3408](https://github.com/matrix-org/matrix-react-sdk/pull/3408)
+ * Change copy for sharing an email
+   [\#3438](https://github.com/matrix-org/matrix-react-sdk/pull/3438)
+ * Fix: stop propagation click handler for <TR> doesn't run
+   [\#3441](https://github.com/matrix-org/matrix-react-sdk/pull/3441)
+ * Fix: clicking on a room directory item takes you to the room
+   [\#3439](https://github.com/matrix-org/matrix-react-sdk/pull/3439)
+ * Fix: only hide clear filter button when blurred & no more search term
+   [\#3432](https://github.com/matrix-org/matrix-react-sdk/pull/3432)
+ * Dont wrap text in room directory buttons
+   [\#3430](https://github.com/matrix-org/matrix-react-sdk/pull/3430)
+ * Add way to report the content of a message
+   [\#3290](https://github.com/matrix-org/matrix-react-sdk/pull/3290)
+ * Breadcrumbs: only show after having joined at least 10 rooms
+   [\#3428](https://github.com/matrix-org/matrix-react-sdk/pull/3428)
+ * Breadcrumbs: show placeholder for empty slot
+   [\#3429](https://github.com/matrix-org/matrix-react-sdk/pull/3429)
+ * Hide the change HS url button on SSO login flow if custom urls disabled
+   [\#3421](https://github.com/matrix-org/matrix-react-sdk/pull/3421)
+ * Fix register page selector buttons growing too wide
+   [\#3423](https://github.com/matrix-org/matrix-react-sdk/pull/3423)
+ * Left panel: visual fixes
+   [\#3422](https://github.com/matrix-org/matrix-react-sdk/pull/3422)
+ * EditMessageComposer: disable Save button until a change has been made
+   [\#3410](https://github.com/matrix-org/matrix-react-sdk/pull/3410)
+ * RoomDirectory: show spinner if loading more results
+   [\#3416](https://github.com/matrix-org/matrix-react-sdk/pull/3416)
+ * SSO Login: don't assume m.login.password, ask server before showing
+   [\#3417](https://github.com/matrix-org/matrix-react-sdk/pull/3417)
+ * Switch to React 16
+   [\#3270](https://github.com/matrix-org/matrix-react-sdk/pull/3270)
+ * Fix replying from search results for this and all rooms
+   [\#3406](https://github.com/matrix-org/matrix-react-sdk/pull/3406)
+ * Support Synapse deactivate on MemberInfo without Room (timeline pill)
+   [\#3411](https://github.com/matrix-org/matrix-react-sdk/pull/3411)
+ * Lift 3PID state management up to Settings tab
+   [\#3419](https://github.com/matrix-org/matrix-react-sdk/pull/3419)
+ * Room directory: update design
+   [\#3418](https://github.com/matrix-org/matrix-react-sdk/pull/3418)
+ * Room directory: add action buttons on room directly
+   [\#3413](https://github.com/matrix-org/matrix-react-sdk/pull/3413)
+ * Add explore button in left panel to go show room directory
+   [\#3412](https://github.com/matrix-org/matrix-react-sdk/pull/3412)
+ * Only update m.accepted_terms if there were changes
+   [\#3415](https://github.com/matrix-org/matrix-react-sdk/pull/3415)
+ * Make uses of AddressPickerDialog static dialogs
+   [\#3414](https://github.com/matrix-org/matrix-react-sdk/pull/3414)
+ * Support sending hidden read receipts
+   [\#3395](https://github.com/matrix-org/matrix-react-sdk/pull/3395)
+ * Catch error from changing room power level requirements and show modal
+   [\#3407](https://github.com/matrix-org/matrix-react-sdk/pull/3407)
+ * Add "Remove recent messages" button in member info for administrator
+   [\#3409](https://github.com/matrix-org/matrix-react-sdk/pull/3409)
+ * Add bound 3PID warning when changing IS as well
+   [\#3394](https://github.com/matrix-org/matrix-react-sdk/pull/3394)
+ * Stregthen bound 3PID warning dialog
+   [\#3401](https://github.com/matrix-org/matrix-react-sdk/pull/3401)
+ * Stop setting IS input field on account change
+   [\#3398](https://github.com/matrix-org/matrix-react-sdk/pull/3398)
+ * New composer: use underscore for italics so it doesn't collide with bold
+   when toggling
+   [\#3403](https://github.com/matrix-org/matrix-react-sdk/pull/3403)
+ * Switch to createReactClass: views/elements & views/groups. React 16 :D
+   [\#3404](https://github.com/matrix-org/matrix-react-sdk/pull/3404)
+ * Switch to createReactClass: *everything else*. React 16 :D
+   [\#3405](https://github.com/matrix-org/matrix-react-sdk/pull/3405)
+ * Switch to createReactClass: views/rooms and test/components. React 16 :D
+   [\#3400](https://github.com/matrix-org/matrix-react-sdk/pull/3400)
+ * New composer: support toggling inline formatting
+   [\#3402](https://github.com/matrix-org/matrix-react-sdk/pull/3402)
+ * Fix format bar not appearing in edit composer
+   [\#3399](https://github.com/matrix-org/matrix-react-sdk/pull/3399)
+ * Correct case of propTypes property in ES6 React Components. React 16
+   [\#3397](https://github.com/matrix-org/matrix-react-sdk/pull/3397)
+ * Fix error on load in composer
+   [\#3396](https://github.com/matrix-org/matrix-react-sdk/pull/3396)
+ * New composer: ensure undo history is persisted before applying formatting
+   [\#3391](https://github.com/matrix-org/matrix-react-sdk/pull/3391)
+ * New composer: fix pasting from word processors
+   [\#3392](https://github.com/matrix-org/matrix-react-sdk/pull/3392)
+ * New composer: fix needing to push arrow-up twice after sending first message
+   after switching to a room
+   [\#3393](https://github.com/matrix-org/matrix-react-sdk/pull/3393)
+ * Remove accent color as selection color
+   [\#3390](https://github.com/matrix-org/matrix-react-sdk/pull/3390)
+ * New composer: formatting keyboard shortcuts
+   [\#3389](https://github.com/matrix-org/matrix-react-sdk/pull/3389)
+ * New composer: format bar tooltips
+   [\#3387](https://github.com/matrix-org/matrix-react-sdk/pull/3387)
+ * New composer: show format bar on selection
+   [\#3386](https://github.com/matrix-org/matrix-react-sdk/pull/3386)
+ * Add new agreed URLs to account data instead of overwriting
+   [\#3388](https://github.com/matrix-org/matrix-react-sdk/pull/3388)
+ * Fix member power levels in room settings
+   [\#3384](https://github.com/matrix-org/matrix-react-sdk/pull/3384)
+ * New composer: allow escaping the first slash to not write a command
+   [\#3382](https://github.com/matrix-org/matrix-react-sdk/pull/3382)
+ * /plain command to bypass markdown conversion
+   [\#3381](https://github.com/matrix-org/matrix-react-sdk/pull/3381)
+ * Improve email invite preview messaging
+   [\#3385](https://github.com/matrix-org/matrix-react-sdk/pull/3385)
+ * Revert "New composer: show markdown legend on focus"
+   [\#3383](https://github.com/matrix-org/matrix-react-sdk/pull/3383)
+ * Disable MSISDN registration if the homeserver doesn't support it
+   [\#3368](https://github.com/matrix-org/matrix-react-sdk/pull/3368)
+ * Add a button to MemberInfo to deactivate a user
+   [\#3371](https://github.com/matrix-org/matrix-react-sdk/pull/3371)
+ * New composer: show markdown legend on focus
+   [\#3378](https://github.com/matrix-org/matrix-react-sdk/pull/3378)
+ * New composer: allow submitting after inserting newline
+   [\#3380](https://github.com/matrix-org/matrix-react-sdk/pull/3380)
+ * Message editing: deserialize headers from html back to markdown
+   [\#3379](https://github.com/matrix-org/matrix-react-sdk/pull/3379)
+ * New composer: share user pill postfix between autocomplete and insert
+   mention
+   [\#3375](https://github.com/matrix-org/matrix-react-sdk/pull/3375)
+ * New composer: make command detection not break with pill candidates in
+   command
+   [\#3374](https://github.com/matrix-org/matrix-react-sdk/pull/3374)
+ * New composer: dont allow sending empty messages
+   [\#3377](https://github.com/matrix-org/matrix-react-sdk/pull/3377)
+ * New composer: disable spell check for pills
+   [\#3376](https://github.com/matrix-org/matrix-react-sdk/pull/3376)
+ * Restrict green link colours to address picker dialog
+   [\#3373](https://github.com/matrix-org/matrix-react-sdk/pull/3373)
+ * New composer: fix tab-complete in commands
+   [\#3372](https://github.com/matrix-org/matrix-react-sdk/pull/3372)
+ * Add a dialog when inviting via slash command without IS
+   [\#3367](https://github.com/matrix-org/matrix-react-sdk/pull/3367)
+ * Migrate away from React.createClass for auth and views/auth. React 16 :D
+   [\#3363](https://github.com/matrix-org/matrix-react-sdk/pull/3363)
+ * Migrate away from React.createClass for non-auth structures. React 16 :D
+   [\#3365](https://github.com/matrix-org/matrix-react-sdk/pull/3365)
+ * New composer: put display name in user pill text fallback instead of mxid
+   [\#3366](https://github.com/matrix-org/matrix-react-sdk/pull/3366)
+ * New composer: force model update after IME composition finishes
+   [\#3364](https://github.com/matrix-org/matrix-react-sdk/pull/3364)
+ * New composer: append colon to completed user pill when at start of message
+   [\#3361](https://github.com/matrix-org/matrix-react-sdk/pull/3361)
+ * Expose power level toggle for enabling e2ee to room settings
+   [\#3351](https://github.com/matrix-org/matrix-react-sdk/pull/3351)
+ * Allow connecting to an IS from address picker
+   [\#3359](https://github.com/matrix-org/matrix-react-sdk/pull/3359)
+ * New composer: don't capture enter to close autocomplete
+   [\#3362](https://github.com/matrix-org/matrix-react-sdk/pull/3362)
+ * Add Spoilers as per MSC2010
+   [\#3018](https://github.com/matrix-org/matrix-react-sdk/pull/3018)
+ * New composer: support pasting files
+   [\#3358](https://github.com/matrix-org/matrix-react-sdk/pull/3358)
+ * New composer: don't update model while doing IME compositions
+   [\#3357](https://github.com/matrix-org/matrix-react-sdk/pull/3357)
+ * New composer: handle newlines properly when pasting
+   [\#3356](https://github.com/matrix-org/matrix-react-sdk/pull/3356)
+ * Bump eslint-utils from 1.4.0 to 1.4.2
+   [\#3360](https://github.com/matrix-org/matrix-react-sdk/pull/3360)
+ * Reveal custom IS field only when required
+   [\#3343](https://github.com/matrix-org/matrix-react-sdk/pull/3343)
+ * Only Destroy the expected persistent widget, not *ANY*
+   [\#3338](https://github.com/matrix-org/matrix-react-sdk/pull/3338)
+ * Expose upgrade room permissions in room settings and fix command
+   [\#3352](https://github.com/matrix-org/matrix-react-sdk/pull/3352)
+ * Don't use cursor: pointer on roomsettings avatar if you can't change it
+   [\#3354](https://github.com/matrix-org/matrix-react-sdk/pull/3354)
+ * New composer: support forcing auto complete on name by hitting tab
+   [\#3349](https://github.com/matrix-org/matrix-react-sdk/pull/3349)
+ * Update email help text
+   [\#3355](https://github.com/matrix-org/matrix-react-sdk/pull/3355)
+ * Don't infinite loop on server change
+   [\#3350](https://github.com/matrix-org/matrix-react-sdk/pull/3350)
+ * Support multiple integration managers behind a labs flag
+   [\#3341](https://github.com/matrix-org/matrix-react-sdk/pull/3341)
+ * Support homeserver-configured integration managers
+   [\#3340](https://github.com/matrix-org/matrix-react-sdk/pull/3340)
+ * Auto-replace emoticons with emojis in new composer
+   [\#3342](https://github.com/matrix-org/matrix-react-sdk/pull/3342)
+ * Adjust copy and include identity server changing when terms are pending
+   [\#3348](https://github.com/matrix-org/matrix-react-sdk/pull/3348)
+ * Migrate away from React.createClass for views/dialogs. React 16 :D
+   [\#3347](https://github.com/matrix-org/matrix-react-sdk/pull/3347)
+ * Migrate away from React.createClass for async-components. React 16 :D
+   [\#3346](https://github.com/matrix-org/matrix-react-sdk/pull/3346)
+ * Switch from react-addons-test-utils to react-dom/test-utils. React 16 :D
+   [\#3345](https://github.com/matrix-org/matrix-react-sdk/pull/3345)
+ * Iterate over all instances of variable/tag for _t substitutions
+   [\#3339](https://github.com/matrix-org/matrix-react-sdk/pull/3339)
+ * Treat 404 errors on IS as having no terms
+   [\#3344](https://github.com/matrix-org/matrix-react-sdk/pull/3344)
+ * Add IS access token callback
+   [\#3337](https://github.com/matrix-org/matrix-react-sdk/pull/3337)
+ * Tweak rageshake logging messages
+   [\#3331](https://github.com/matrix-org/matrix-react-sdk/pull/3331)
+ * Support editing composer to be used as main composer (feature flagged)
+   [\#3287](https://github.com/matrix-org/matrix-react-sdk/pull/3287)
+ * Remove tooltipClassName from the Field's input
+   [\#3333](https://github.com/matrix-org/matrix-react-sdk/pull/3333)
+ * Fix alignment of discovery section addresses
+   [\#3335](https://github.com/matrix-org/matrix-react-sdk/pull/3335)
+ * No-op removals of widgets that don't exist
+   [\#3336](https://github.com/matrix-org/matrix-react-sdk/pull/3336)
+ * Remove extraneous logging
+   [\#3334](https://github.com/matrix-org/matrix-react-sdk/pull/3334)
+ * Handle terms agreement in Discovery section of user settings
+   [\#3327](https://github.com/matrix-org/matrix-react-sdk/pull/3327)
+ * Don't double translate labs settings
+   [\#3332](https://github.com/matrix-org/matrix-react-sdk/pull/3332)
+ * Explicitly check for modifier keydown events before focusing composer
+   [\#3328](https://github.com/matrix-org/matrix-react-sdk/pull/3328)
+ * Touch up settings: alignment, spacing, error states
+   [\#3330](https://github.com/matrix-org/matrix-react-sdk/pull/3330)
+ * Fix regression on widget panel edit button
+   [\#3329](https://github.com/matrix-org/matrix-react-sdk/pull/3329)
+ * Clarify that device names are publicly visible
+   [\#3326](https://github.com/matrix-org/matrix-react-sdk/pull/3326)
+ * Tweak privacy settings copy and whitespace
+   [\#3325](https://github.com/matrix-org/matrix-react-sdk/pull/3325)
+ *  Persist and maintain identity server in account data
+   [\#3320](https://github.com/matrix-org/matrix-react-sdk/pull/3320)
+ *  Prompt for terms of service on identity server changes
+   [\#3317](https://github.com/matrix-org/matrix-react-sdk/pull/3317)
+ * Allow 3pids to be added with no ID server set
+   [\#3323](https://github.com/matrix-org/matrix-react-sdk/pull/3323)
+ * Fix up remove threepid confirmation UX
+   [\#3324](https://github.com/matrix-org/matrix-react-sdk/pull/3324)
+ * Improve Discovery section when no IS set
+   [\#3322](https://github.com/matrix-org/matrix-react-sdk/pull/3322)
+ * Allow password reset without an ID Server
+   [\#3319](https://github.com/matrix-org/matrix-react-sdk/pull/3319)
+ * Allow registering with email if no ID Server
+   [\#3318](https://github.com/matrix-org/matrix-react-sdk/pull/3318)
+ * Update from Weblate
+   [\#3321](https://github.com/matrix-org/matrix-react-sdk/pull/3321)
+ * Fix showing events which were replied to and then redacted
+   [\#3310](https://github.com/matrix-org/matrix-react-sdk/pull/3310)
+ * Prompt for terms of service on integration manager changes
+   [\#3316](https://github.com/matrix-org/matrix-react-sdk/pull/3316)
+ * Warn on disconnecting from IS
+   [\#3314](https://github.com/matrix-org/matrix-react-sdk/pull/3314)
+ * Fix set integration manager tooltip
+   [\#3315](https://github.com/matrix-org/matrix-react-sdk/pull/3315)
+ * Prompt for ICE server fallback permission
+   [\#3309](https://github.com/matrix-org/matrix-react-sdk/pull/3309)
+ * Fix Persisted Widgets (Jitsi) randomly closing on room change
+   [\#3313](https://github.com/matrix-org/matrix-react-sdk/pull/3313)
+ * Verifying your own device should not ask you to "contact its owner"
+   [\#3312](https://github.com/matrix-org/matrix-react-sdk/pull/3312)
+ * Support changing your integration manager in the UI
+   [\#3308](https://github.com/matrix-org/matrix-react-sdk/pull/3308)
+ * delint languageHandler
+   [\#3311](https://github.com/matrix-org/matrix-react-sdk/pull/3311)
+ * Disconnect from IS Button
+   [\#3305](https://github.com/matrix-org/matrix-react-sdk/pull/3305)
+ * Add UI in settings to change ID Server
+   [\#3300](https://github.com/matrix-org/matrix-react-sdk/pull/3300)
+ * Read integration managers from account data (widgets)
+   [\#3302](https://github.com/matrix-org/matrix-react-sdk/pull/3302)
+ * Refactor integration manager handling into a common place
+   [\#3301](https://github.com/matrix-org/matrix-react-sdk/pull/3301)
+ * Fix wrong default-letter-avatar for RoomAvatarEvent
+   [\#3291](https://github.com/matrix-org/matrix-react-sdk/pull/3291)
+ * Fix alignment of add email/phone number inputs in settings
+   [\#3307](https://github.com/matrix-org/matrix-react-sdk/pull/3307)
+ * Bump matrix-react-test-utils for React 16 compatibility
+   [\#3306](https://github.com/matrix-org/matrix-react-sdk/pull/3306)
+ * Consolidate Themes into ThemeController. Remove hardcoded themes in view
+   [\#3304](https://github.com/matrix-org/matrix-react-sdk/pull/3304)
+ * Deduplicate code in ModularServerConfig by extending ServerConfig
+   [\#3303](https://github.com/matrix-org/matrix-react-sdk/pull/3303)
+ * RegistrationForm: the Fields are controlled, fix default values
+   [\#3299](https://github.com/matrix-org/matrix-react-sdk/pull/3299)
+ * change Modal async/await signature to use raw promises
+   [\#3298](https://github.com/matrix-org/matrix-react-sdk/pull/3298)
+ * Modal.createX return thenable which extends onFinished, for async/await
+   [\#3297](https://github.com/matrix-org/matrix-react-sdk/pull/3297)
+ * Add mount-guards to MImageBody
+   [\#3294](https://github.com/matrix-org/matrix-react-sdk/pull/3294)
+ * Get rid of support for legacy login params
+   [\#3296](https://github.com/matrix-org/matrix-react-sdk/pull/3296)
+ * Change throttle to debounce
+   [\#3295](https://github.com/matrix-org/matrix-react-sdk/pull/3295)
+ * Misc fixes to karma webpack
+   [\#3293](https://github.com/matrix-org/matrix-react-sdk/pull/3293)
+ * Remove 3PID binding during registration
+   [\#3289](https://github.com/matrix-org/matrix-react-sdk/pull/3289)
+ * Add controls for toggling discovery in user settings
+   [\#3288](https://github.com/matrix-org/matrix-react-sdk/pull/3288)
+ * Reuse DMs whenever possible instead of asking to reuse them
+   [\#3286](https://github.com/matrix-org/matrix-react-sdk/pull/3286)
+ * Work with no ID server set
+   [\#3285](https://github.com/matrix-org/matrix-react-sdk/pull/3285)
+ * Split MessageEditor up in edit-specifics & reusable parts for main composer
+   [\#3282](https://github.com/matrix-org/matrix-react-sdk/pull/3282)
+ * Fix waste of space of collapsed left panel
+   [\#2668](https://github.com/matrix-org/matrix-react-sdk/pull/2668)
+ * Add help slash command
+   [\#3257](https://github.com/matrix-org/matrix-react-sdk/pull/3257)
+ * Allow setting in electron whether or not to auto hide menu bar
+   [\#3278](https://github.com/matrix-org/matrix-react-sdk/pull/3278)
+ * Progress towards React 16 compatibility
+   [\#3276](https://github.com/matrix-org/matrix-react-sdk/pull/3276)
+ * Hide settings button on Room Tile Context Menu for myMembership=invite
+   [\#3284](https://github.com/matrix-org/matrix-react-sdk/pull/3284)
+ * Remove withMatrixClient as we are committed to using Contexts
+   [\#3279](https://github.com/matrix-org/matrix-react-sdk/pull/3279)
+ * Update existing 3PID management UX
+   [\#3283](https://github.com/matrix-org/matrix-react-sdk/pull/3283)
+ * Let user know their account has been deactivated upon trying to login
+   [\#3280](https://github.com/matrix-org/matrix-react-sdk/pull/3280)
+ * Fix newline not being appended to code block while converting message to
+   markdown
+   [\#3274](https://github.com/matrix-org/matrix-react-sdk/pull/3274)
+ * Don't load guest sessions on post-registration login link
+   [\#3273](https://github.com/matrix-org/matrix-react-sdk/pull/3273)
+ * Show terms modal when inviting by email
+   [\#3271](https://github.com/matrix-org/matrix-react-sdk/pull/3271)
+ * Add developer documentation for the new editor
+   [\#3272](https://github.com/matrix-org/matrix-react-sdk/pull/3272)
+ * Undo/redo support for new editor
+   [\#3267](https://github.com/matrix-org/matrix-react-sdk/pull/3267)
+ * Check IS v2 account tokens for validity
+   [\#3268](https://github.com/matrix-org/matrix-react-sdk/pull/3268)
+ * Fix dialog button border colours
+   [\#3269](https://github.com/matrix-org/matrix-react-sdk/pull/3269)
+ * Upgrade dependencies
+   [\#3266](https://github.com/matrix-org/matrix-react-sdk/pull/3266)
+
+Changes in [1.5.3](https://github.com/matrix-org/matrix-react-sdk/releases/tag/v1.5.3) (2019-09-16)
+===================================================================================================
+[Full Changelog](https://github.com/matrix-org/matrix-react-sdk/compare/v1.5.3-rc.3...v1.5.3)
+
+ * Release: Directory should use the alias or server information to join the
+   room
+   [\#3448](https://github.com/matrix-org/matrix-react-sdk/pull/3448)
+
+Changes in [1.5.3-rc.3](https://github.com/matrix-org/matrix-react-sdk/releases/tag/v1.5.3-rc.3) (2019-09-13)
+=============================================================================================================
+[Full Changelog](https://github.com/matrix-org/matrix-react-sdk/compare/v1.5.3-rc.2...v1.5.3-rc.3)
+
+ * js-sdk rc.1 for report API
+
+Changes in [1.5.3-rc.2](https://github.com/matrix-org/matrix-react-sdk/releases/tag/v1.5.3-rc.2) (2019-09-13)
+=============================================================================================================
+[Full Changelog](https://github.com/matrix-org/matrix-react-sdk/compare/v1.5.3-rc.1...v1.5.3-rc.2)
+
+ * Fix: stop propagation click handler for <TR> doesn't run
+   [\#3443](https://github.com/matrix-org/matrix-react-sdk/pull/3443)
+ * Add way to report the content of a message
+   [\#3442](https://github.com/matrix-org/matrix-react-sdk/pull/3442)
+ * Fix synapse deactivate button for release
+   [\#3436](https://github.com/matrix-org/matrix-react-sdk/pull/3436)
+ * Fix: clicking on a room directory item takes you to the room
+   [\#3440](https://github.com/matrix-org/matrix-react-sdk/pull/3440)
+
+Changes in [1.5.3-rc.1](https://github.com/matrix-org/matrix-react-sdk/releases/tag/v1.5.3-rc.1) (2019-09-12)
+=============================================================================================================
+[Full Changelog](https://github.com/matrix-org/matrix-react-sdk/compare/v1.5.2...v1.5.3-rc.1)
+
+ * Fix: only hide clear filter button when blurred & no more search term
+   [\#3435](https://github.com/matrix-org/matrix-react-sdk/pull/3435)
+ * Dont wrap text in room directory buttons
+   [\#3434](https://github.com/matrix-org/matrix-react-sdk/pull/3434)
+
+Changes in [1.5.2](https://github.com/matrix-org/matrix-react-sdk/releases/tag/v1.5.2) (2019-09-12)
+===================================================================================================
+[Full Changelog](https://github.com/matrix-org/matrix-react-sdk/compare/v1.5.2-rc.1...v1.5.2)
+
+ * Fix register page selector buttons growing too wide
+   [\#3427](https://github.com/matrix-org/matrix-react-sdk/pull/3427)
+ * Left panel: visual fixes
+   [\#3426](https://github.com/matrix-org/matrix-react-sdk/pull/3426)
+ * Hide the change HS url button on SSO login flow if custom urls disabled
+   [\#3425](https://github.com/matrix-org/matrix-react-sdk/pull/3425)
+ * RoomDirectory: show spinner if loading more results
+   [\#3424](https://github.com/matrix-org/matrix-react-sdk/pull/3424)
+
+Changes in [1.5.2-rc.1](https://github.com/matrix-org/matrix-react-sdk/releases/tag/v1.5.2-rc.1) (2019-09-11)
+=============================================================================================================
+[Full Changelog](https://github.com/matrix-org/matrix-react-sdk/compare/v1.5.1...v1.5.2-rc.1)
+
+ * Merge first pass of First Time User Experience to release branch
+   [\#3420](https://github.com/matrix-org/matrix-react-sdk/pull/3420)
+
+Changes in [1.5.1](https://github.com/matrix-org/matrix-react-sdk/releases/tag/v1.5.1) (2019-08-05)
+===================================================================================================
+[Full Changelog](https://github.com/matrix-org/matrix-react-sdk/compare/v1.5.0-rc.1...v1.5.1)
+
+ * Let user know their account has been deactivated upon trying to login
+   [\#3281](https://github.com/matrix-org/matrix-react-sdk/pull/3281)
+
+Changes in [1.5.0](https://github.com/matrix-org/matrix-react-sdk/releases/tag/v1.5.0) (2019-08-05)
+===================================================================================================
+[Full Changelog](https://github.com/matrix-org/matrix-react-sdk/compare/v1.5.0-rc.1...v1.5.0)
+
+ * Don't load guest sessions on post-registration login link
+   [\#3277](https://github.com/matrix-org/matrix-react-sdk/pull/3277)
+
+Changes in [1.5.0-rc.1](https://github.com/matrix-org/matrix-react-sdk/releases/tag/v1.5.0-rc.1) (2019-07-31)
+=============================================================================================================
+[Full Changelog](https://github.com/matrix-org/matrix-react-sdk/compare/v1.4.0...v1.5.0-rc.1)
+
+ * Upgrade to JS SDK 2.3.0-rc.1
+ * Update from Weblate
+   [\#3265](https://github.com/matrix-org/matrix-react-sdk/pull/3265)
+ * Replace React.PropTypes with usage of the `prop-types` package
+   [\#3263](https://github.com/matrix-org/matrix-react-sdk/pull/3263)
+ * strikethrough & underline deletions & insertions
+   [\#3264](https://github.com/matrix-org/matrix-react-sdk/pull/3264)
+ * Get rid of warning of required prop
+   [\#3261](https://github.com/matrix-org/matrix-react-sdk/pull/3261)
+ * Fix html diffs repeating text sometimes
+   [\#3262](https://github.com/matrix-org/matrix-react-sdk/pull/3262)
+ * Introduce RoomContext for sharing state between RoomView and children
+   [\#3260](https://github.com/matrix-org/matrix-react-sdk/pull/3260)
+ * Upgrade emojibase to fix :anxious:
+   [\#3259](https://github.com/matrix-org/matrix-react-sdk/pull/3259)
+ * Add support for IS v2 API with authentication
+   [\#3256](https://github.com/matrix-org/matrix-react-sdk/pull/3256)
+ * Fix autocomplete for editing being broken
+   [\#3258](https://github.com/matrix-org/matrix-react-sdk/pull/3258)
+ * Unit tests for new editor
+   [\#3247](https://github.com/matrix-org/matrix-react-sdk/pull/3247)
+ * Show MessageActionBar buttons conditionally on room state permissions
+   [\#3255](https://github.com/matrix-org/matrix-react-sdk/pull/3255)
+ * Handle onPaste AddressPickerDialog, allow addressing CSV/NL/Space delim list
+   [\#3249](https://github.com/matrix-org/matrix-react-sdk/pull/3249)
+ * Move history with alt up/down regardless of where selection is
+   [\#3254](https://github.com/matrix-org/matrix-react-sdk/pull/3254)
+ * Update from Weblate
+   [\#3253](https://github.com/matrix-org/matrix-react-sdk/pull/3253)
+ * Fix /rainbowme and /rainbow breaking apart utf-16 emoji
+   [\#3248](https://github.com/matrix-org/matrix-react-sdk/pull/3248)
+ * Tweak interactive tooltip buffer area allow for overshoot
+   [\#3245](https://github.com/matrix-org/matrix-react-sdk/pull/3245)
+ * Keep widget URL in permission screen to one line
+   [\#3243](https://github.com/matrix-org/matrix-react-sdk/pull/3243)
+ * Avoid visual glitch when terms appear for Integration Manager
+   [\#3242](https://github.com/matrix-org/matrix-react-sdk/pull/3242)
+ * Show diff for formatted messages in the edit history
+   [\#3244](https://github.com/matrix-org/matrix-react-sdk/pull/3244)
+ * Redirect paste to composer when event target can't receive input
+   [\#3239](https://github.com/matrix-org/matrix-react-sdk/pull/3239)
+ * Restore manual composing focusing logic
+   [\#3241](https://github.com/matrix-org/matrix-react-sdk/pull/3241)
+ * ToS for ISes/IMs: prompt on use screen
+   [\#3199](https://github.com/matrix-org/matrix-react-sdk/pull/3199)
+ * Defer IM token until widget is shown and permission granted
+   [\#3240](https://github.com/matrix-org/matrix-react-sdk/pull/3240)
+ * Move read marker past invisible events
+   [\#3226](https://github.com/matrix-org/matrix-react-sdk/pull/3226)
+ * Basic diff visualisation for plain text edits
+   [\#3238](https://github.com/matrix-org/matrix-react-sdk/pull/3238)
+ * Don't focus composer on keydown with modifier
+   [\#3237](https://github.com/matrix-org/matrix-react-sdk/pull/3237)
+ * Focus composer when typing anywhere in the app
+   [\#3224](https://github.com/matrix-org/matrix-react-sdk/pull/3224)
+ * Don't show remove button for original event in edit history
+   [\#3235](https://github.com/matrix-org/matrix-react-sdk/pull/3235)
+ * Remove feature flags for reactions and edits
+   [\#3233](https://github.com/matrix-org/matrix-react-sdk/pull/3233)
+ * Enable reactions and edits by default
+   [\#3229](https://github.com/matrix-org/matrix-react-sdk/pull/3229)
+ * Improve interactive tooltip safe mousing area
+   [\#3228](https://github.com/matrix-org/matrix-react-sdk/pull/3228)
+ * Add a previous event safe area around action bar
+   [\#3227](https://github.com/matrix-org/matrix-react-sdk/pull/3227)
+ * Parse integration manager origins more sensibly
+   [\#3217](https://github.com/matrix-org/matrix-react-sdk/pull/3217)
+ * ChatCreateOrReuse show only rooms both you and the other party still in
+   [\#3225](https://github.com/matrix-org/matrix-react-sdk/pull/3225)
+ * Check for liveliness on submission when the server was previously dead
+   [\#3218](https://github.com/matrix-org/matrix-react-sdk/pull/3218)
+ * Fix autocomplete delay text field not accepting text
+   [\#3219](https://github.com/matrix-org/matrix-react-sdk/pull/3219)
+ * Don't show a reason if there's no reason for a kick/ban
+   [\#3220](https://github.com/matrix-org/matrix-react-sdk/pull/3220)
+ * Take adjacent invisible events into account for read receipt, even if any
+   but first should be ignored.
+   [\#3221](https://github.com/matrix-org/matrix-react-sdk/pull/3221)
+ * Check content and content.users in power levels
+   [\#3216](https://github.com/matrix-org/matrix-react-sdk/pull/3216)
+ * Autojoin rooms when clicking the tombstone
+   [\#3206](https://github.com/matrix-org/matrix-react-sdk/pull/3206)
+ * Verify i18n in CI
+   [\#3209](https://github.com/matrix-org/matrix-react-sdk/pull/3209)
+ * Send the correct UIA alongside the wrong UIA for backwards comaptibility
+   [\#3211](https://github.com/matrix-org/matrix-react-sdk/pull/3211)
+ * Remove unused identityEnabled property from ValidatedServerConfig
+   [\#3213](https://github.com/matrix-org/matrix-react-sdk/pull/3213)
+ * Remove misleading text about admins logging people out from soft logout
+   [\#3205](https://github.com/matrix-org/matrix-react-sdk/pull/3205)
+
 Changes in [1.4.0](https://github.com/matrix-org/matrix-react-sdk/releases/tag/v1.4.0) (2019-07-18)
 ===================================================================================================
 [Full Changelog](https://github.com/matrix-org/matrix-react-sdk/compare/v1.4.0-rc.3...v1.4.0)

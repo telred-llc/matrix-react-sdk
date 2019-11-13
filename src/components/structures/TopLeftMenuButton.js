@@ -110,19 +110,22 @@ export default class TopLeftMenuButton extends React.Component {
     render() {
         const name = this._getDisplayName();
         let nameElement;
+        let chevronElement;
         if (!this.props.collapsed) {
-            nameElement = (
-                <div className='mx_TopLeftMenuButton_name'>{name}</div>
-            );
+            nameElement = <div className="mx_TopLeftMenuButton_name">
+                { name }
+            </div>;
+            chevronElement = <span className="mx_TopLeftMenuButton_chevron" />;
         }
 
         return (
             <AccessibleButton
-                className='mx_TopLeftMenuButton'
-                role='button'
+                className="mx_TopLeftMenuButton"
                 onClick={this.onToggleMenu}
-                inputRef={r => (this._buttonRef = r)}
-                aria-label={_t('Your profile')}
+                inputRef={(r) => this._buttonRef = r}
+                aria-label={_t("Your profile")}
+                aria-haspopup={true}
+                aria-expanded={this.state.menuDisplayed}
             >
                 <BaseAvatar
                     idName={MatrixClientPeg.get().getUserId()}
@@ -135,8 +138,8 @@ export default class TopLeftMenuButton extends React.Component {
                     height={AVATAR_SIZE}
                     resizeMethod='crop'
                 />
-                {nameElement}
-                <span className='mx_TopLeftMenuButton_chevron' />
+                { nameElement }
+                { chevronElement }
             </AccessibleButton>
         );
     }

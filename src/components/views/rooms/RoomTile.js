@@ -19,6 +19,7 @@ limitations under the License.
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import createReactClass from 'create-react-class';
 import classNames from 'classnames';
 import dis from '../../../dispatcher';
 import MatrixClientPeg from '../../../MatrixClientPeg';
@@ -30,10 +31,10 @@ import * as FormattingUtils from '../../../utils/FormattingUtils';
 import AccessibleButton from '../elements/AccessibleButton';
 import ActiveRoomObserver from '../../../ActiveRoomObserver';
 import RoomViewStore from '../../../stores/RoomViewStore';
-import SettingsStore from '../../../settings/SettingsStore';
-// import { setInterval } from 'timers';
+import SettingsStore from "../../../settings/SettingsStore";
+import {_t} from "../../../languageHandler";
 
-module.exports = React.createClass({
+module.exports = createReactClass({
     displayName: 'RoomTile',
 
     propTypes: {
@@ -174,22 +175,17 @@ module.exports = React.createClass({
         });
     },
 
-    componentWillMount: function() {
-        MatrixClientPeg.get().on('accountData', this.onAccountData);
-        MatrixClientPeg.get().on('Room.name', this.onRoomName);
-        ActiveRoomObserver.addListener(
-            this.props.room.roomId,
-            this._onActiveRoomChange
-        );
+    componentDidMount: function() {
+        const cli = MatrixClientPeg.get();
+        cli.on("accountData", this.onAccountData);
+        cli.on("Room.name", this.onRoomName);
+        ActiveRoomObserver.addListener(this.props.room.roomId, this._onActiveRoomChange);
         this.dispatcherRef = dis.register(this.onAction);
 
         if (this._shouldShowStatusMessage()) {
             const statusUser = this._getStatusMessageUser();
             if (statusUser) {
-                statusUser.on(
-                    'User._unstable_statusMessage',
-                    this._onStatusMessageCommitted
-                );
+                statusUser.on("User._unstable_statusMessage", this._onStatusMessageCommitted);
             }
         }
     },
@@ -435,6 +431,8 @@ module.exports = React.createClass({
         }
 
         const RoomAvatar = sdk.getComponent('avatars.RoomAvatar');
+
+        let ariaLabel = name;
 
         let dmIndicator;
         if (this._isDirectMessageRoom(this.props.room.roomId)) {

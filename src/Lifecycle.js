@@ -35,6 +35,7 @@ import { sendLoginRequest } from "./Login";
 import * as StorageManager from './utils/StorageManager';
 import SettingsStore from "./settings/SettingsStore";
 import TypingStore from "./stores/TypingStore";
+import {IntegrationManagers} from "./integrations/IntegrationManagers";
 
 /**
  * Called at startup, to attempt to build a logged-in Matrix session. It tries
@@ -66,6 +67,9 @@ import TypingStore from "./stores/TypingStore";
  * @params {string} opts.guestIsUrl: homeserver URL. Only used if enableGuest is
  *     true; defines the IS to use.
  *
+ * @params {bool} opts.ignoreGuest: If the stored session is a guest account, ignore
+ *     it and don't load it.
+ *
  * @returns {Promise} a promise which resolves when the above process completes.
  *     Resolves to `true` if we ended up starting a session, or `false` if we
  *     failed.
@@ -78,7 +82,7 @@ export async function loadSession(opts) {
         const fragmentQueryParams = opts.fragmentQueryParams || {};
         const defaultDeviceDisplayName = opts.defaultDeviceDisplayName;
 
-        if (!guestHsUrl) {
+        if (enableGuest && !guestHsUrl) {
             console.warn("Cannot enable guest access: can't determine HS URL to use");
             enableGuest = false;
         }
@@ -96,7 +100,9 @@ export async function loadSession(opts) {
                 guest: true,
             }, true).then(() => true);
         }
-        const success = await _restoreFromLocalStorage();
+        const success = await _restoreFromLocalStorage({
+            ignoreGuest: Boolean(opts.ignoreGuest),
+        });
         if (success) {
             return true;
         }
@@ -246,7 +252,7 @@ function _registerAsGuest(hsUrl, isUrl, defaultDeviceDisplayName) {
  */
 export function getLocalStorageSessionVars() {
     const hsUrl = localStorage.getItem("mx_hs_url");
-    const isUrl = localStorage.getItem("mx_is_url") || 'https://matrix.org';
+    const isUrl = localStorage.getItem("mx_is_url");
     const accessToken = localStorage.getItem("mx_access_token");
     const userId = localStorage.getItem("mx_user_id");
     const deviceId = localStorage.getItem("mx_device_id");
@@ -272,7 +278,9 @@ export function getLocalStorageSessionVars() {
 //      The plan is to gradually move the localStorage access done here into
 //      SessionStore to avoid bugs where the view becomes out-of-sync with
 //      localStorage (e.g. isGuest etc.)
-async function _restoreFromLocalStorage() {
+async function _restoreFromLocalStorage(opts) {
+    const ignoreGuest = opts.ignoreGuest;
+
     if (!localStorage) {
         return false;
     }
@@ -280,6 +288,11 @@ async function _restoreFromLocalStorage() {
     const {hsUrl, isUrl, accessToken, userId, deviceId, isGuest} = getLocalStorageSessionVars();
 
     if (accessToken && userId && hsUrl) {
+        if (ignoreGuest && isGuest) {
+            console.log("Ignoring stored guest account: " + userId);
+            return false;
+        }
+
         console.log(`Restoring session for ${userId}`);
         await _doSetLoggedIn({
             userId: userId,
@@ -459,7 +472,9 @@ class AbortLoginAndRebuildStorage extends Error { }
 
 function _persistCredentialsToLocalStorage(credentials) {
     localStorage.setItem("mx_hs_url", credentials.homeserverUrl);
-    localStorage.setItem("mx_is_url", credentials.identityServerUrl);
+    if (credentials.identityServerUrl) {
+        localStorage.setItem("mx_is_url", credentials.identityServerUrl);
+    }
     localStorage.setItem("mx_user_id", credentials.userId);
     localStorage.setItem("mx_access_token", credentials.accessToken);
     localStorage.setItem("mx_is_guest", JSON.stringify(credentials.guest));
@@ -488,12 +503,7 @@ export function logout() {
         // logout doesn't work for guest sessions
         // Also we sometimes want to re-log in a guest session
         // if we abort the login
-
-        // use settimeout to avoid racing with react unmounting components
-        // which need a valid matrixclientpeg
-        setTimeout(()=>{
-            onLoggedOut();
-        }, 0);
+        onLoggedOut();
         return;
     }
 
@@ -521,9 +531,15 @@ export function softLogout() {
     // been soft logged out, despite having credentials and data for a MatrixClient).
     localStorage.setItem("mx_soft_logout", "true");
 
+    // Dev note: please keep this log line around. It can be useful for track down
+    // random clients stopping in the middle of the logs.
+    console.log("Soft logout initiated");
     _isLoggingOut = true; // to avoid repeated flags
-    stopMatrixClient(/*unsetClient=*/false);
+    // Ensure that we dispatch a view change **before** stopping the client so
+    // so that React components unmount first. This avoids React soft crashes
+    // that can occur when components try to use a null client.
     dis.dispatch({action: 'on_client_not_viable'}); // generic version of on_logged_out
+    stopMatrixClient(/*unsetClient=*/false);
 
     // DO NOT CALL LOGOUT. A soft logout preserves data, logout does not.
 }
@@ -558,6 +574,7 @@ async function startMatrixClient(startSyncing=true) {
         Presence.start();
     }
     DMRoomMap.makeShared().start();
+    IntegrationManagers.sharedInstance().startWatching();
     ActiveWidgetStore.start();
 
     if (startSyncing) {
@@ -582,9 +599,12 @@ async function startMatrixClient(startSyncing=true) {
  */
 export function onLoggedOut() {
     _isLoggingOut = false;
+    // Ensure that we dispatch a view change **before** stopping the client so
+    // so that React components unmount first. This avoids React soft crashes
+    // that can occur when components try to use a null client.
+    dis.dispatch({action: 'on_logged_out'}, true);
     stopMatrixClient();
     _clearStorage().done();
-    dis.dispatch({action: 'on_logged_out'});
 }
 
 /**
@@ -616,6 +636,7 @@ export function stopMatrixClient(unsetClient=true) {
     TypingStore.sharedInstance().reset();
     Presence.stop();
     ActiveWidgetStore.stop();
+    IntegrationManagers.sharedInstance().stopWatching();
     if (DMRoomMap.shared()) DMRoomMap.shared().stop();
     const cli = MatrixClientPeg.get();
     if (cli) {
