@@ -336,6 +336,22 @@ function textForCallAnswerEvent(event) {
     return _t('%(senderName)s answered the call.', {senderName}) + ' ' + supported;
 }
 
+function handleCallDataProp(event) {
+    const { sender, receiver, data } = event.callData;
+
+    if (data === "ended") {
+        return `${receiver} ended the call.`;
+    }
+
+    if (data === "invite_timeout") {
+        return `${receiver} missed a call from ${sender === "You" ? "you" : sender}.`;
+    }
+
+    if (data === "called") {
+        return `${sender} called ${receiver === "You" ? "you" : receiver}.`;
+    }
+}
+
 function textForCallHangupEvent(event) {
     const senderName = getSenderName(event, 'sender');
     const eventContent = event.getContent();
@@ -357,7 +373,12 @@ function textForCallHangupEvent(event) {
             reason = _t('(unknown failure: %(reason)s)', {reason: eventContent.reason});
         }
     }
-    return _t('%(senderName)s ended the call.', {senderName}) + ' ' + reason;
+
+    if (event.hasOwnProperty('callData')) {
+        return handleCallDataProp(event);
+    } else {
+        return _t('%(senderName)s ended the call.', {senderName}) + ' ' + reason;
+    }
 }
 
 function textForCallInviteEvent(event) {
@@ -369,7 +390,11 @@ function textForCallInviteEvent(event) {
         callType = "video";
     }
     const supported = MatrixClientPeg.get().supportsVoip() ? "" : _t('(not supported by this browser)');
-    return _t('%(senderName)s placed a %(callType)s call.', {senderName, callType}) + ' ' + supported;
+    if (event.hasOwnProperty('callData')) {
+        return handleCallDataProp(event);
+    } else {
+        return _t('%(senderName)s placed a %(callType)s call.', {senderName, callType}) + ' ' + supported;
+    }
 }
 
 function textForThreePidInviteEvent(event) {

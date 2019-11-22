@@ -22,6 +22,7 @@ import createReactClass from 'create-react-class';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
+import DMRoomMap from '../../utils/DMRoomMap';
 import shouldHideEvent from '../../shouldHideEvent';
 import { wantsDateSeparator } from '../../DateUtils';
 import sdk from '../../index';
@@ -171,6 +172,7 @@ module.exports = createReactClass({
         );
 
         this._isMounted = true;
+        window.DMRoomCallEvents = {};
     },
 
     componentWillUnmount: function() {
@@ -634,10 +636,142 @@ module.exports = createReactClass({
         return ret;
     },
 
+    _getSenderId: function(event) {
+        return event.sender ? event.sender.userId : "";
+    },
+
     _getTilesForEvent: function(prevEvent, mxEv, last) {
         const EventTile = sdk.getComponent('rooms.EventTile');
         const DateSeparator = sdk.getComponent('messages.DateSeparator');
         const ret = [];
+        const roomId = mxEv.getRoomId();
+        const callData = {
+            sender: '',
+            receiver: '',
+            data: '',
+        };
+
+        if (DMRoomMap.shared().getUserIdForRoomId(roomId)) {
+            const INVITE = "m.call.invite";
+            const ANSWER = "m.call.answer";
+            const HANGUP = "m.call.hangup";
+            const mxEvType = mxEv.getType();
+            const mxEvTs = mxEv.getTs();
+            const prevEvTs = prevEvent ? prevEvent.getTs() : 0;
+            const members = MatrixClientPeg.get().getRoom(roomId).currentState.members;
+            const memberIds = Object.keys(members);
+            let DMUserId = "";
+            let UserId = this.props.room.myUserId;
+            for (const id of memberIds) {
+                if (id !== UserId) {
+                    DMUserId = id;
+                    break;
+                }
+              }
+            const DMUserName = members[DMUserId].rawDisplayName;
+            const loadingOldCalls = prevEvTs > 0 ? prevEvTs > mxEvTs : true;
+
+            const setSenderAndReceiverName = (callData, invite, end) => {
+                if (invite === UserId) {
+                    callData.sender = "You";
+                    callData.receiver = DMUserName;
+                } else {
+                    callData.sender = DMUserName;
+                    callData.receiver = "You";
+                }
+
+                if (end) {
+                    if (end === UserId) {
+                        callData.receiver = "You";
+                    } else {
+                        callData.receiver = DMUserName;
+                    }
+                }
+
+            };
+
+            const finishSetupMxEv = (data, callData, mxEv, roomId) => {
+                callData.data = data;
+                mxEv.callData = callData;
+                if (roomId !== "") {
+                    window.DMRoomCallEvents[roomId] = {};
+                }
+            };
+
+            if (mxEvType === INVITE) {
+                if (!loadingOldCalls) {
+                    window.DMRoomCallEvents[roomId] = {
+                        invite: this._getSenderId(mxEv),
+                    };
+                    ret.push(null);
+                    return ret;
+                } else {
+                    const DMROOM = window.DMRoomCallEvents[roomId];
+                    const invite = this._getSenderId(mxEv);
+                    const end = DMROOM ? DMROOM.end : "";
+                    setSenderAndReceiverName(callData, invite);
+                    if (DMROOM) {
+                        if (DMROOM.timeOut) {
+                            finishSetupMxEv("invite_timeout", callData, mxEv, roomId);
+                        } else if (DMROOM.data == "ended") {
+                            setSenderAndReceiverName(callData, invite, end);
+                            finishSetupMxEv("ended", callData, mxEv, roomId);
+                        } else if (DMROOM.data === "called") {
+                            finishSetupMxEv("called", callData, mxEv, roomId);
+                        }
+                    }
+                }
+            }
+
+            if (mxEvType === ANSWER) {
+                const DMROOM = window.DMRoomCallEvents[roomId];
+                if (DMROOM) {
+                    DMROOM.data = "called";
+                } else {
+                    window.DMRoomCallEvents[roomId] = {
+                        data: "called",
+                    };
+                }
+
+                ret.push(null);
+                return ret;
+            }
+
+            if (mxEvType === HANGUP) {
+                const DMROOM = window.DMRoomCallEvents[roomId];
+                if (!loadingOldCalls) {
+                    const invite = DMROOM ? DMROOM.invite : "";
+                    const end = this._getSenderId(mxEv);
+                    setSenderAndReceiverName(callData, invite);
+                    if (mxEv.getContent().reason === "invite_timeout") {
+                        finishSetupMxEv("invite_timeout", callData, mxEv, roomId);
+                    } else if (DMROOM && invite !== "") {
+                        if (!DMROOM.data) {
+                            setSenderAndReceiverName(callData, invite, end);
+                            finishSetupMxEv("ended", callData, mxEv, roomId);
+                        } else if (DMROOM.data === "called") {
+                            finishSetupMxEv("called", callData, mxEv, roomId);
+                        }
+                    }
+                } else {
+                    window.DMRoomCallEvents[roomId] = {};
+                    if (mxEv.getContent().reason === "invite_timeout") {
+                        window.DMRoomCallEvents[roomId] = {
+                            timeOut: true,
+                        };
+                        ret.push(null);
+                        return ret;
+                    } else {
+                        window.DMRoomCallEvents[roomId] = {
+                            data: "ended",
+                            end: this._getSenderId(mxEv)
+                        };
+                        ret.push(null);
+                        return ret;
+                    }
+                }
+            }
+        }
 
         const isEditing =
             this.props.editState &&
