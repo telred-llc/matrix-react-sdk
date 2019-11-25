@@ -37,6 +37,8 @@ limitations under the License.
 .mx_IncomingCallBox_title {
     padding: 6px;
     font-weight: bold;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
 }
 
 .mx_IncomingCallBox_buttons {

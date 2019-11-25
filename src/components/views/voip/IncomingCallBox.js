@@ -64,12 +64,19 @@ module.exports = createReactClass({
             }
         }
 
+        const limitTo60Chars = str => {
+            if (str.length > 60) {
+                return str.slice(0, 59) + "...";
+            }
+            return str;
+        }
+
         const AccessibleButton = sdk.getComponent('elements.AccessibleButton');
         return (
             <div className="mx_IncomingCallBox" id="incomingCallBox">
                 <img className="mx_IncomingCallBox_chevron" src={require("../../../../res/img/chevron-left.png")} width="9" height="16" />
                 <div className="mx_IncomingCallBox_title">
-                    { incomingCallText }
+                    { limitTo60Chars(incomingCallText) }
                 </div>
                 <div className="mx_IncomingCallBox_buttons">
                     <div className="mx_IncomingCallBox_buttons_cell">
