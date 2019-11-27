@@ -1165,7 +1165,7 @@
     "Backup of encryption keys to server": "Savkopio de ĉifroŝlosiloj al servilo",
     "Show a reminder to enable Secure Message Recovery in encrypted rooms": "Montri memorigilon por ŝalti Sekuran Ricevon de Mesaĝoj en ĉifrataj ĉambroj",
     "Show developer tools": "Montri verkistajn ilojn",
-    "Messages containing @room": "Mesaĝoj enhavantaj @room",
+    "Messages containing @all": "Mesaĝoj enhavantaj @all",
     "Encrypted messages in one-to-one chats": "Ĉifritaj mesaĝoj en duopaj babiloj",
     "Encrypted messages in group chats": "Ĉifritaj mesaĝoj en grupaj babiloj",
     "Delete Backup": "Forigi savkopion",

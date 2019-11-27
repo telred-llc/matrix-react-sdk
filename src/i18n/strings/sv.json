@@ -1357,7 +1357,7 @@
     "Enable Community Filter Panel": "Aktivera community-filterpanel",
     "Allow Peer-to-Peer for 1:1 calls": "Tillåt enhet-till-enhet-kommunikation för direktsamtal (mellan två personer)",
     "Messages containing my username": "Meddelanden som innehåller mitt användarnamn",
-    "Messages containing @room": "Meddelanden som innehåller @room",
+    "Messages containing @all": "Meddelanden som innehåller @all",
     "Encrypted messages in one-to-one chats": "Krypterade meddelanden i privata chattar",
     "Encrypted messages in group chats": "Krypterade meddelanden i gruppchattar",
     "Dog": "Hund",

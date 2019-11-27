@@ -1387,7 +1387,7 @@
     "Failed to invite users to the room:": "Konnte Benutzer nicht in den Raum einladen:",
     "Short keyboard patterns are easy to guess": "Kurze Tastaturmuster sind einfach zu erraten",
     "Show a reminder to enable Secure Message Recovery in encrypted rooms": "Zeige eine Erinnerung um die Sichere Nachrichten-Wiederherstellung in verschlüsselten Räumen zu aktivieren",
-    "Messages containing @room": "Nachrichten die \"@room\" enthalten",
+    "Messages containing @all": "Nachrichten die \"@all\" enthalten",
     "Encrypted messages in one-to-one chats": "Verschlüsselte Nachrichten in 1:1 Chats",
     "Encrypted messages in group chats": "Verschlüsselte Nachrichten in Gruppenchats",
     "Use a longer keyboard pattern with more turns": "Nutze ein längeres Tastaturmuster mit mehr Abwechslung",

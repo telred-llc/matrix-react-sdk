@@ -1349,7 +1349,7 @@
     "Prompt before sending invites to potentially invalid matrix IDs": "Pedir confirmación antes de enviar invitaciones a IDs de matrix que parezcan inválidos",
     "Show developer tools": "Mostrar herramientas de desarrollador",
     "Messages containing my username": "Mensajes que contengan mi nombre",
-    "Messages containing @room": "Mensajes que contengan @sala",
+    "Messages containing @all": "Mensajes que contengan @sala",
     "Encrypted messages in one-to-one chats": "Mensajes cifrados en salas 1 a 1",
     "Encrypted messages in group chats": "Mensajes cifrados en chats grupales",
     "The other party cancelled the verification.": "El otro lado canceló la verificación.",

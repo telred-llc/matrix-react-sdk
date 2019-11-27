@@ -35,21 +35,22 @@ export default class NotifProvider extends AutocompleteProvider {
 
         const client = MatrixClientPeg.get();
 
-        if (!this.room.currentState.mayTriggerNotifOfType('room', client.credentials.userId)) return [];
-
         const {command, range} = this.getCurrentCommand(query, selection, force);
-        if (command && command[0] && '@room'.startsWith(command[0]) && command[0].length > 1) {
+        if (command && command[0] && '@all'.startsWith(command[0]) && command[0].length > 1) {
             return [{
-                completion: '@room',
-                completionId: '@room',
+                completion: '@all',
+                completionId: '@all',
                 type: "at-room",
                 suffix: ' ',
                 component: (
-                    <PillCompletion initialComponent={<RoomAvatar width={24} height={24} room={this.room} />} title="@room" description={_t("Notify the whole room")} />
+                    <PillCompletion initialComponent={<RoomAvatar width={24} height={24} room={this.room} />} title="@all" description={_t("Notify the whole room")} />
                 ),
                 range,
             }];
         }
+
+        if (!this.room.currentState.mayTriggerNotifOfType('room', client.credentials.userId)) return [];
+
         return [];
     }
 

@@ -1424,7 +1424,7 @@
     "If you don't want encrypted message history to be available on other devices, <button>opt out</button>.": "Si vous ne souhaitez pas que l'historique de vos messages chiffrés soit disponible sur d'autres appareils, <button>désactivez l'option</button>.",
     "Without setting up Secure Message Recovery, you'll lose your secure message history when you log out.": "Si vous ne configurez pas la récupération de messages sécurisée, vous perdrez l'historique de vos messages sécurisés quand vous vous déconnectez.",
     "If you don't want to set this up now, you can later in Settings.": "Si vous ne voulez pas le configurer maintenant, vous pouvez le faire plus tard dans les paramètres.",
-    "Messages containing @room": "Messages contenant @room",
+    "Messages containing @all": "Messages contenant @all",
     "Encrypted messages in one-to-one chats": "Messages chiffrés dans les discussions directes",
     "Encrypted messages in group chats": "Messages chiffrés dans les discussions de groupe",
     "That doesn't look like a valid email address": "Cela ne ressemble pas à une adresse e-mail valide",

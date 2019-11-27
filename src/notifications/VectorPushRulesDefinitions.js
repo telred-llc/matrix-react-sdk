@@ -91,10 +91,10 @@ module.exports = {
         },
     }),
 
-    // Messages containing @room
+    // Messages containing @all
     ".m.rule.roomnotif": new VectorPushRuleDefinition({
         kind: "override",
-        description: _td("Messages containing @room"), // passed through _t() translation in src/components/views/settings/Notifications.js
+        description: _td("Messages containing @all"), // passed through _t() translation in src/components/views/settings/Notifications.js
         vectorStateToActions: { // The actions for each vector state, or null to disable the rule.
             on: StandardActions.ACTION_NOTIFY,
             loud: StandardActions.ACTION_HIGHLIGHT,

@@ -1333,7 +1333,7 @@
     "Use a longer keyboard pattern with more turns": "Използвайте по-дълга клавиатурна последователност с повече разклонения",
     "Backup of encryption keys to server": "Резервно копие на ключовете за шифроване на сървъра",
     "Show a reminder to enable Secure Message Recovery in encrypted rooms": "Покажи напомняне за включване на Възстановяване на Защитени Съобщения в шифровани стаи",
-    "Messages containing @room": "Съобщения съдържащи @room",
+    "Messages containing @all": "Съобщения съдържащи @all",
     "Encrypted messages in one-to-one chats": "Шифровани съобщения в 1-на-1 чатове",
     "Encrypted messages in group chats": "Шифровани съобщения в групови чатове",
     "Delete Backup": "Изтрий резервното копие",

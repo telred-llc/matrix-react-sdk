@@ -170,7 +170,7 @@ Changes in [1.6.0-rc.1](https://github.com/matrix-org/matrix-react-sdk/releases/
    [\#3470](https://github.com/matrix-org/matrix-react-sdk/pull/3470)
  * put the room name in the title tag
    [\#3471](https://github.com/matrix-org/matrix-react-sdk/pull/3471)
- * Fix: when using autocomplete, ensure command is not sent as text, and @room
+ * Fix: when using autocomplete, ensure command is not sent as text, and @all
    notifs gets needed suffix
    [\#3468](https://github.com/matrix-org/matrix-react-sdk/pull/3468)
  * Fix: paragraphs not being preserved when editing in CIDER
@@ -938,7 +938,7 @@ Changes in [1.3.0-rc.1](https://github.com/matrix-org/matrix-react-sdk/releases/
    [\#3118](https://github.com/matrix-org/matrix-react-sdk/pull/3118)
  * Provide default name if device label is missing
    [\#3113](https://github.com/matrix-org/matrix-react-sdk/pull/3113)
- * Support @room pills while editing
+ * Support @all pills while editing
    [\#3108](https://github.com/matrix-org/matrix-react-sdk/pull/3108)
 
 Changes in [1.2.2](https://github.com/matrix-org/matrix-react-sdk/releases/tag/v1.2.2) (2019-06-19)

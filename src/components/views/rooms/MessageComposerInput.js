@@ -1197,7 +1197,7 @@ setDisplayedCompletion = async (displayedCompletion: ?Completion): boolean => {
             type: 'pill',
             data: { completion, completionId, href },
         });
-    } else if (completion === '@room') {
+    } else if (completion === '@all') {
         inline = Inline.create({
             type: 'pill',
             data: { completion, completionId },
@@ -1272,7 +1272,7 @@ renderNode = props => {
             const shouldShowPillAvatar = SettingsStore.getValue("Pill.shouldShowPillAvatar");
             const Pill = sdk.getComponent('elements.Pill');
 
-            if (completion === '@room') {
+            if (completion === '@all') {
                 return <Pill
                     type={Pill.TYPE_AT_ROOM_MENTION}
                     room={this.props.room}

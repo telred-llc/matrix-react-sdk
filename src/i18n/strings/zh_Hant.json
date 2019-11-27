@@ -1415,7 +1415,7 @@
     "Unknown server error": "未知的伺服器錯誤",
     "Failed to load group members": "載入群組成員失敗",
     "Show a reminder to enable Secure Message Recovery in encrypted rooms": "顯示在已加密的聊天室中啟用安全訊息復原的提醒",
-    "Messages containing @room": "包含 @room 的訊息",
+    "Messages containing @all": "包含 @all 的訊息",
     "Encrypted messages in one-to-one chats": "在一對一的聊天中的加密訊息",
     "Encrypted messages in group chats": "在群組聊天中的已加密訊息",
     "Secure Message Recovery": "安全訊息復原",

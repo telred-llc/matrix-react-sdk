@@ -64,8 +64,8 @@ class PlainWithPillsSerializer {
             return node.data.get('emojiUnicode');
         } else if (node.type == 'pill') {
             const completion = node.data.get('completion');
-            // over the wire the @room pill is just plaintext
-            if (completion === '@room') return completion;
+            // over the wire the @all pill is just plaintext
+            if (completion === '@all') return completion;
 
             switch (this.pillFormat) {
                 case 'plain':

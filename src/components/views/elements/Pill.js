@@ -40,15 +40,15 @@ const Pill = createReactClass({
             return !!REGEX_LOCAL_PERMALINK.exec(url);
         },
         roomNotifPos: (text) => {
-            return text.indexOf("@room");
+            return text.indexOf("@all");
         },
         roomNotifLen: () => {
-            return "@room".length;
+            return "@all".length;
         },
         TYPE_USER_MENTION: 'TYPE_USER_MENTION',
         TYPE_ROOM_MENTION: 'TYPE_ROOM_MENTION',
         TYPE_GROUP_MENTION: 'TYPE_GROUP_MENTION',
-        TYPE_AT_ROOM_MENTION: 'TYPE_AT_ROOM_MENTION', // '@room' mention
+        TYPE_AT_ROOM_MENTION: 'TYPE_AT_ROOM_MENTION', // '@all' mention
     },
 
     props: {
@@ -219,7 +219,7 @@ const Pill = createReactClass({
             case Pill.TYPE_AT_ROOM_MENTION: {
                 const room = this.props.room;
                 if (room) {
-                    linkText = "@room";
+                    linkText = "@all";
                     if (this.props.shouldShowPillAvatar) {
                         avatar = <RoomAvatar room={room} width={16} height={16} />;
                     }

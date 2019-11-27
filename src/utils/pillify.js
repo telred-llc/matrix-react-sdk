@@ -53,7 +53,7 @@ export function pillifyLinks(nodes, mxEvent) {
         } else if (
             node.nodeType === Node.TEXT_NODE &&
             // as applying pills happens outside of react, make sure we're not doubly
-            // applying @room pills here, as a rerender with the same content won't touch the DOM
+            // applying @all pills here, as a rerender with the same content won't touch the DOM
             // to clear the pills from the last run of pillifyLinks
             !node.parentElement.classList.contains("mx_AtRoomPill")
         ) {
@@ -62,7 +62,7 @@ export function pillifyLinks(nodes, mxEvent) {
             let currentTextNode = node;
             const roomNotifTextNodes = [];
 
-            // Take a textNode and break it up to make all the instances of @room their
+            // Take a textNode and break it up to make all the instances of @all their
             // own textNode, adding those nodes to roomNotifTextNodes
             while (currentTextNode !== null) {
                 const roomNotifPos = Pill.roomNotifPos(currentTextNode.textContent);
@@ -82,7 +82,11 @@ export function pillifyLinks(nodes, mxEvent) {
             if (roomNotifTextNodes.length > 0) {
                 const pushProcessor = new PushProcessor(MatrixClientPeg.get());
                 const atRoomRule = pushProcessor.getPushRuleById(".m.rule.roomnotif");
-                if (atRoomRule && pushProcessor.ruleMatchesEvent(atRoomRule, mxEvent)) {
+                const { body = "" } = mxEvent.event.content;
+                const { body: bodyClearEvent = "" } = (mxEvent._clearEvent.content) ? mxEvent._clearEvent.content : {};
+                const containAtAll = body => body === "@all" || body.includes('@all ')
+                let bodyContainAtAll = containAtAll(body) || containAtAll(bodyClearEvent)
+                if (atRoomRule && (pushProcessor.ruleMatchesEvent(atRoomRule, mxEvent) || bodyContainAtAll)) {
                     // Now replace all those nodes with Pills
                     for (const roomNotifTextNode of roomNotifTextNodes) {
                         // Set the next node to be processed to the one after the node
