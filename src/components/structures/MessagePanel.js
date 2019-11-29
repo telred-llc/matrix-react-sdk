@@ -465,17 +465,19 @@ module.exports = createReactClass({
 
                 // Get sender profile from the latest event in the summary as the m.room.create doesn't contain one
                 const ev = this.props.events[i];
-                ret.push(<EventListSummary
-                    key="roomcreationsummary"
-                    events={summarisedEvents}
-                    onToggle={this._onHeightChanged} // Update scroll state
-                    summaryMembers={[ev.sender]}
-                    summaryText={_t("%(creator)s created and configured the room.", {
-                        creator: ev.sender ? ev.sender.name : ev.getSender(),
-                    })}
-                >
-                    { eventTiles }
-                </EventListSummary>);
+                if (this.props.tileShape !== "file_grid") {
+                    ret.push(<EventListSummary
+                        key="roomcreationsummary"
+                        events={summarisedEvents}
+                        onToggle={this._onHeightChanged} // Update scroll state
+                        summaryMembers={[ev.sender]}
+                        summaryText={_t("%(creator)s created and configured the room.", {
+                            creator: ev.sender ? ev.sender.name : ev.getSender(),
+                        })}
+                    >
+                        { eventTiles }
+                    </EventListSummary>);
+                }
 
                 if (readMarkerInSummary) {
                     ret.push(this._getReadMarkerTile(visible));
@@ -568,16 +570,18 @@ module.exports = createReactClass({
                     eventTiles = null;
                 }
 
-                ret.push(
-                    <MemberEventListSummary
-                        key={key}
-                        events={summarisedEvents}
-                        onToggle={this._onHeightChanged} // Update scroll state
-                        startExpanded={highlightInMels}
-                    >
-                        {eventTiles}
-                    </MemberEventListSummary>
-                );
+                if (this.props.tileShape !== "file_grid") {
+                    ret.push(
+                        <MemberEventListSummary
+                            key={key}
+                            events={summarisedEvents}
+                            onToggle={this._onHeightChanged} // Update scroll state
+                            startExpanded={highlightInMels}
+                        >
+                            {eventTiles}
+                        </MemberEventListSummary>
+                    );
+                }
 
                 if (readMarkerInMels) {
                     ret.push(this._getReadMarkerTile(visible));

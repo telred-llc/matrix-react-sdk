@@ -28,6 +28,13 @@ module.exports = createReactClass({
         mxEvent: PropTypes.object.isRequired,
     },
 
+    componentDidMount() {
+        const { tileShape, updateAfterDecryption } = this.props;
+        if (tileShape === "file_grid" && updateAfterDecryption) {
+            updateAfterDecryption(false);
+        }
+    },
+
     render: function() {
         const text = TextForEvent.textForEvent(this.props.mxEvent);
         if (text == null || text.length === 0) return null;

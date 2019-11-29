@@ -86,7 +86,7 @@ module.exports = createReactClass({
     },
 
     setClientHighlight: function() {
-        let elements = this.refs.content.querySelectorAll('a[title^="@"]')
+        let elements = this.refs.content ? this.refs.content.querySelectorAll('a[title^="@"]') : []
         this.props.setClientHighlight(elements.length > 0)
     },
 

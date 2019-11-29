@@ -63,36 +63,37 @@ const FilePanel = createReactClass({
         this.noRoom = !room;
 
         if (room) {
-            const filter = new Matrix.Filter(client.credentials.userId);
-            filter.setDefinition({
-                room: {
-                    timeline: {
-                        types: ['m.room.message']
-                    }
-                }
-            });
+            // const filter = new Matrix.Filter(client.credentials.userId);
+            // filter.setDefinition({
+            //     room: {
+            //         timeline: {
+            //             types: ['m.room.message']
+            //         }
+            //     }
+            // });
 
             // FIXME: we shouldn't be doing this every time we change room - see comment above.
-            client
-                .getOrCreateFilter(
-                    'FILTER_FILES_' + client.credentials.userId,
-                    filter
-                )
-                .then(
-                    filterId => {
-                        filter.filterId = filterId;
-                        const timelineSet = room.getOrCreateFilteredTimelineSet(
-                            filter
-                        );
-                        this.setState({ timelineSet: timelineSet });
-                    },
-                    error => {
-                        console.error(
-                            'Failed to get or create file panel filter',
-                            error
-                        );
-                    }
-                );
+            // client
+            //     .getOrCreateFilter(
+            //         'FILTER_FILES_' + client.credentials.userId,
+            //         filter
+            //     )
+            //     .then(
+            //         filterId => {
+            //             filter.filterId = filterId;
+            //             const timelineSet = room.getOrCreateFilteredTimelineSet(
+            //                 filter
+            //             );
+            //             this.setState({ timelineSet: timelineSet });
+            //         },
+            //         error => {
+            //             console.error(
+            //                 'Failed to get or create file panel filter',
+            //                 error
+            //             );
+            //         }
+            //     );
+            this.setState({ timelineSet: room.getUnfilteredTimelineSet() });
         } else {
             console.error(
                 'Failed to add filtered timelineSet for FilePanel as no room!'

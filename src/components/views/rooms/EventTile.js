@@ -162,6 +162,7 @@ module.exports = createReactClass({
 
         // whether to show reactions for this event
         showReactions: PropTypes.bool,
+
     },
 
     getDefaultProps: function() {
@@ -185,7 +186,8 @@ module.exports = createReactClass({
             // The Relations model from the JS SDK for reactions to `mxEvent`
             reactions: this.getReactions(),
             // Set client hightlight, not depend on data from server
-            isClientHighlight: false
+            isClientHighlight: false,
+            shouldRenderInFilePanel: true,
         };
     },
 
@@ -533,6 +535,20 @@ module.exports = createReactClass({
         });
     },
 
+    _shouldRenderInFilePanel(event) {
+        const filter = ["m.text", "m.emote", "m.bad.encrypted", "m.notify", "m.notice"]
+        if (filter.includes(event.content.msgtype) ||
+            event.type.startsWith('m.call') ||
+            event.type === "m.room.member") {
+            return false;
+        }
+        return true;
+    },
+
+    _updateAfterDecryption(bool) {
+        this.setState({ shouldRenderInFilePanel: bool })
+    },
+
     render: function() {
         const MessageTimestamp = sdk.getComponent('messages.MessageTimestamp');
         const SenderProfile = sdk.getComponent('messages.SenderProfile');
@@ -750,6 +766,11 @@ module.exports = createReactClass({
                 );
             }
             case 'file_grid': {
+                if (!this._shouldRenderInFilePanel(this.props.mxEvent.event) ||
+                    !this.state.shouldRenderInFilePanel) {
+                    return null;
+                }
+
                 return (
                     <div className={classes}>
                         <div className="mx_EventTile_line">
@@ -759,7 +780,8 @@ module.exports = createReactClass({
                                            highlightLink={this.props.highlightLink}
                                            showUrlPreview={this.props.showUrlPreview}
                                            tileShape={this.props.tileShape}
-                                           onHeightChanged={this.props.onHeightChanged} />
+                                           onHeightChanged={this.props.onHeightChanged}
+                                           updateAfterDecryption={this._updateAfterDecryption}/>
                         </div>
                         <a
                             className="mx_EventTile_senderDetailsLink"

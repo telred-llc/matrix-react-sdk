@@ -40,6 +40,10 @@ body.mx_scrollbar_overlay_noautohide .mx_AutoHideScrollbar {
 body.mx_scrollbar_overlay_noautohide .mx_AutoHideScrollbar:hover {
     overflow-y: overlay;
 }
+
+.mx_AutoHideScrollbar_offset {
+    width: 100%;
+}
 /*
 3. as a last fallback, compensate for the scrollbar taking up space in the layout
 by having giving the child element (.mx_AutoHideScrollbar_offset) a
