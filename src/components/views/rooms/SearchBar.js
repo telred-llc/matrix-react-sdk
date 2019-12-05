@@ -18,6 +18,7 @@ import React from 'react';
 import createReactClass from 'create-react-class';
 const classNames = require('classnames');
 const AccessibleButton = require('../../../components/views/elements/AccessibleButton');
+const MatrixClientPeg = require('../../../MatrixClientPeg')
 import { _t } from '../../../languageHandler';
 
 module.exports = createReactClass({
