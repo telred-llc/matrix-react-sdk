@@ -19,14 +19,14 @@ limitations under the License.
 }
 
 .mx_TextualEvent.mx_EventListSummary_summary {
-    font-size: 14px;
+    font-size: 13px;
+    font-style: italic;
     display: inline-flex;
 }
 
 .mx_EventListSummary_avatars {
     display: inline-block;
     margin-right: 8px;
-    padding-top: 8px;
     line-height: 12px;
 }
 
