@@ -20,15 +20,15 @@ import { checkBlockNode } from "../HtmlUtils";
 import {getPrimaryPermalinkEntity} from "../utils/permalinks/Permalinks";
 
 function parseAtRoomMentions(text, partCreator) {
-    const ATROOM = "@room";
+    const ATROOM = "@all";
     const parts = [];
     text.split(ATROOM).forEach((textPart, i, arr) => {
         if (textPart.length) {
             parts.push(partCreator.plain(textPart));
         }
-        // it's safe to never append @room after the last textPart
+        // it's safe to never append @all after the last textPart
         // as split will report an empty string at the end if
-        // `text` ended in @room.
+        // `text` ended in @all.
         const isLast = i === arr.length - 1;
         if (!isLast) {
             parts.push(partCreator.atRoomPill(ATROOM));

@@ -386,7 +386,7 @@
     "Names and surnames by themselves are easy to guess": "खुद के नाम और उपनाम अनुमान लगाना आसान है",
     "Common names and surnames are easy to guess": "सामान्य नाम और उपनाम अनुमान लगाना आसान है",
     "Show a reminder to enable Secure Message Recovery in encrypted rooms": "एन्क्रिप्टेड रूम में सुरक्षित संदेश रिकवरी सक्षम करने के लिए एक अनुस्मारक दिखाएं",
-    "Messages containing @room": "@Room युक्त संदेश",
+    "Messages containing @all": "@all युक्त संदेश",
     "Encrypted messages in one-to-one chats": "एक एक के साथ चैट में एन्क्रिप्टेड संदेश",
     "Encrypted messages in group chats": "समूह चैट में एन्क्रिप्टेड संदेश",
     "Backup has a <validity>valid</validity> signature from <verify>verified</verify> device <device></device>": "बैकअप के पास  <verify>सत्यापित</verify> डिवाइस <device></device> से <validity>वैध</validity> हस्ताक्षर है",

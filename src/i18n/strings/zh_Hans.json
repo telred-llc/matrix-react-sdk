@@ -1282,7 +1282,7 @@
     "Custom user status messages": "自定义用户状态信息",
     "Backup of encryption keys to server": "将加密密钥备份至服务器",
     "Show developer tools": "显示开发者工具",
-    "Messages containing @room": "含有 @room 的消息",
+    "Messages containing @all": "含有 @all 的消息",
     "Delete Backup": "删除备份",
     "Delete your backed up encryption keys from the server? You will no longer be able to use your recovery key to read encrypted message history": "是否从服务器中删除您备份的加密密钥？您将无法再次使用您的还原密钥来解密历史加密消息",
     "Delete backup": "删除备份",

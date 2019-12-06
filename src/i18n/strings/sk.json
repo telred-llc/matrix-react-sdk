@@ -1321,7 +1321,7 @@
     "Pin unread rooms to the top of the room list": "Pripnúť miestnosti s neprečítanými správami na vrch zoznamu",
     "Always invite users which may not exist": "Vždy pozývať používateľov, ktorí nemusia existovať",
     "Show developer tools": "Zobraziť nástroje pre vývojárov",
-    "Messages containing @room": "Správy obsahujúce @room",
+    "Messages containing @all": "Správy obsahujúce @all",
     "Encrypted messages in one-to-one chats": "Šifrované správy v priamych konverzáciách",
     "Encrypted messages in group chats": "Šifrované správy v skupinových konverzáciách",
     "Delete Backup": "Vymazať zálohu",

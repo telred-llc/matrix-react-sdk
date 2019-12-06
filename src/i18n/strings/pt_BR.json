@@ -1185,7 +1185,7 @@
     "Enable widget screenshots on supported widgets": "Ativar capturas de tela do widget em widgets suportados",
     "Show empty room list headings": "Mostrar cabeçalhos de lista de salas vazias",
     "Show developer tools": "Mostrar ferramentas de desenvolvedor",
-    "Messages containing @room": "Mensagens contendo @room",
+    "Messages containing @all": "Mensagens contendo @all",
     "Encrypted messages in one-to-one chats": "Mensagens criptografadas em bate-papos individuais",
     "Encrypted messages in group chats": "Mensagens criptografadas em bate-papos de grupo",
     "Delete Backup": "Deletar Backup",

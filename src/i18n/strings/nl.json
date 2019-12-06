@@ -1323,7 +1323,7 @@
     "Show developer tools": "Ontwikkelgereedschap tonen",
     "Order rooms in the room list by most important first instead of most recent": "Gesprekken in de gesprekkenlijst sorteren op belang in plaats van laatste gebruik",
     "Messages containing my username": "Berichten die mijn gebruikersnaam bevatten",
-    "Messages containing @room": "Berichten die ‘@room’ bevatten",
+    "Messages containing @all": "Berichten die ‘@all’ bevatten",
     "Encrypted messages in one-to-one chats": "Versleutelde berichten in tweegesprekken",
     "Encrypted messages in group chats": "Versleutelde berichten in groepsgesprekken",
     "The other party cancelled the verification.": "De tegenpartij heeft de verificatie geannuleerd.",
