@@ -81,6 +81,12 @@ module.exports = createReactClass({
             }
         }
 
+        if (['m.text', 'm.notice', 'm.emote'].includes(msgtype) &&
+            this.props.tileShape === "file_grid" &&
+            this.props.updateAfterDecryption) {
+                this.props.updateAfterDecryption(false)
+        }
+
         return <BodyType
             ref="body" mxEvent={this.props.mxEvent}
             highlights={this.props.highlights}
