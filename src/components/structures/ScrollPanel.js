@@ -34,7 +34,7 @@ const UNFILL_REQUEST_DEBOUNCE_MS = 200;
 // don't have to update the height too often. It also allows the user
 // to scroll past the pagination spinner a bit so they don't feel blocked so
 // much while the content loads.
-const PAGE_SIZE = 400;
+const PAGE_SIZE = 80;
 
 let debuglog;
 if (DEBUG_SCROLL) {
