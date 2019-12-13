@@ -57,7 +57,7 @@ class MatrixClientPeg {
         // at any time up to after the 'will_start_client'
         // event is finished processing.
         this.opts = {
-            initialSyncLimit: 5000
+            initialSyncLimit: 1000
         };
         // the credentials used to init the current client object.
         // used if we tear it down & recreate it with a different store

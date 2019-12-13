@@ -672,6 +672,7 @@ const LoggedInView = createReactClass({
                         collapsedRhs={this.props.collapsedRhs}
                         ConferenceHandler={this.props.ConferenceHandler}
                         resizeNotifier={this.props.resizeNotifier}
+                        matrixClient={this.props.matrixClient}
                     />
                 );
                 break;

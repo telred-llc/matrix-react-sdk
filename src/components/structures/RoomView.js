@@ -45,9 +45,7 @@ import Tinter from '../../Tinter';
 import rate_limited_func from '../../ratelimitedfunc';
 import ObjectUtils from '../../ObjectUtils';
 import * as Rooms from '../../Rooms';
-
 import { KeyCode, isOnlyCtrlOrCmdKeyEvent } from '../../Keyboard';
-
 import MainSplit from './MainSplit';
 import RightPanel from './RightPanel';
 import RoomViewStore from '../../stores/RoomViewStore';
@@ -57,7 +55,10 @@ import SettingsStore, {SettingLevel} from "../../settings/SettingsStore";
 import WidgetUtils from '../../utils/WidgetUtils';
 import AccessibleButton from "../views/elements/AccessibleButton";
 
-const DEBUG = false;
+import Matrix from 'matrix-js-sdk';
+import { MatrixEvent } from 'matrix-js-sdk';
+
+const DEBUG = true;
 let debuglog = function() {};
 
 const BROWSER_SUPPORTS_SANDBOX = 'sandbox' in document.createElement('iframe');
@@ -134,7 +135,6 @@ module.exports = createReactClass({
             draggingFile: false,
             searching: false,
             searchResults: null,
-            localSearchResults: null,
             callState: null,
             guestsCanJoin: false,
             canPeek: false,
@@ -171,6 +171,12 @@ module.exports = createReactClass({
             canReply: false,
 
             useCider: false,
+
+            // Result for each search
+            localSearchResults: null,  // [mxEvent]
+
+            // Cache for between local searchs
+            localSearchCache: {}  // {[mxEvent_id]: mxEvent}
         };
     },
 
@@ -1121,6 +1127,8 @@ module.exports = createReactClass({
             searchScope: scope,
             searchResults: {},
             searchHighlights: [],
+            localSearchResults: null,
+            searchInProgress: true,
         });
 
         // if we already have a search panel, we need to tell it to forget
@@ -1151,41 +1159,165 @@ module.exports = createReactClass({
             filter: filter,
             term: term,
         });
-        if (!window.allMsgs) {
-            // if (true) { // TEST
-            // fall back to server searching (onlly applied to plain text)
+
+        if (this.props.matrixClient.isRoomEncrypted(this.state.room.roomId)) {
+            return this._handleLocalSearch(term, scope);
+        } else {
             return this._handleSearchResult(searchPromise).done();
         }
-        this._handleLocalSearch(term, scope);
     },
-    _handleLocalSearch: function(term, scope) {
-        console.log('*** Do search for *** ', term, scope);
-        let localSearchResults;
-        if (window.allMsgs && window.allMsgs.length > 0) {
-            localSearchResults = {};
-            localSearchResults.results = window.allMsgs;
-            console.log('*** Data is available to search', window.allMsgs.map(item => console.log(item.event.room_id) || item.event.room_id));
-            if (scope === 'Room' && this.state.room.roomId) {
-                localSearchResults.results = window.allMsgs.filter(e => e.event && e.event.room_id === this.state.room.roomId);
-                console.log('*** Events in Room ***', localSearchResults.results);
-            }
-            localSearchResults.results = localSearchResults.results.filter(mxEvent => {
-                const type = mxEvent && mxEvent.event && mxEvent.event.type;
-                term = term.toLowerCase();
-                if (type === 'm.room.message') {
-                    return mxEvent.event.content.body.toLowerCase().includes(term);
-                } else if (type === 'm.room.encrypted') {
-                    return mxEvent._clearEvent.content.body.toLowerCase().includes(term);
+
+    _handleLocalSearch: async function(term, scope) {
+        const unableToDecrypt = event => event.content && event.content.msgtype === "m.bad.encrypted"
+        const searchTerm = mxEvent => {
+            const type = mxEvent && mxEvent.event && mxEvent.event.type;
+            const containContentAndBody = event => {
+                if (event.content) {
+                    if (event.content.body) {
+                        return true;
+                    }
                 }
                 return false;
-            });
-            console.log('*** Fitlered data ***', localSearchResults.results);
+            }
+            const containTerm = event => event.content.body.toLowerCase().includes(term.toLowerCase())
+
+            if ((type === 'm.room.message' &&
+                containContentAndBody(mxEvent.event) &&
+                containTerm(mxEvent.event)) ||
+                (type === 'm.room.encrypted' &&
+                containContentAndBody(mxEvent._clearEvent) &&
+                !unableToDecrypt(mxEvent._clearEvent) &&
+                containTerm(mxEvent._clearEvent))
+            ) {
+                return true;
+            }
+            return false;
         }
+
+        const transformEvent = async rawEvent => {
+            const client = this.props.matrixClient;
+            let event = new MatrixEvent(rawEvent)
+            const content = event.getContent()
+            if (content && content.ciphertext && client._crypto.decryptEvent && event.isEncrypted()) {
+                await event.attemptDecryption(client._crypto);
+                return event;
+            } else if (content) {
+                return event;
+            }
+        }
+
+        const transFormData = async data => {
+            let events = []
+            let allRooms = [data.rooms.join, data.rooms.leave]
+
+            for (let rooms of allRooms) {
+                for (let room in rooms) {
+                    const rawEvents = rooms[room].timeline.events
+                    for (let rawEvent of rawEvents) {
+                        rawEvent.room_id = room
+                        const transformedEvent = await transformEvent(rawEvent)
+                        events.push(transformedEvent)
+                    }
+
+                }
+            }
+            return events
+        }
+
+        const resolveNewEventstAndCache = newEvents => {
+            const newCache = { ...this.state.localSearchCache }
+            newEvents.forEach(mxEvent => {
+                const mxEventId = mxEvent.event.event_id
+                if (!newCache.hasOwnProperty(mxEventId)) {
+                    newCache[mxEventId] = mxEvent
+                } else if (mxEvent.isEncrypted() && !unableToDecrypt(mxEvent._clearEvent)) {
+                    newCache[mxEventId] = mxEvent
+                }
+            })
+            return newCache
+        }
+
+        const processSearchResult = newCache => {
+            const localSearchResults = [];
+            const newCacheArray = []
+
+            for (let eventId in newCache) {
+                newCacheArray.push(newCache[eventId])
+            }
+
+            newCacheArray.forEach(mxEvent => {
+                if (searchTerm(mxEvent)) {
+                    localSearchResults.push(mxEvent)
+                }
+            })
+
+            return localSearchResults
+        }
+
+        const data = await this._prepareForLocalSearch(scope)
+        const newEvents = await transFormData(data)
+        const newCache = resolveNewEventstAndCache(newEvents)
+        const localSearchResults = processSearchResult(newCache)
+
         this.setState({
-            localSearchResults: localSearchResults,
+            localSearchResults,
+            localSearchCache: newCache,
             searchInProgress: false,
         });
     },
+
+    _prepareForLocalSearch: function(scope) {
+        const client = this.props.matrixClient;
+        const filter = new Matrix.Filter(client.credentials.userId);
+        const definition = scope === "All" ? {
+            room: {
+                timeline: {
+                    limit: 100 // Search for 100 newest events each room
+                }
+            }
+        } : {
+            room: {
+                rooms: [this.state.room.roomId],
+                timeline: {
+                    limit: 10000 // Search for 10000 newest events in this room
+                }
+            }
+        }
+        const filterName = scope === "All" ? "FILTER_ALL_ROOMS" : "FILTER_THIS_ROOM"
+        filter.setDefinition(definition);
+        const qps = {
+            timeout: 30000,
+        };
+
+        return client
+            .getOrCreateFilter(
+                filterName + client.credentials.userId,
+                filter
+            )
+            .then(
+                filterId => {
+                    qps.filter = filterId;
+                    return client._http.authedRequest(
+                        undefined, "GET", "/sync", qps
+                    );
+                },
+                error => {
+                    console.error(
+                        'Failed to get or create filter',
+                        error
+                    );
+                }
+            ).then(
+                data => data,
+                error => {
+                    console.error(
+                        'Failed to get data from filter',
+                        error
+                    );
+                }
+            );
+    },
+
     _handleSearchResult: function(searchPromise) {
         const self = this;
 
@@ -1253,10 +1385,10 @@ module.exports = createReactClass({
         };
 
         if (this.state.searchInProgress) {
-            return (<li key="search-spinner"><Spinner /></li>)
+            return (<div className="mx_RoomView_messagePanel mx_RoomView_messagePanelSearchSpinner" />)
         }
 
-        if (this.state.localSearchResults.results.length === 0) {
+        if (this.state.localSearchResults.length === 0) {
             return (<li key="search-top-marker">
                     <h2 className="mx_RoomView_topMarker">{ _t("No results") }</h2>
                 </li>
@@ -1266,7 +1398,7 @@ module.exports = createReactClass({
         // const resultLink = "#/room/"+roomId+"/"+mxEv.getId();
 
         return <LocalSearchResult
-            searchResult={this.state.localSearchResults.results}
+            searchResult={this.state.localSearchResults}
             searchHighlights={[]}
             onHeightChanged={onHeightChanged}
             allRoom={this.state.searchScope === 'All'}
@@ -1286,9 +1418,7 @@ module.exports = createReactClass({
         const ret = [];
 
         if (this.state.searchInProgress) {
-            ret.push(<li key="search-spinner">
-                <Spinner />
-            </li>);
+            ret.push(<div className="mx_RoomView_messagePanel mx_RoomView_messagePanelSearchSpinner" />);
         }
 
         if (!this.state.searchResults.next_batch) {

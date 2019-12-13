@@ -243,7 +243,7 @@ export default createReactClass({
         // if (this.props.config.sync_timeline_limit) {
         //     MatrixClientPeg.opts.initialSyncLimit = this.props.config.sync_timeline_limit;
         // }
-        MatrixClientPeg.opts.initialSyncLimit = 5000;
+        MatrixClientPeg.opts.initialSyncLimit = 1000;
 
         // a thing to call showScreen with once login completes.  this is kept
         // outside this.state because updating it should never trigger a
@@ -734,12 +734,6 @@ export default createReactClass({
                 this.setState({
                     showCookieBar: false,
                 });
-                break;
-            case 'message_sent':
-                console.log('+++ Msg sent +++');
-                setTimeout(() => {
-                    this.saveChatForSearch();
-                }, 1000)
                 break;
         }
     },
@@ -1263,34 +1257,6 @@ export default createReactClass({
         this._setPageSubtitle();
     },
 
-    /**
-     * Called just before the matrix client is started
-     * (useful for setting listeners)
-     */
-    saveChatForSearch: function() {
-        console.log('+++ Save Chat For Search +++')
-        const cli = MatrixClientPeg.get()
-        const rooms = cli.getRooms();
-        console.log('********************');
-        console.log('Rooms now: ', rooms);
-        window.allMsgs = [];
-        rooms.forEach(room => {
-            room.timeline.forEach(async t => {
-                const event = t.event;
-                const eventObj = new MatrixEvent(event);
-                const content = eventObj.getContent();
-
-                if (content && content.msgtype === 'm.text') {
-                    window.allMsgs.push(eventObj);
-                } else if (content && content.ciphertext && cli._crypto.decryptEvent && eventObj.isEncrypted()) {
-                    await eventObj.attemptDecryption(cli._crypto);
-                    if (['m.text', 'm.file', 'm.image'].includes(eventObj.getContent().msgtype)) {
-                        window.allMsgs.push(eventObj);
-                    }
-                }
-            });
-        });
-    },
     _onWillStartClient() {
         const self = this;
 
@@ -1349,7 +1315,6 @@ export default createReactClass({
             if (state !== "PREPARED") { return; }
 
             self.firstSyncComplete = true;
-            self.saveChatForSearch();
             self.firstSyncPromise.resolve();
 
             dis.dispatch({action: 'focus_composer'});
