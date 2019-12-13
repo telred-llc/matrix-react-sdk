@@ -252,7 +252,7 @@ module.exports = createReactClass({
 
         const text = mxEvent._replacingEvent
             ? mxEvent._replacingEvent._clearEvent.content.body.slice(3)
-            : mxEvent._clearEvent.content.body;
+            : (mxEvent._clearEvent.content) ? mxEvent._clearEvent.content.body : mxEvent.event.content.body;
 
         var textArea = document.createElement('textarea');
         textArea.value = text;
@@ -458,7 +458,19 @@ module.exports = createReactClass({
             }
         }
 
-        if (mxEvent._clearEvent.content.msgtype === 'm.text') {
+        const shoudldHaveCopyButton = mxEvent => {
+            if (mxEvent._clearEvent.content) {
+                return mxEvent._clearEvent.content.msgtype === 'm.text'
+            }
+
+            if (mxEvent.event.content) {
+                return mxEvent.event.content.msgtype === 'm.text'
+            }
+
+            return false;
+        }
+
+        if (shoudldHaveCopyButton(mxEvent)) {
             copyButton = (
                 <div className="mx_MessageContextMenu_field" onClick={this.onCopyClick}>
                     {'Copy'}
@@ -577,6 +589,7 @@ module.exports = createReactClass({
                 { collapseReplyThread }
                 { e2eInfo }
                 { reportEventButton }
+                { copyButton }
             </div>
         );
     }
