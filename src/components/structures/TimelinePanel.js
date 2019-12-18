@@ -1208,21 +1208,23 @@ const TimelinePanel = createReactClass({
         // quite slow. So we detect that situation and shortcut straight to
         // calling _reloadEvents and updating the state.
 
-        if (prom.isFulfilled()) {
+        const timeline = this.props.timelineSet.getTimelineForEvent(eventId);
+        if (timeline) {
+            // This is a hot-path optimization by skipping a promise tick
+            // by repeating a no-op sync branch in TimelineSet.getTimelineForEvent & MatrixClient.getEventTimeline
+            this._timelineWindow.load(eventId, INITIAL_SIZE); // in this branch this method will happen in sync time
             onLoaded();
         } else {
+            const prom = this._timelineWindow.load(eventId, INITIAL_SIZE);
             this.setState({
                 events: [],
                 liveEvents: [],
                 canBackPaginate: false,
                 canForwardPaginate: false,
-                timelineLoading: true
+                timelineLoading: true,
             });
-
-            prom = prom.then(onLoaded, onError);
+            prom.then(onLoaded, onError);
         }
-
-        prom.done();
     },
 
     // handle the completion of a timeline load or localEchoUpdate, by
