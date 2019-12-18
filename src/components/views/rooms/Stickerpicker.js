@@ -48,6 +48,8 @@ export default class Stickerpicker extends React.Component {
         this._onWidgetAction = this._onWidgetAction.bind(this);
         this._onResize = this._onResize.bind(this);
         this._onFinished = this._onFinished.bind(this);
+        this._setStickerRef = this._setStickerRef.bind(this);
+        this._onClickOutside = this._onClickOutside.bind(this);
 
         this.popoverWidth = 300;
         this.popoverHeight = 300;
@@ -117,6 +119,9 @@ export default class Stickerpicker extends React.Component {
 
         // Initialise widget state from current account data
         this._updateWidget();
+
+        // Subscribe to clicking outside event
+        document.addEventListener('mousedown', this._onClickOutside);
     }
 
     componentWillUnmount() {
@@ -127,6 +132,9 @@ export default class Stickerpicker extends React.Component {
         if (this.dispatcherRef) {
             dis.unregister(this.dispatcherRef);
         }
+
+        // Unsubscribe to clicking outside event
+        document.removeEventListener('mousedown', this._onClickOutside);
     }
 
     componentDidUpdate(prevProps, prevState) {
@@ -192,7 +200,7 @@ export default class Stickerpicker extends React.Component {
     _defaultStickerpickerContent() {
         return (
             <AccessibleButton onClick={this._launchManageIntegrations}
-                className='mx_Stickers_contentPlaceholder'>
+                className='mx_Stickers_contentPlaceholder' inputRef={this._setStickerRef}>
                 <p>{ _t("You don't currently have any stickerpacks enabled") }</p>
                 <p className='mx_Stickers_addLink'>{ _t("Add some now") }</p>
                 <img src={require("../../../../res/img/stickerpack-placeholder.png")} alt="" />
@@ -241,7 +249,7 @@ export default class Stickerpicker extends React.Component {
             stickerpickerWidget.content.name = stickerpickerWidget.name || _t("Stickerpack");
 
             stickersContent = (
-                <div className='mx_Stickers_content_container'>
+                <div className='mx_Stickers_content_container' ref={this._setStickerRef}>
                     <div
                         id='stickersContent'
                         className='mx_Stickers_content'
@@ -362,6 +370,22 @@ export default class Stickerpicker extends React.Component {
                 `type_${widgetType}`,
                 this.state.widgetId,
             );
+        }
+    }
+
+    /**
+     * Setup a ref so we can close the box when clicking outside
+     */
+    _setStickerRef(node) {
+        this.stickerRef = node;
+    }
+
+    /**
+     * Handle event click outside the box
+     */
+    _onClickOutside(event) {
+        if (this.stickerRef && !this.stickerRef.contains(event.target)) {
+            this._onHideStickersClick()
         }
     }
 
