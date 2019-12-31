@@ -177,6 +177,7 @@ const RoomSubList = createReactClass({
     },
 
     onRoomTileClick(roomId, ev) {
+        this.props._removeRoomSwitchImmediately(roomId);
         dis.dispatch({
             action: 'view_room',
             room_id: roomId,

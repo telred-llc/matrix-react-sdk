@@ -790,7 +790,6 @@ const TimelinePanel = createReactClass({
             );
             MatrixClientPeg.get().setRoomReadMarkers(
                 this.props.timelineSet.room.roomId,
-                'rm',
                 this.state.readMarkerEventId,
                 lastReadEvent, // Could be null, in which case no RR is sent
                 {hidden: hiddenRR},
