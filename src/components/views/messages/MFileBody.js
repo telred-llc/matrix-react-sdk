@@ -257,6 +257,8 @@ module.exports = createReactClass({
         this.id = nextMountId++;
         mounts[this.id] = this;
         this.tint();
+        const el = document.querySelector(`[data-click="${this.props.mxEvent.getId()}"]`);
+        if (el) el.click();
     },
 
     componentDidUpdate: function(prevProps, prevState) {
@@ -323,11 +325,10 @@ module.exports = createReactClass({
                         return;
                     });
                 };
-
                 return (
                     <span className="mx_MFileBody" ref="body">
                         <div className="mx_MFileBody_download">
-                            <a href="javascript:void(0)" onClick={decrypt}>
+                            <a href="javascript:void(0)" onClick={decrypt} data-click={this.props.mxEvent.getId()}>
                                 { _t("Decrypt %(text)s", { text: text }) }
                             </a>
                         </div>
