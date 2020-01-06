@@ -36,6 +36,8 @@ import CustomRoomTagStore from '../../../stores/CustomRoomTagStore';
 import GroupStore from '../../../stores/GroupStore';
 import RoomSubList from '../../structures/RoomSubList';
 import ResizeHandle from '../elements/ResizeHandle';
+import Unread from '../../../Unread';
+import * as RoomNotifs from '../../../RoomNotifs';
 
 import { Resizer } from '../../../resizer';
 import {
@@ -140,7 +142,16 @@ module.exports = createReactClass({
             incomingCall: null,
             selectedTags: [],
             hover: false,
-            customTags: CustomRoomTagStore.getTags()
+            customTags: CustomRoomTagStore.getTags(),
+
+            // If user A creates room 1 and invites user B, then immediately
+            // switches to room 2 before B accepts it, then A will not see notification
+            // counts until he comes back to room 1.
+            // We list these kinds of room here.
+            // Model: {
+            //  [room_id]: unreadNotifCount
+            // }
+            _roomsSwitchImmediately: {},
         };
     },
 
@@ -409,6 +420,7 @@ module.exports = createReactClass({
     onEventDecrypted: function(ev) {
         // An event being decrypted may mean we need to re-order the room list
         this._delayedRefreshRoomList();
+        this._handleRoomSwitchImmediately(ev);
     },
 
     onAccountData: function(ev) {
@@ -815,6 +827,7 @@ module.exports = createReactClass({
                     key={chosenKey}
                     label={label}
                     {...otherProps}
+                    _removeRoomSwitchImmediately={this._removeRoomSwitchImmediately}
                 />
             );
 
@@ -851,6 +864,75 @@ module.exports = createReactClass({
             return false
         }
 
+    },
+
+    // If user A creates room 1 and invites user B, then immediately
+    // switches to room 2 before B accepts it, then A will not see notification
+    // counts until he comes back to room 1.
+    // We set unread notif count for these kinds of room here.
+    _handleRoomSwitchImmediately(clearEvent) {
+        const self = this;
+        const client = MatrixClientPeg.get();
+        const room = client.getRoom(clearEvent.getRoomId());
+
+        const getRoomsSwitchImmediately = () =>
+            self.state._roomsSwitchImmediately;  // return { [room_id]: unreadNotifCount }
+
+        const getRoomUnreadNotifCount = room =>
+            getRoomsSwitchImmediately()[room.roomId] || 0; // return unreadNotifCount
+
+        const shouldRRContainMyUserId = room => {
+            if (room) {
+                const { myUserId, _receipts } = room;
+                return _receipts && _receipts["m.read"] &&
+                    _receipts["m.read"][myUserId];
+            } else {
+                return false;
+            }
+        };
+
+        const looksLikeRoomSwitchImmediately = (room) => {
+            return shouldRRContainMyUserId(room) &&
+                Unread.doesRoomHaveUnreadMessages(room) &&
+                (room.getUnreadNotificationCount() === undefined ||
+                Object.keys(getRoomsSwitchImmediately()).includes(room.roomId));
+        };
+
+        const getLastReadEventTs = room => {
+            const { myUserId, _receipts } = room;
+            return _receipts["m.read"][myUserId].data.ts;
+        };
+
+        const shouldNotifyEvent = (clearEvent, room) => {
+            return looksLikeRoomSwitchImmediately(room) &&
+                clearEvent.getTs() > getLastReadEventTs(room) &&
+                ["m.room.message", "m.call.invite"].includes(clearEvent.getType());
+        };
+
+        const updateState = (room, roomNewUnreadNotifCount) => {
+            self.setState({
+                _roomsSwitchImmediately: {
+                    ...getRoomsSwitchImmediately(),
+                    [room.roomId]: roomNewUnreadNotifCount,
+                },
+            });
+        };
+
+        if (shouldNotifyEvent(clearEvent, room)) {
+            const roomNewUnreadNotifCount = getRoomUnreadNotifCount(room) + 1;
+            room.setUnreadNotificationCount("total", roomNewUnreadNotifCount);
+            updateState(room, roomNewUnreadNotifCount);
+        }
+    },
+
+    _removeRoomSwitchImmediately(roomId) {
+        const newState = { ...this.state._roomsSwitchImmediately };
+        if (newState[roomId]) {
+            delete newState[roomId];
+            this.setState({
+                _roomsSwitchImmediately: newState,
+            });
+        }
     },
 
     render: function() {
