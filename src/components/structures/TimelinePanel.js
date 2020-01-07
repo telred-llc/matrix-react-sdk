@@ -662,6 +662,12 @@ const TimelinePanel = createReactClass({
         // happens to save us re-rendering the whole timeline.
         if (ev.getRoomId() === this.props.timelineSet.room.roomId) {
             this.forceUpdate();
+
+            // We also need to inform the parent component, RoomView in this case, about
+            // the event being decrypted, so something like the scroll to bottom button
+            // can be not rendered.
+            const { handleAtEndOfLiveTimeline: handle } = this.props;
+            if (handle) handle();
         }
     },
 
