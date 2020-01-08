@@ -195,6 +195,8 @@ const RoomSubList = createReactClass({
     },
 
     makeRoomTile: function(room) {
+        const localUnreadNotifCount = window.unreadNotifCount ? window.unreadNotifCount[room.roomId] : 0;
+
         return (
             <RoomTile
                 room={room}
@@ -207,7 +209,7 @@ const RoomSubList = createReactClass({
                     this.props.isInvite ||
                     RoomNotifs.getUnreadNotificationCount(room, 'highlight') > 0
                 }
-                notificationCount={RoomNotifs.getUnreadNotificationCount(room)}
+                notificationCount={localUnreadNotifCount}
                 isInvite={this.props.isInvite}
                 refreshSubList={this._updateSubListCount}
                 incomingCall={null}

@@ -50,12 +50,6 @@ module.exports = createReactClass({
         incomingCall: PropTypes.object
     },
 
-    componentDidMount: function() {
-        if (this._isDirectMessageRoom(this.props.room.roomId)) {
-            this._watchPartnerStatus.call(this);
-        }
-    },
-
     _watchPartnerStatus: function() {
         const members = this.state.room.currentState.members;
         const currentUserId = this.state.room.myUserId;
@@ -187,6 +181,10 @@ module.exports = createReactClass({
             if (statusUser) {
                 statusUser.on("User._unstable_statusMessage", this._onStatusMessageCommitted);
             }
+        }
+
+        if (this._isDirectMessageRoom(this.props.room.roomId)) {
+            this._watchPartnerStatus.call(this);
         }
     },
 
