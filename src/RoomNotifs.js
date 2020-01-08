@@ -67,7 +67,7 @@ export function aggregateNotificationCount(rooms) {
         const badges = notifBadges || mentionBadges;
 
         if (badges) {
-            result.count += notificationCount;
+            result.count += 1;
             if (highlight) {
                 result.highlight = true;
             }
