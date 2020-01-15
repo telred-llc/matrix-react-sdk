@@ -495,11 +495,15 @@ module.exports = createReactClass({
         // in render() prevents the ref from being set on first mount, so we try and
         // catch the messagePanel when it does mount. Because we only want the ref once,
         // we use a boolean flag to avoid duplicate work.
-        if (this.refs.messagePanel && !this.state.atEndOfLiveTimelineInit) {
-            this.setState({
-                atEndOfLiveTimelineInit: true,
-                atEndOfLiveTimeline: this.refs.messagePanel.isAtEndOfLiveTimeline(),
-            });
+        if (this.refs.messagePanel) {
+            if (!this.state.atEndOfLiveTimelineInit) {
+                this.setState({
+                    atEndOfLiveTimelineInit: true,
+                    atEndOfLiveTimeline: this.refs.messagePanel.isAtEndOfLiveTimeline(),
+                });
+            } else {
+                this._handleAtEndOfLiveTimeline();
+            }
         }
     },
 
@@ -666,6 +670,7 @@ module.exports = createReactClass({
     },
 
     onRoomTimeline: function(ev, room, toStartOfTimeline, removed, data) {
+        this._handleAtEndOfLiveTimeline();
         if (this.unmounted) return;
 
         // ignore events for other rooms
@@ -1680,6 +1685,7 @@ module.exports = createReactClass({
         if (auxPanelMaxHeight < 50) auxPanelMaxHeight = 50;
 
         this.setState({auxPanelMaxHeight: auxPanelMaxHeight});
+        this._handleAtEndOfLiveTimeline();
     },
 
     onFullscreenClick: function() {
@@ -1779,6 +1785,14 @@ module.exports = createReactClass({
         const oldRoom = this._getOldRoom();
         if (!oldRoom) return;
         dis.dispatch({action: "view_room", room_id: oldRoom.roomId});
+    },
+
+    _handleAtEndOfLiveTimeline() {
+        if (this.refs.messagePanel) {
+            this.setState({
+                atEndOfLiveTimeline: this.refs.messagePanel.isAtEndOfLiveTimeline(),
+            });
+        }
     },
 
     render: function() {
@@ -2156,6 +2170,7 @@ module.exports = createReactClass({
                            permalinkCreator={this._getPermalinkCreatorForRoom(this.state.room)}
                            resizeNotifier={this.props.resizeNotifier}
                            showReactions={true}
+                           handleAtEndOfLiveTimeline={this._handleAtEndOfLiveTimeline}
             />);
 
         let topUnreadMessagesBar = null;
