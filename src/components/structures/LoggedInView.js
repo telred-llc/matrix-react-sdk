@@ -791,6 +791,7 @@ const LoggedInView = createReactClass({
                             resizeNotifier={this.props.resizeNotifier}
                             collapsed={this.props.collapseLhs || false}
                             disabled={this.props.leftDisabled}
+                            currentRoomId={this.props.currentRoomId}
                         />
                         <ResizeHandle />
                         {pageElement}

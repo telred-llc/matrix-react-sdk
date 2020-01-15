@@ -428,7 +428,15 @@ module.exports = createReactClass({
         return widgets.length > 0 || WidgetEchoStore.roomHasPendingWidgets(room.roomId, WidgetUtils.getRoomWidgets(room));
     },
 
+    _resetLocalUnreadNotifCount() {
+        const { roomId } = this.state;
+        if (window.unreadNotifCount && window.unreadNotifCount[roomId]) {
+            window.unreadNotifCount[roomId] = 0;
+        }
+    },
+
     componentDidMount: function() {
+        this._resetLocalUnreadNotifCount();
         const call = this._getCallForRoom();
         const callState = call ? call.call_state : "ended";
         this.setState({
@@ -471,6 +479,7 @@ module.exports = createReactClass({
     },
 
     componentDidUpdate: function() {
+        this._resetLocalUnreadNotifCount();
         if (this.refs.roomView) {
             const roomView = ReactDOM.findDOMNode(this.refs.roomView);
             if (!roomView.ondrop) {
@@ -683,6 +692,7 @@ module.exports = createReactClass({
         if (this.state.joining) return;
 
         if (ev.getSender() !== MatrixClientPeg.get().credentials.userId) {
+            this._resetLocalUnreadNotifCount();
             // update unread count when scrolled up
             if (!this.state.searchResults && this.state.atEndOfLiveTimeline) {
                 // no change
@@ -728,6 +738,7 @@ module.exports = createReactClass({
         this._calculateRecommendedVersion(room);
         this._updateE2EStatus(room);
         this._updatePermissions(room);
+        this._resetLocalUnreadNotifCount();
     },
 
     _calculateRecommendedVersion: async function(room) {

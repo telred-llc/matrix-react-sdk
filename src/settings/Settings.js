@@ -319,7 +319,7 @@ export const SETTINGS = {
     },
     "readMarkerOutOfViewThresholdMs": {
         supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS_WITH_CONFIG,
-        default: 30000,
+        default: 3000,
     },
     "blacklistUnverifiedDevices": {
         // We specifically want to have room-device > device so that users may set a device default

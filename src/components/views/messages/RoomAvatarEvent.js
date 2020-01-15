@@ -55,7 +55,7 @@ module.exports = createReactClass({
         const ev = this.props.mxEvent;
         const senderDisplayName =
             ev.sender && ev.sender.name ? ev.sender.name : ev.getSender();
-        const BaseAvatar = sdk.getComponent('avatars.BaseAvatar');
+        const RoomAvatar = sdk.getComponent("avatars.RoomAvatar");
 
         const room = MatrixClientPeg.get().getRoom(
             this.props.mxEvent.getRoomId()

@@ -76,7 +76,8 @@ const LeftPanel = createReactClass({
         // We just need to update if any of these things change.
         if (
             this.props.collapsed !== nextProps.collapsed ||
-            this.props.disabled !== nextProps.disabled
+            this.props.disabled !== nextProps.disabled ||
+            this.props.currentRoomId !== nextProps.currentRoomId
         ) {
             return true;
         }
@@ -322,6 +323,7 @@ const LeftPanel = createReactClass({
                         collapsed={this.props.collapsed}
                         searchFilter={this.state.searchFilter}
                         ConferenceHandler={VectorConferenceHandler}
+                        currentRoomId={this.props.currentRoomId}
                     />
                 </aside>
             </div>

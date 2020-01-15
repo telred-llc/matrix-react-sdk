@@ -24,13 +24,13 @@ module.exports = {
      * count of unread messages
      */
     eventTriggersUnreadCount: function(ev) {
-        if (ev.sender && ev.sender.userId == MatrixClientPeg.get().credentials.userId) {
+        if (ev.getSender() == MatrixClientPeg.get().credentials.userId && ev.getType() !== 'm.call.hangup') {
             return false;
         } else if (ev.getType() == 'm.room.member') {
             return false;
         } else if (ev.getType() == 'm.room.third_party_invite') {
             return false;
-        } else if (ev.getType() == 'm.call.answer' || ev.getType() == 'm.call.hangup') {
+        } else if (ev.getType() == 'm.call.invite' || ev.getType() == 'm.call.answer') {
             return false;
         } else if (ev.getType() == 'm.room.message' && ev.getContent().msgtype == 'm.notify') {
             return false;

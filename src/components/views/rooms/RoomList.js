@@ -133,6 +133,7 @@ module.exports = createReactClass({
         );
 
         this._layout = this._unfilteredlayout;
+        window.unreadNotifCount = {};
 
         return {
             isLoadingLeftRooms: false,
@@ -421,6 +422,7 @@ module.exports = createReactClass({
         // An event being decrypted may mean we need to re-order the room list
         this._delayedRefreshRoomList();
         this._handleRoomSwitchImmediately(ev);
+        this._handleLocalUnreadNotifCount(ev);
     },
 
     onAccountData: function(ev) {
@@ -933,6 +935,60 @@ module.exports = createReactClass({
                 _roomsSwitchImmediately: newState,
             });
         }
+    },
+
+    _handleLocalUnreadNotifCount(clearEvent) {
+        const client = MatrixClientPeg.get();
+        const roomId = clearEvent.getRoomId();
+        const room = client.getRoom(roomId);
+
+        const setupLocalUnreadNotifCount = room => {
+            window.unreadNotifCount = window.unreadNotifCount || {};
+            window.unreadNotifCount[room.roomId] = window.unreadNotifCount[room.roomId] || 0;
+        };
+
+        const shouldRRContainMyUserId = room => {
+            if (room) {
+                const { myUserId, _receipts } = room;
+                return _receipts && _receipts["m.read"] &&
+                    _receipts["m.read"][myUserId];
+            } else {
+                return false;
+            }
+        };
+
+        const getLastReadEventTs = room => {
+            const { myUserId, _receipts } = room;
+            return _receipts["m.read"][myUserId].data.ts;
+        };
+
+        const shouldNotifyEvent = (clearEvent, room) => {
+            const result = !clearEvent.isDecryptionFailure() &&
+                Unread.eventTriggersUnreadCount(clearEvent) &&
+                room.roomId !== this.props.currentRoomId &&
+                shouldRRContainMyUserId(room) &&
+                clearEvent.getTs() > getLastReadEventTs(room);
+
+            // console.log("__shouldNotify", result, {
+            //     isDecryptionFailure: clearEvent.isDecryptionFailure(),
+            //     notInCurrentRoom: room.roomId !== this.props.currentRoomId,
+            //     setByUnread: Unread.eventTriggersUnreadCount(clearEvent),
+            //     shouldRRContainMyUserId: shouldRRContainMyUserId(room),
+            //     nextTs: clearEvent.getTs() > getLastReadEventTs(room),
+            //     content: clearEvent.getContent()
+            // });
+
+            return result;
+        };
+
+        const setLocalUnreadNotifCount = (clearEvent, room) => {
+            setupLocalUnreadNotifCount(room);
+            if (shouldNotifyEvent(clearEvent, room)) {
+                window.unreadNotifCount[roomId]++;
+            }
+        };
+
+        if (room) setLocalUnreadNotifCount(clearEvent, room);
     },
 
     render: function() {
