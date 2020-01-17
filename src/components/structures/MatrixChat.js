@@ -1424,7 +1424,7 @@ export default createReactClass({
                     "blacklistUnverifiedDevices",
                     room.roomId,
                     /*explicit=*/true,
-                );
+                ) || false;
                 room.setBlacklistUnverifiedDevices(blacklistEnabled);
             }
         });
@@ -1500,7 +1500,7 @@ export default createReactClass({
             const blacklistEnabled = SettingsStore.getValueAt(
                 SettingLevel.DEVICE,
                 "blacklistUnverifiedDevices",
-            );
+            ) || false;
             cli.setGlobalBlacklistUnverifiedDevices(blacklistEnabled);
         }
     },

@@ -122,21 +122,26 @@ function _reAttemptCall(call) {
     }
 }
 
+function handleUnverifiedDevices(call) {
+    const cli = MatrixClientPeg.get();
+    const room = cli.getRoom(call.roomId);
+    cryptodevices
+        .getUnknownDevicesForRoom(cli, room)
+        .then(devices => {
+            cryptodevices.markAllDevicesKnown(
+                cli,
+                devices,
+            );
+            Resend.resendUnsentEvents(room);
+        });
+}
+
 function _setCallListeners(call) {
     call.on('error', function(err) {
         console.error('Call error: %s', err);
         console.error(err.stack);
         if (err.code === 'unknown_devices') {
-            const room = MatrixClientPeg.get().getRoom(call.roomId);
-            cryptodevices
-                .getUnknownDevicesForRoom(MatrixClientPeg.get(), room)
-                .then(devices => {
-                    cryptodevices.markAllDevicesKnown(
-                        MatrixClientPeg.get(),
-                        devices
-                    );
-                    Resend.resendUnsentEvents(room);
-                });
+            handleUnverifiedDevices(call);
         } else {
             if (
                 MatrixClientPeg.get().getTurnServers().length === 0 &&
@@ -154,6 +159,7 @@ function _setCallListeners(call) {
         }
     });
     call.on('hangup', function() {
+        handleUnverifiedDevices(call);
         _setCallState(undefined, call.roomId, 'ended');
     });
     // map web rtc states to dummy UI state
