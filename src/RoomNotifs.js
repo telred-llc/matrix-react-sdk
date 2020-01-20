@@ -39,7 +39,8 @@ export function countRoomsWithNotif(rooms) {
     return rooms.reduce((result, room, index) => {
         const roomNotifState = getRoomNotifsState(room.roomId);
         const highlight = room.getUnreadNotificationCount('highlight') > 0;
-        const notificationCount = room.getUnreadNotificationCount();
+        // const notificationCount = room.getUnreadNotificationCount();
+        const notificationCount = window.unreadNotifCount ? window.unreadNotifCount[room.roomId] : 0;
 
         const notifBadges = notificationCount > 0 && shouldShowNotifBadge(roomNotifState);
         const mentionBadges = highlight && shouldShowMentionBadge(roomNotifState);
