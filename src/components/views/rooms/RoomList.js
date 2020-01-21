@@ -38,6 +38,8 @@ import RoomSubList from '../../structures/RoomSubList';
 import ResizeHandle from '../elements/ResizeHandle';
 import Unread from '../../../Unread';
 import * as RoomNotifs from '../../../RoomNotifs';
+import PlatformPeg from '../../../PlatformPeg';
+import SdkConfig from '../../../SdkConfig';
 
 import { Resizer } from '../../../resizer';
 import {
@@ -937,6 +939,21 @@ module.exports = createReactClass({
         }
     },
 
+    _updateStatusIndicator() {
+        const cli = MatrixClientPeg.get();
+        const plf = PlatformPeg.get();
+        const currentRoomId = this.props ? this.props.currentRoomId : "";
+        const notifCount = RoomNotifs.countRoomsWithNotif(cli.getRooms()).count;
+
+        if (cli && plf && currentRoomId && notifCount > 0) {
+            plf.setNotificationCount(notifCount);
+            const room = cli.getRoom(currentRoomId);
+            if (room) {
+                document.title = `${SdkConfig.get().brand || 'ClearKeep'} | ${room.name} [${notifCount}]`;
+            }
+        }
+    },
+
     _handleLocalUnreadNotifCount(clearEvent) {
         const client = MatrixClientPeg.get();
         const roomId = clearEvent.getRoomId();
@@ -985,6 +1002,7 @@ module.exports = createReactClass({
             setupLocalUnreadNotifCount(room);
             if (shouldNotifyEvent(clearEvent, room)) {
                 window.unreadNotifCount[roomId]++;
+                this._updateStatusIndicator();
             }
         };
 
