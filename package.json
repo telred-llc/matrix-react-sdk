@@ -142,7 +142,7 @@
     "file-loader": "^3.0.1",
     "flow-parser": "^0.57.3",
     "jest-mock": "^23.2.0",
-    "karma": "^4.0.1",
+    "karma": "^6.3.14",
     "karma-chrome-launcher": "^2.2.0",
     "karma-cli": "^1.0.1",
     "karma-logcapture-reporter": "0.0.1",
